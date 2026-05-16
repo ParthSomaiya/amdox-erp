@@ -5,6 +5,10 @@ import mongoose from "mongoose";
 
 import authRoutes from "./routes/authRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import hrRoutes from "./routes/hrRoutes.js";
+import { seedAdmin } from "./seed/adminSeeder.js";
+
+seedAdmin();
 
 dotenv.config();
 
@@ -22,6 +26,7 @@ mongoose.connect(process.env.MONGO_URI)
 // ✅ Routes (PLACE HERE)
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/hr", hrRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
