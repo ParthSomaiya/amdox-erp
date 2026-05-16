@@ -11,6 +11,7 @@ import {
 } from "../controllers/authController.js";
 import Otp from "../models/Otp.js";
 import User from "../models/User.js";
+import { registerEmployeeWithInvite } from "../controllers/authController.js";
 
 const router = express.Router();
 
@@ -56,5 +57,7 @@ router.post("/verify-otp", async (req, res) => {
 router.post("/register-admin", registerAdmin);
 router.post("/register-user", registerUser);
 router.post("/login", login);
+router.post("/register-invite", registerEmployeeWithInvite);
+
 
 export default router;

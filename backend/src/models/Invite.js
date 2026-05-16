@@ -2,13 +2,19 @@ import mongoose from "mongoose";
 
 const inviteSchema = new mongoose.Schema({
   email: String,
-  role: String,
+  role: {
+    type: String,
+    enum: ["HR", "FINANCE", "EMPLOYEE"],
+  },
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",
   },
   token: String,
-  expiresAt: Date,
+  status: {
+    type: String,
+    default: "PENDING",
+  },
 });
 
 export default mongoose.model("Invite", inviteSchema);

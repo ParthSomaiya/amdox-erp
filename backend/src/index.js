@@ -9,6 +9,10 @@ import hrRoutes from "./routes/hrRoutes.js";
 import leaveRoutes from "./routes/leaveRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 import payrollRoutes from "./routes/payrollRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
+import pdfRoutes from "./routes/pdfRoutes.js";
+import financeRoutes from "./routes/financeRoutes.js";
 
 import { seedAdmin } from "./seed/adminSeeder.js";
 
@@ -19,7 +23,11 @@ dotenv.config();
 const app = express();
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
+
 app.use(express.json());
 
 // ✅ Database Connection (ADD THIS)
@@ -34,6 +42,10 @@ app.use("/api/hr", hrRoutes);
 app.use("/api/leave", leaveRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/payroll", payrollRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api", analyticsRoutes);
+app.use("/api", pdfRoutes);
+app.use("/api/finance", financeRoutes);
 
 
 // Test Route
@@ -41,7 +53,8 @@ app.get("/", (req, res) => {
   res.send("ERP API Running...");
 });
 
-// Server Start
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

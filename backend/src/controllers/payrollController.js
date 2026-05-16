@@ -1,6 +1,7 @@
 import Payroll from "../models/Payroll.js";
+import { sendNotification } from "../utils/notify.js";
 
-// 👨‍💼 Generate Payroll
+// ➕ Generate Payroll
 export const generatePayroll = async (req, res) => {
   try {
     const { employeeId, basicSalary, bonus, deductions, month } = req.body;
@@ -23,20 +24,36 @@ export const generatePayroll = async (req, res) => {
   }
 };
 
-// 👨‍💼 Mark as paid
+// 💰 Mark Paid (SECURE)
 export const markPaid = async (req, res) => {
-  const { payrollId } = req.body;
+  try {
+    const { payrollId } = req.body;
 
-  const payroll = await Payroll.findByIdAndUpdate(
-    payrollId,
-    { status: "PAID" },
-    { new: true }
-  );
+    const payroll = await Payroll.findOneAndUpdate(
+      {
+        _id: payrollId,
+        companyId: req.user.companyId, // ✅ FIXED
+      },
+      { status: "PAID" },
+      { new: true }
+    );
 
-  res.json(payroll);
+    if (!payroll) {
+      return res.status(404).json({ message: "Payroll not found" });
+    }
+
+    await sendNotification(
+      payroll.employeeId,
+      "Salary credited"
+    );
+
+    res.json(payroll);
+  } catch (err) {
+    res.status(500).json({ message: "Error marking paid" });
+  }
 };
 
-// 👨‍💼 HR/Admin view all
+// 📋 All Payroll
 export const getAllPayroll = async (req, res) => {
   const data = await Payroll.find({
     companyId: req.user.companyId,
@@ -45,10 +62,11 @@ export const getAllPayroll = async (req, res) => {
   res.json(data);
 };
 
-// 👤 Employee view own
+// 👤 My Payroll
 export const getMyPayroll = async (req, res) => {
   const data = await Payroll.find({
     employeeId: req.user.id,
+    companyId: req.user.companyId, // ✅ FIXED
   });
 
   res.json(data);

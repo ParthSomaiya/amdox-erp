@@ -6,17 +6,46 @@ import {
   getMyPayroll,
 } from "../controllers/payrollController.js";
 
-import { protect } from "../middleware/authMiddleware.js";
-import { authorizeRoles } from "../middleware/roleMiddleware.js";
+// ✅ CORRECT IMPORTS
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import { allowRoles } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-// HR/Admin
-router.post("/generate", protect, authorizeRoles("HR", "ADMIN"), generatePayroll);
-router.put("/pay", protect, authorizeRoles("HR", "ADMIN"), markPaid);
-router.get("/", protect, authorizeRoles("HR", "ADMIN"), getAllPayroll);
 
-// Employee
-router.get("/my", protect, authorizeRoles("EMPLOYEE"), getMyPayroll);
+// 💰 Generate Payroll (Finance/Admin)
+router.post(
+  "/generate",
+  authMiddleware,
+  allowRoles("FINANCE", "ADMIN"),
+  generatePayroll
+);
+
+
+// 💰 Mark as Paid (Finance/Admin)
+router.put(
+  "/pay",
+  authMiddleware,
+  allowRoles("FINANCE", "ADMIN"),
+  markPaid
+);
+
+
+// 👨‍💼 View all payroll (Finance/Admin)
+router.get(
+  "/",
+  authMiddleware,
+  allowRoles("FINANCE", "ADMIN"),
+  getAllPayroll
+);
+
+
+// 👤 Employee view own payroll
+router.get(
+  "/my",
+  authMiddleware,
+  allowRoles("EMPLOYEE"),
+  getMyPayroll
+);
 
 export default router;

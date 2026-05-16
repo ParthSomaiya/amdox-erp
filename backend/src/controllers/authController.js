@@ -4,6 +4,7 @@ import OTP from "../models/Otp.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { generateOTP, saveOTP } from "../services/otpService.js";
+import Invite from "../models/Invite.js";
 
 // Send OTP
 export const sendOTP = async (req, res) => {
@@ -24,32 +25,30 @@ export const verifyOTP = async (req, res) => {
   if (record.expiresAt < new Date())
     return res.status(400).json({ message: "OTP expired" });
 
-   res.json({ message: "OTP verified" });
+  res.json({ message: "OTP verified" });
 };
 
 // Admin Register
 export const registerAdmin = async (req, res) => {
-  const { name, email, password, companyName } = req.body;
+  const { companyName, email, password } = req.body;
 
-  const hashed = await bcrypt.hash(password, 10);
-
-  const user = await User.create({
-    name,
-    email,
-    password: hashed,
-    role: "ADMIN",
-  });
-
+  // create company
   const company = await Company.create({
     name: companyName,
-    ownerId: user._id,
+    email,
   });
 
-  user.companyId = company._id;
-  await user.save();
+  // create admin user
+  const user = await User.create({
+    email,
+    password,
+    role: "ADMIN",
+    companyId: company._id,
+  });
 
-  res.json({ message: "Admin registered" });
+  res.json({ user });
 };
+
 
 // User Register
 export const registerUser = async (req, res) => {
@@ -88,4 +87,54 @@ export const login = async (req, res) => {
   );
 
   res.json({ token });
+};
+
+export const registerEmployeeWithInvite = async (req, res) => {
+  try {
+    const { token, name, password } = req.body;
+
+    const invite = await Invite.findOne({ token });
+
+    if (!invite) {
+      return res.status(400).json({ message: "Invalid invite" });
+    }
+
+    if (invite.status === "ACCEPTED") {
+      return res.status(400).json({ message: "Invite already used" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name,
+      email: invite.email,
+      password: hashedPassword,
+      role: invite.role,
+      companyId: invite.companyId,
+    });
+
+    invite.status = "ACCEPTED";
+    await invite.save();
+
+    res.json({ message: "Account created", user });
+  } catch (err) {
+    res.status(500).json({ message: "Register error" });
+  }
+};
+
+export const registerJobSeeker = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: "JOB_SEEKER",
+    });
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Register error" });
+  }
 };

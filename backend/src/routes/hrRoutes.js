@@ -9,7 +9,19 @@ import {
   getLeaves,
 } from "../controllers/hrController.js";
 
+import {
+  createInvoice,
+  markInvoicePaid,
+  getInvoices,
+  addExpense,
+  getExpenses,
+} from "../controllers/financeController.js";
+
+
 import Invite from "../models/Invite.js";
+
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import { allowRoles } from "../middleware/roleMiddleware.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { authorizeRoles } from "../middleware/roleMiddleware.js";
 
@@ -25,7 +37,8 @@ router.get("/invite/:token", async (req, res) => {
   res.json(invite);
 });
 
-router.post("/invite", async (req, res) => {
+// 📩 Invite System
+router.post("/invite", authMiddleware, async (req, res) => {
   const { email, role } = req.body;
 
   const token = crypto.randomBytes(20).toString("hex");
@@ -35,7 +48,7 @@ router.post("/invite", async (req, res) => {
     role,
     companyId: req.user.companyId,
     token,
-    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
   });
 
   const inviteLink = `http://localhost:5173/invite/${token}`;
@@ -44,6 +57,7 @@ router.post("/invite", async (req, res) => {
 
   res.json({ message: "Invite sent" });
 });
+
 
 router.post("/register-invite", async (req, res) => {
   const { token, password } = req.body;
@@ -72,9 +86,50 @@ router.post("/register-invite", async (req, res) => {
 router.post("/add", protect, authorizeRoles("ADMIN", "HR"), addEmployee);
 router.get("/", protect, authorizeRoles("ADMIN", "HR"), getEmployees);
 
-// Leave
-router.post("/leave", protect, authorizeRoles("EMPLOYEE"), applyLeave);
-router.get("/leave", protect, authorizeRoles("HR"), getLeaves);
-router.put("/leave", protect, authorizeRoles("HR"), updateLeaveStatus);
+// 📅 Leave
+router.post(
+  "/leave",
+  authMiddleware,
+  allowRoles("EMPLOYEE"),
+  applyLeave
+);
+
+router.get(
+  "/leave",
+  authMiddleware,
+  allowRoles("HR", "ADMIN"),
+  getLeaves
+);
+
+router.put(
+  "/leave",
+  authMiddleware,
+  allowRoles("HR", "ADMIN"),
+  updateLeaveStatus
+);
+
+// Invoice
+router.post("/invoice", authMiddleware, createInvoice);
+router.get("/invoice", authMiddleware, getInvoices);
+router.post("/invoice/paid", authMiddleware, markInvoicePaid);
+
+// Expense
+router.post("/expense", authMiddleware, addExpense);
+router.get("/expense", authMiddleware, getExpenses);
+
+// HR + ADMIN
+router.get(
+  "/employees",
+  authMiddleware,
+  allowRoles("HR", "ADMIN"),
+  getEmployees
+);
+
+router.post(
+  "/employees",
+  authMiddleware,
+  allowRoles("HR", "ADMIN"),
+  createEmployee
+);
 
 export default router;

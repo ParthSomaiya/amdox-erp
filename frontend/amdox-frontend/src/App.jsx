@@ -12,7 +12,12 @@ import AttendanceReport from "./pages/AttendanceReport";
 import GeneratePayroll from "./pages/GeneratePayroll";
 import PayrollList from "./pages/PayrollList";
 import MyPayslip from "./pages/MyPayslip";
-
+import Analytics from "./pages/Analytics";
+import Payroll from "./pages/Payroll";
+import EmployeeRegister from "./pages/EmployeeRegister";
+import Jobs from "./pages/Jobs";
+import JobRegister from "./pages/JobRegister";
+import FinanceAnalytics from "./pages/FinanceAnalytics";
 
 
 function App() {
@@ -33,6 +38,14 @@ function App() {
         <Route path="/generate-payroll" element={<GeneratePayroll />} />
         <Route path="/payroll" element={<PayrollList />} />
         <Route path="/my-payslip" element={<MyPayslip />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/payroll" element={<Payroll />} />
+        <Route path="/register" element={<RegisterChoice />} />
+        <Route path="/jobs" element={<Jobs />} />
+        <Route path="/register/employee" element={<EmployeeRegister />} />
+        <Route path="/register/job" element={<JobRegister />} />
+        <Route path="/register/employee/:token" element={<EmployeeRegister />} />
+        <Route path="/finance-analytics" element={<FinanceAnalytics />} />
       </Routes>
     </BrowserRouter>
   );
