@@ -1,6 +1,6 @@
 import User from "../models/User.js";
 import Company from "../models/Company.js";
-import OTP from "../models/OTP.js";
+import OTP from "../models/Otp.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { generateOTP, saveOTP } from "../services/otpService.js";

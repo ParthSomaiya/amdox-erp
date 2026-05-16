@@ -1,4 +1,4 @@
-import OTP from "../models/OTP.js";
+import OTP from "../models/Otp.js";
 
 export const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();

@@ -43,7 +43,9 @@ export default function Sidebar() {
       {role === "EMPLOYEE" && (
         <>
           <p>My Profile</p>
-          <p>Attendance</p>
+          <Link to="/attendance">Attendance</Link>
+          <Link to="/apply-leave">Apply Leave</Link>
+          <Link to="/my-payslip">My Payslip</Link>
         </>
       )}
     </div>

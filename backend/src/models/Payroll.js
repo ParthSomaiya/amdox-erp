@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const leaveSchema = new mongoose.Schema({
+const payrollSchema = new mongoose.Schema({
   employeeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -9,14 +9,16 @@ const leaveSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",
   },
-  fromDate: Date,
-  toDate: Date,
-  reason: String,
+  month: String, // "2026-04"
+  basicSalary: Number,
+  bonus: Number,
+  deductions: Number,
+  netSalary: Number,
   status: {
     type: String,
-    enum: ["PENDING", "APPROVED", "REJECTED"],
+    enum: ["PENDING", "PAID"],
     default: "PENDING",
   },
 }, { timestamps: true });
 
-export default mongoose.model("Leave", leaveSchema);
+export default mongoose.model("Payroll", payrollSchema);

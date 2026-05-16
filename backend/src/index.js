@@ -6,6 +6,10 @@ import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import hrRoutes from "./routes/hrRoutes.js";
+import leaveRoutes from "./routes/leaveRoutes.js";
+import attendanceRoutes from "./routes/attendanceRoutes.js";
+import payrollRoutes from "./routes/payrollRoutes.js";
+
 import { seedAdmin } from "./seed/adminSeeder.js";
 
 seedAdmin();
@@ -27,6 +31,10 @@ mongoose.connect(process.env.MONGO_URI)
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/hr", hrRoutes);
+app.use("/api/leave", leaveRoutes);
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/payroll", payrollRoutes);
+
 
 // Test Route
 app.get("/", (req, res) => {
