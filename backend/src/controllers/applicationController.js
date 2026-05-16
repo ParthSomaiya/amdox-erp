@@ -1,13 +1,11 @@
 import Application from "../models/Application.js";
 
-// 🧑 Job seeker apply
 export const applyJob = async (req, res) => {
   try {
-    const { jobId } = req.body;
-
     const app = await Application.create({
-      jobId,
-      userId: req.user.id,
+      name: req.body.name,
+      email: req.body.email,
+      resume: req.file?.path,
     });
 
     res.json(app);
@@ -16,11 +14,19 @@ export const applyJob = async (req, res) => {
   }
 };
 
-// 👨‍💼 HR view applicants
-export const getApplicants = async (req, res) => {
-  const apps = await Application.find()
-    .populate("userId", "email")
-    .populate("jobId", "title");
+export const getApplications = async (req, res) => {
+  const data = await Application.find().sort({ createdAt: -1 });
+  res.json(data);
+};
 
-  res.json(apps);
+export const updateStatus = async (req, res) => {
+  const { id, status } = req.body;
+
+  const updated = await Application.findByIdAndUpdate(
+    id,
+    { status },
+    { new: true }
+  );
+
+  res.json(updated);
 };

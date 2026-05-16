@@ -2,7 +2,7 @@ import Employee from "../models/Employee.js";
 import User from "../models/User.js";
 import Invite from "../models/Invite.js";
 import crypto from "crypto";
-
+import EmployeeProfile from "../models/EmployeeProfile.js";
 
 // ➕ Add Employee (Admin/HR)
 export const addEmployee = async (req, res) => {
@@ -34,16 +34,13 @@ export const addEmployee = async (req, res) => {
 
 // 📋 Get all employees (HR/Admin)
 export const getEmployees = async (req, res) => {
-  try {
-    const employees = await Employee.find({
-      companyId: req.user.companyId,
-    }).populate("userId", "name email");
+  const data = await EmployeeProfile.find({
+    companyId: req.user.companyId,
+  }).populate("userId", "name email role");
 
-    res.json(employees);
-  } catch (err) {
-    res.status(500).json({ message: "Error fetching employees" });
-  }
+  res.json(data);
 };
+
 
 // 👤 Get single employee
 export const getEmployeeById = async (req, res) => {
@@ -64,21 +61,43 @@ export const getEmployeeById = async (req, res) => {
 };
 
 // ✏️ Update employee
+// Update profile
 export const updateEmployee = async (req, res) => {
-  try {
-    const employee = await Employee.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        companyId: req.user.companyId,
-      },
-      req.body,
-      { new: true }
-    );
+  const { id } = req.params;
 
-    res.json(employee);
-  } catch (err) {
-    res.status(500).json({ message: "Error updating employee" });
-  }
+  const updated = await EmployeeProfile.findByIdAndUpdate(
+    id,
+    req.body,
+    { new: true }
+  );
+
+  res.json(updated);
+};
+
+// Deactivate employee
+export const deactivateEmployee = async (req, res) => {
+  const { id } = req.params;
+
+  const emp = await EmployeeProfile.findByIdAndUpdate(
+    id,
+    { status: "INACTIVE" },
+    { new: true }
+     );
+
+  res.json(emp);
+};
+
+// Change role
+export const changeRole = async (req, res) => {
+  const { userId, role } = req.body;
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { role },
+    { new: true }
+  );
+
+  res.json(user);
 };
 
 // ❌ Delete employee

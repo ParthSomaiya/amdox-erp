@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path";
 import dotenv from "dotenv";
 import cors from "cors";
 import mongoose from "mongoose";
@@ -13,8 +14,31 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import pdfRoutes from "./routes/pdfRoutes.js";
 import financeRoutes from "./routes/financeRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
+import lifecycleRoutes from "./routes/lifecycleRoutes.js";
+import applicationRoutes from "./routes/applicationRoutes.js";
 
 import { seedAdmin } from "./seed/adminSeeder.js";
+import { Server } from "socket.io";
+import { setSocket } from "./utils/notify.js";
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
+
+setSocket(io);
+
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  // join user room
+  socket.on("join", (userId) => {
+    socket.join(userId);
+  });
+});
 
 seedAdmin();
 
@@ -46,6 +70,11 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api", analyticsRoutes);
 app.use("/api", pdfRoutes);
 app.use("/api/finance", financeRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/uploads", express.static("uploads"));
+app.use("/api/reports", reportRoutes);
+app.use("/api/lifecycle", lifecycleRoutes);
+app.use("/api/jobs", applicationRoutes);
 
 
 // Test Route

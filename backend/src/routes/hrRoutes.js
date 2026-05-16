@@ -7,6 +7,7 @@ import {
   applyLeave,
   updateLeaveStatus,
   getLeaves,
+  createEmployee
 } from "../controllers/hrController.js";
 
 import {
@@ -90,7 +91,7 @@ router.get("/", protect, authorizeRoles("ADMIN", "HR"), getEmployees);
 router.post(
   "/leave",
   authMiddleware,
-  allowRoles("EMPLOYEE"),
+  checkPermission(PERMISSIONS.APPLY_LEAVE),
   applyLeave
 );
 
@@ -101,10 +102,10 @@ router.get(
   getLeaves
 );
 
-router.put(
+router.post(
   "/leave",
   authMiddleware,
-  allowRoles("HR", "ADMIN"),
+  checkPermission(PERMISSIONS.APPROVE_LEAVE),
   updateLeaveStatus
 );
 
@@ -118,17 +119,20 @@ router.post("/expense", authMiddleware, addExpense);
 router.get("/expense", authMiddleware, getExpenses);
 
 // HR + ADMIN
+// Get employees
 router.get(
   "/employees",
   authMiddleware,
-  allowRoles("HR", "ADMIN"),
+  checkPermission(PERMISSIONS.VIEW_EMPLOYEES),
   getEmployees
 );
 
+
+// Add employee
 router.post(
   "/employees",
   authMiddleware,
-  allowRoles("HR", "ADMIN"),
+  checkPermission(PERMISSIONS.ADD_EMPLOYEE),
   createEmployee
 );
 

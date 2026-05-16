@@ -67,7 +67,9 @@ export const updateLeaveStatus = async (req, res) => {
 
     await sendNotification(
       leave.employeeId,
-      `Your leave is ${status}`
+      `Your leave is ${status}`,
+      "LEAVE",
+      req.user.companyId
     );
 
     res.json(leave);

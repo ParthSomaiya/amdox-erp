@@ -16,7 +16,10 @@ const userSchema = new mongoose.Schema({
     ref: "Company",
   },
 
-  isVerified: { type: Boolean, default: false },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 export default mongoose.model("User", userSchema);

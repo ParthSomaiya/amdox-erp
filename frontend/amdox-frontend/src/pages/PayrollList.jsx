@@ -1,31 +1,80 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
+import MainLayout from "../layouts/MainLayout";
 
-export default function PayrollList() {
-  const [data, setData] = useState([]);
+export default function Payroll() {
+  const [payrolls, setPayrolls] = useState([]);
+  const [file, setFile] = useState(null);
 
   useEffect(() => {
-    API.get("/payroll").then((res) => setData(res.data));
+    API.get("/payroll").then((res) => setPayrolls(res.data));
   }, []);
 
-  const markPaid = async (id) => {
-    await API.put("/payroll/pay", { payrollId: id });
-    window.location.reload();
+  // ✅ Upload function
+  const handleUpload = async (payrollId) => {
+    if (!file) return alert("Select file first");
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("payrollId", payrollId);
+
+    await API.post("/payroll/upload-payslip", formData);
+
+    alert("Payslip uploaded ✅");
   };
 
   return (
-    <div>
-      <h2>Payroll</h2>
+    <MainLayout>
+      <h2 className="text-xl font-semibold mb-4">Payroll List</h2>
 
-      {data.map((p) => (
-        <div key={p._id}>
-          {p.employeeId?.email} | ₹{p.netSalary} | {p.status}
+      <div className="bg-white shadow rounded">
+        {payrolls.map((payroll) => (
+          <div
+            key={payroll._id}
+            className="border-b p-4 flex justify-between items-center"
+          >
+            {/* LEFT */}
+            <div>
+              <p>{payroll.employeeId?.name}</p>
+              <p className="text-sm text-gray-500">
+                Month: {payroll.month}
+              </p>
+            </div>
 
-          {p.status === "PENDING" && (
-            <button onClick={() => markPaid(p._id)}>Mark Paid</button>
-          )}
-        </div>
-      ))}
-    </div>
+            {/* RIGHT */}
+            <div className="flex gap-2 items-center">
+
+              {/* 📁 Upload */}
+              <input
+                type="file"
+                onChange={(e) => setFile(e.target.files[0])}
+                className="text-sm"
+              />
+
+              <button
+                onClick={() => handleUpload(payroll._id)}
+                className="bg-blue-600 text-white px-3 py-1 rounded"
+              >
+                Upload
+              </button>
+
+              {/* 📥 Download */}
+              <button
+                onClick={() =>
+                  window.open(
+                    `http://localhost:5000/api/payroll/payslip/${payroll._id}`,
+                    "_blank"
+                  )
+                }
+                className="bg-green-600 text-white px-3 py-1 rounded"
+              >
+                Download
+              </button>
+
+            </div>
+          </div>
+        ))}
+      </div>
+    </MainLayout>
   );
 }

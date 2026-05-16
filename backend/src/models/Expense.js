@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const expenseSchema = new mongoose.Schema({
   title: String,
+  month: String,
   amount: Number,
   category: String,
   companyId: {

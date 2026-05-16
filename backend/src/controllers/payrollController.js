@@ -44,7 +44,9 @@ export const markPaid = async (req, res) => {
 
     await sendNotification(
       payroll.employeeId,
-      "Salary credited"
+      "Salary credited",
+      "PAYROLL",
+      req.user.companyId
     );
 
     res.json(payroll);
