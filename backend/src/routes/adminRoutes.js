@@ -8,7 +8,9 @@ import {
   getAuditLogs,
 } from "../controllers/adminController.js";
 
+import { backupDB } from "../utils/backup.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
+import { allowRoles } from "../middleware/roleMiddleware.js";
 import { checkPermission } from "../middleware/permissionMiddleware.js";
 import { PERMISSIONS } from "../config/permissions.js";
 
@@ -60,6 +62,16 @@ router.get(
   authMiddleware,
   checkPermission(PERMISSIONS.MANAGE_USERS),
   getAuditLogs
+);
+
+router.get(
+  "/backup",
+  authMiddleware,
+  allowRoles("ADMIN"),
+  async (req, res) => {
+    backupDB();
+    res.json({ message: "Backup started" });
+  }
 );
 
 export default router;

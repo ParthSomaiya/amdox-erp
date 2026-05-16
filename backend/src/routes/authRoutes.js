@@ -1,7 +1,7 @@
 import express from "express";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
-
+import jwt from "jsonwebtoken";
 import {
   sendOTP,
   verifyOTP,
@@ -11,6 +11,7 @@ import {
 } from "../controllers/authController.js";
 import Otp from "../models/Otp.js";
 import User from "../models/User.js";
+import passport from "../config/passport.js";
 import { registerEmployeeWithInvite } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -59,5 +60,24 @@ router.post("/register-user", registerUser);
 router.post("/login", login);
 router.post("/register-invite", registerEmployeeWithInvite);
 
+// 🔥 Redirect to Google
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+// 🔥 Callback
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
+  (req, res) => {
+    const token = jwt.sign(
+      { id: req.user._id },
+      process.env.JWT_SECRET
+    );
+
+    res.redirect(`http://localhost:5173/login-success?token=${token}`);
+  }
+);
 
 export default router;

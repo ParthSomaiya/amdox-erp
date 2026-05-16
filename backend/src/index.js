@@ -1,8 +1,23 @@
 import express from "express";
-import path from "path";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// ✅ ES module __dirname fix
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// ✅ LOAD ENV FIRST (MOST IMPORTANT)
+dotenv.config({
+  path: path.join(__dirname, "../../.env"), // 👈 ROOT .env
+});
+
+// 🔍 DEBUG
+console.log("CLIENT ID:", process.env.GOOGLE_CLIENT_ID);
+
 import cors from "cors";
 import mongoose from "mongoose";
+import rateLimit from "express-rate-limit";
 
 import authRoutes from "./routes/authRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
@@ -18,10 +33,30 @@ import adminRoutes from "./routes/adminRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import lifecycleRoutes from "./routes/lifecycleRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
+import glRoutes from "./routes/glRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+import vendorRoutes from "./routes/vendorRoutes.js";
+import poRoutes from "./routes/poRoutes.js";
+import projectRoutes from "./routes/projectRoutes.js";
+import taskRoutes from "./routes/taskRoutes.js";
 
 import { seedAdmin } from "./seed/adminSeeder.js";
 import { Server } from "socket.io";
 import { setSocket } from "./utils/notify.js";
+
+// app
+const app = express();
+
+// limiter
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+}));
+
+// server
+const server = http.createServer(app);
+
+app.use(limiter);
 
 const io = new Server(server, {
   cors: {
@@ -44,7 +79,6 @@ seedAdmin();
 
 dotenv.config();
 
-const app = express();
 
 // Middlewares
 app.use(cors({
@@ -52,12 +86,14 @@ app.use(cors({
   credentials: true
 }));
 
+
 app.use(express.json());
 
 // ✅ Database Connection (ADD THIS)
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch(err => console.log(err));
+
 
 // ✅ Routes (PLACE HERE)
 app.use("/api/auth", authRoutes);
@@ -75,6 +111,13 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/reports", reportRoutes);
 app.use("/api/lifecycle", lifecycleRoutes);
 app.use("/api/jobs", applicationRoutes);
+app.use("/api/gl", glRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/vendors", vendorRoutes);
+app.use("/api/po", poRoutes);
+app.use("/api/projects", projectRoutes);
+app.use("/api/tasks", taskRoutes);
+
 
 
 // Test Route

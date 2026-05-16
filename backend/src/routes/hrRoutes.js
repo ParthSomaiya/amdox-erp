@@ -122,11 +122,16 @@ router.get("/expense", authMiddleware, getExpenses);
 // Get employees
 router.get(
   "/employees",
-  authMiddleware,
-  checkPermission(PERMISSIONS.VIEW_EMPLOYEES),
-  getEmployees
-);
+  protect,
+  attachCompany,
+  async (req, res) => {
+    const data = await User.find({
+      companyId: req.companyId,
+    });
 
+    res.json(data);
+  }
+);
 
 // Add employee
 router.post(

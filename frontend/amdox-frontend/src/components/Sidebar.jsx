@@ -14,7 +14,7 @@ export default function Sidebar() {
 
   return (
     <div className="w-64 bg-gray-900 text-white flex flex-col">
-      
+
       {/* Logo / Title */}
       <h2 className="text-2xl font-bold p-5 border-b border-gray-700">
         Amdox ERP
@@ -34,8 +34,14 @@ export default function Sidebar() {
             <Link to="/users" className={linkStyle}>
               👑 Users
             </Link>
+
             <Link to="/reports" className={linkStyle}>
               📄 Reports
+            </Link>
+
+            {/* 👇 ADD THIS */}
+            <Link to="/admin-settings" className={linkStyle}>
+              ⚙️ Admin Settings
             </Link>
           </>
         )}
@@ -75,6 +81,22 @@ export default function Sidebar() {
             </Link>
             <Link to="/finance-analytics" className={linkStyle}>
               📈 Finance Analytics
+            </Link>
+
+            {/* 🔥 NEW FINANCE MODULE */}
+            <div className="border-t border-gray-700 my-2"></div>
+
+            <Link to="/gl" className={linkStyle}>
+              📘 General Ledger
+            </Link>
+            <Link to="/bills" className={linkStyle}>
+              🧾 Bills (AP)
+            </Link>
+            <Link to="/receivables" className={linkStyle}>
+              💰 Receivables (AR)
+            </Link>
+            <Link to="/reconciliation" className={linkStyle}>
+              🏦 Bank Reconciliation
             </Link>
           </>
         )}

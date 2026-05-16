@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -18,11 +18,17 @@ import EmployeeRegister from "./pages/EmployeeRegister";
 import Jobs from "./pages/Jobs";
 import JobRegister from "./pages/JobRegister";
 import FinanceAnalytics from "./pages/FinanceAnalytics";
+import GL from "./pages/GL";
+import Bills from "./pages/Bills";
+import Receivables from "./pages/Receivables";
+import Reconciliation from "./pages/Reconciliation";
+import AdminSettings from "./pages/AdminSettings";
+import LoginSuccess from "./pages/LoginSuccess";
 
 
 function App() {
   return (
-    <BrowserRouter>
+    
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -46,8 +52,15 @@ function App() {
         <Route path="/register/job" element={<JobRegister />} />
         <Route path="/register/employee/:token" element={<EmployeeRegister />} />
         <Route path="/finance-analytics" element={<FinanceAnalytics />} />
+        <Route path="/gl" element={<GL />} />
+        <Route path="/bills" element={<Bills />} />
+        <Route path="/receivables" element={<Receivables />} />
+        <Route path="/reconciliation" element={<Reconciliation />} />
+        <Route path="/admin-settings" element={<AdminSettings />} />
+        <Route path="/login-success" element={<LoginSuccess />} />
+    
       </Routes>
-    </BrowserRouter>
+    
   );
 }
 
