@@ -5,7 +5,14 @@ export default function Sidebar() {
   const token = localStorage.getItem("token");
   if (!token) return null;
 
-  const { role } = jwtDecode(token);
+  let role = null;
+
+  try {
+    const decoded = jwtDecode(token);
+    role = decoded.role;
+  } catch (err) {
+    console.log("Invalid token");
+  }
 
   const canViewAnalytics = ["ADMIN", "HR", "FINANCE"].includes(role);
 
@@ -15,7 +22,7 @@ export default function Sidebar() {
   return (
     <div className="w-64 bg-gray-900 text-white flex flex-col">
 
-      {/* Logo / Title */}
+      {/* Logo */}
       <h2 className="text-2xl font-bold p-5 border-b border-gray-700">
         Amdox ERP
       </h2>
@@ -28,9 +35,11 @@ export default function Sidebar() {
           📊 Dashboard
         </Link>
 
-        {/* ADMIN */}
+        {/* 🔥 ADMIN */}
         {role === "ADMIN" && (
           <>
+            <div className="border-t border-gray-700 my-2"></div>
+
             <Link to="/users" className={linkStyle}>
               👑 Users
             </Link>
@@ -39,31 +48,50 @@ export default function Sidebar() {
               📄 Reports
             </Link>
 
-            {/* 👇 ADD THIS */}
-            <Link to="/admin-settings" className={linkStyle}>
+            {/* ✅ NEW ADMIN PANEL */}
+            <Link to="/admin/settings" className={linkStyle}>
               ⚙️ Admin Settings
+            </Link>
+
+            <Link to="/admin/security" className={linkStyle}>
+              🔐 Security
+            </Link>
+
+            <Link to="/admin/tenants" className={linkStyle}>
+              🏢 Tenants
+            </Link>
+
+            <Link to="/admin/audit" className={linkStyle}>
+              📜 Audit Logs
             </Link>
           </>
         )}
 
-        {/* HR + ADMIN */}
+        {/* HR */}
         {(role === "HR" || role === "ADMIN") && (
           <>
+            <div className="border-t border-gray-700 my-2"></div>
+
             <Link to="/employees" className={linkStyle}>
               👥 Employees
             </Link>
+
             <Link to="/leave" className={linkStyle}>
               📝 Leave
             </Link>
+
             <Link to="/manage-leave" className={linkStyle}>
               ✅ Manage Leaves
             </Link>
+
             <Link to="/attendance-report" className={linkStyle}>
               📅 Attendance Report
             </Link>
+
             <Link to="/generate-payroll" className={linkStyle}>
               💵 Generate Payroll
             </Link>
+
             <Link to="/payroll" className={linkStyle}>
               📊 Payroll List
             </Link>
@@ -73,30 +101,94 @@ export default function Sidebar() {
         {/* FINANCE */}
         {(role === "FINANCE" || role === "ADMIN") && (
           <>
+            <div className="border-t border-gray-700 my-2"></div>
+
             <Link to="/invoices" className={linkStyle}>
               🧾 Invoices
             </Link>
+
             <Link to="/payments" className={linkStyle}>
               💳 Payments
             </Link>
+
             <Link to="/finance-analytics" className={linkStyle}>
               📈 Finance Analytics
             </Link>
 
-            {/* 🔥 NEW FINANCE MODULE */}
+            {/* Core Finance */}
             <div className="border-t border-gray-700 my-2"></div>
 
             <Link to="/gl" className={linkStyle}>
               📘 General Ledger
             </Link>
+
             <Link to="/bills" className={linkStyle}>
               🧾 Bills (AP)
             </Link>
+
             <Link to="/receivables" className={linkStyle}>
               💰 Receivables (AR)
             </Link>
+
             <Link to="/reconciliation" className={linkStyle}>
               🏦 Bank Reconciliation
+            </Link>
+
+            {/* Advanced Finance */}
+            <div className="border-t border-gray-700 my-2"></div>
+
+            <Link to="/trial-balance" className={linkStyle}>
+              📊 Trial Balance
+            </Link>
+
+            <Link to="/balance-sheet" className={linkStyle}>
+              📑 Balance Sheet
+            </Link>
+
+            <Link to="/create-invoice" className={linkStyle}>
+              🧾 Create Invoice
+            </Link>
+          </>
+        )}
+
+        {/* 📦 SUPPLY CHAIN */}
+        {(role === "ADMIN" || role === "FINANCE") && (
+          <>
+            <div className="border-t border-gray-700 my-2"></div>
+
+            <Link to="/inventory" className={linkStyle}>
+              📦 Inventory
+            </Link>
+
+            <Link to="/products" className={linkStyle}>
+              🏷 Products
+            </Link>
+
+            <Link to="/purchase-orders" className={linkStyle}>
+              🧾 Purchase Orders
+            </Link>
+
+            <Link to="/stock-history" className={linkStyle}>
+              📊 Stock Movement
+            </Link>
+          </>
+        )}
+
+        {/* 📊 PROJECT MANAGEMENT */}
+        {(role === "ADMIN" || role === "HR") && (
+          <>
+            <div className="border-t border-gray-700 my-2"></div>
+
+            <Link to="/projects" className={linkStyle}>
+              📊 Projects
+            </Link>
+
+            <Link to="/tasks-board" className={linkStyle}>
+              🧩 Task Board
+            </Link>
+
+            <Link to="/timeline" className={linkStyle}>
+              📅 Timeline
             </Link>
           </>
         )}
@@ -104,15 +196,20 @@ export default function Sidebar() {
         {/* EMPLOYEE */}
         {role === "EMPLOYEE" && (
           <>
+            <div className="border-t border-gray-700 my-2"></div>
+
             <Link to="/profile" className={linkStyle}>
               👤 My Profile
             </Link>
+
             <Link to="/attendance" className={linkStyle}>
               ⏱ Attendance
             </Link>
+
             <Link to="/apply-leave" className={linkStyle}>
               📩 Apply Leave
             </Link>
+
             <Link to="/my-payslip" className={linkStyle}>
               📄 My Payslip
             </Link>

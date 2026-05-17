@@ -22,45 +22,79 @@ import GL from "./pages/GL";
 import Bills from "./pages/Bills";
 import Receivables from "./pages/Receivables";
 import Reconciliation from "./pages/Reconciliation";
-import AdminSettings from "./pages/AdminSettings";
 import LoginSuccess from "./pages/LoginSuccess";
+import CareerPage from "./pages/CareerPage";
+import TrialBalance from "./pages/TrialBalance";
+import BalanceSheet from "./pages/BalanceSheet";
+import CreateInvoice from "./pages/CreateInvoice";
+import InventoryDashboard from "./pages/InventoryDashboard";
+import Products from "./pages/Products";
+import PurchaseOrders from "./pages/PurchaseOrders";
+import StockHistory from "./pages/StockHistory";
+import ProjectDashboard from "./pages/ProjectDashboard";
+import TaskBoard from "./pages/TaskBoard";
+import Timeline from "./pages/Timeline";
+import AdminSettings from "./pages/admin/AdminSettings";
+import SecuritySettings from "./pages/admin/SecuritySettings";
+import TenantManagement from "./pages/admin/TenantManagement";
+import AuditLogs from "./pages/admin/AuditLogs";
+import DashboardAnalytics from "./pages/analytics/DashboardAnalytics";
+import FinanceAnalytics from "./pages/analytics/FinanceAnalytics";
+import ProjectAnalytics from "./pages/analytics/ProjectAnalytics";
+
 
 
 function App() {
   return (
-    
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/employees" element={<Employees />} />
-        <Route path="/add-employee" element={<AddEmployee />} />
-        <Route path="/invite/:token" element={<InviteRegister />} />
-        <Route path="/apply-leave" element={<ApplyLeave />} />
-        <Route path="/manage-leave" element={<LeaveManagement />} />
-        <Route path="/attendance" element={<Attendance />} />
-        <Route path="/attendance-report" element={<AttendanceReport />} />
-        <Route path="/generate-payroll" element={<GeneratePayroll />} />
-        <Route path="/payroll" element={<PayrollList />} />
-        <Route path="/my-payslip" element={<MyPayslip />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/payroll" element={<Payroll />} />
-        <Route path="/register" element={<RegisterChoice />} />
-        <Route path="/jobs" element={<Jobs />} />
-        <Route path="/register/employee" element={<EmployeeRegister />} />
-        <Route path="/register/job" element={<JobRegister />} />
-        <Route path="/register/employee/:token" element={<EmployeeRegister />} />
-        <Route path="/finance-analytics" element={<FinanceAnalytics />} />
-        <Route path="/gl" element={<GL />} />
-        <Route path="/bills" element={<Bills />} />
-        <Route path="/receivables" element={<Receivables />} />
-        <Route path="/reconciliation" element={<Reconciliation />} />
-        <Route path="/admin-settings" element={<AdminSettings />} />
-        <Route path="/login-success" element={<LoginSuccess />} />
-    
-      </Routes>
-    
+
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/employees" element={<Employees />} />
+      <Route path="/add-employee" element={<AddEmployee />} />
+      <Route path="/invite/:token" element={<InviteRegister />} />
+      <Route path="/apply-leave" element={<ApplyLeave />} />
+      <Route path="/manage-leave" element={<LeaveManagement />} />
+      <Route path="/attendance" element={<Attendance />} />
+      <Route path="/attendance-report" element={<AttendanceReport />} />
+      <Route path="/generate-payroll" element={<GeneratePayroll />} />
+      <Route path="/payroll" element={<PayrollList />} />
+      <Route path="/my-payslip" element={<MyPayslip />} />
+      <Route path="/analytics" element={<Analytics />} />
+      <Route path="/payroll" element={<Payroll />} />
+      <Route path="/register" element={<RegisterChoice />} />
+      <Route path="/jobs" element={<Jobs />} />
+      <Route path="/register/employee" element={<EmployeeRegister />} />
+      <Route path="/register/job" element={<JobRegister />} />
+      <Route path="/register/employee/:token" element={<EmployeeRegister />} />
+      <Route path="/finance-analytics" element={<FinanceAnalytics />} />
+      <Route path="/gl" element={<GL />} />
+      <Route path="/bills" element={<Bills />} />
+      <Route path="/receivables" element={<Receivables />} />
+      <Route path="/reconciliation" element={<Reconciliation />} />
+      <Route path="/login-success" element={<LoginSuccess />} />
+      <Route path="/careers/:companyId" element={<CareerPage />} />
+      <Route path="/trial-balance" element={<TrialBalance />} />
+      <Route path="/balance-sheet" element={<BalanceSheet />} />
+      <Route path="/create-invoice" element={<CreateInvoice />} />
+      <Route path="/inventory" element={<InventoryDashboard />} />
+      <Route path="/products" element={<Products />} />
+      <Route path="/purchase-orders" element={<PurchaseOrders />} />
+      <Route path="/stock-history" element={<StockHistory />} />
+      <Route path="/projects" element={<ProjectDashboard />} />
+      <Route path="/tasks-board" element={<TaskBoard />} />
+      <Route path="/timeline" element={<Timeline />} />
+      <Route path="/admin/settings" element={<AdminSettings />} />
+      <Route path="/admin/security" element={<SecuritySettings />} />
+      <Route path="/admin/tenants" element={<TenantManagement />} />
+      <Route path="/admin/audit" element={<AuditLogs />} />
+      <Route path="/analytics/dashboard" element={<DashboardAnalytics />} />
+      <Route path="/analytics/finance" element={<FinanceAnalytics />} />
+      <Route path="/analytics/projects" element={<ProjectAnalytics />} />
+    </Routes>
+
   );
 }
 

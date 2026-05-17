@@ -12,3 +12,8 @@ export const getProducts = async (req, res) => {
   const data = await Product.find({ companyId: req.user.companyId });
   res.json(data);
 };
+
+export const getLowStock = async (req, res) => {
+  const products = await Product.find({ stock: { $lt: 10 } });
+  res.json(products);
+};

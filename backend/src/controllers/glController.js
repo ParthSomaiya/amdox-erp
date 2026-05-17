@@ -1,4 +1,4 @@
-import JournalEntry from "../models/JournalEntry.js";
+import JournalEntry from "../modules/finance/models/JournalEntry.js";
 
 // Create journal entry
 export const createEntry = async (req, res) => {
@@ -18,7 +18,7 @@ export const createEntry = async (req, res) => {
 export const getLedger = async (req, res) => {
   const data = await JournalEntry.find({
     companyId: req.user.companyId,
-  }).sort({ date: -1 });
+  }).sort({ createdAt: -1 });
 
   res.json(data);
 };

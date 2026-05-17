@@ -3,21 +3,34 @@ import API from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 
 export default function Products() {
-  const [data, setData] = useState([]);
+  const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    API.get("/products").then(res => setData(res.data));
+    API.get("/products").then((res) => setProducts(res.data));
   }, []);
 
   return (
     <MainLayout>
-      <h2 className="text-xl mb-4">Products</h2>
+      <h2 className="text-xl font-bold mb-4">Products</h2>
 
-      {data.map(p => (
-        <div key={p._id} className="bg-white p-4 mb-2 shadow">
-          {p.name} - Qty: {p.quantity}
-        </div>
-      ))}
+      <table className="w-full bg-white shadow">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Stock</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {products.map((p) => (
+            <tr key={p._id}>
+              <td>{p.name}</td>
+              <td>{p.stock}</td>
+              <td>₹{p.price}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </MainLayout>
   );
 }

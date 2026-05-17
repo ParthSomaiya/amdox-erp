@@ -33,14 +33,29 @@ export const authMiddleware = async (req, res, next) => {
   }
 };
 
-export const protect = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
+export const protect = async (req, res, next) => {
+  let token;
 
-  if (!token) return res.status(401).json({ message: "No token" });
+  if (req.headers.authorization?.startsWith("Bearer")) {
+    token = req.headers.authorization.split(" ")[1];
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  req.user = decoded;
-  next();
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      const user = await User.findById(decoded.id).select("-password");
+
+      req.user = user;
+      req.companyId = user.companyId;
+
+      next();
+    } catch (err) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+  }
+
+  if (!token) {
+    return res.status(401).json({ message: "No token" });
+  }
 };
 
 export const authorize = (...roles) => {
