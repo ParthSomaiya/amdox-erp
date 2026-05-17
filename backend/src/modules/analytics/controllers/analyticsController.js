@@ -103,3 +103,16 @@ export const getProjectAnalytics = async (req, res) => {
     res.status(500).json({ message: "Project analytics error" });
   }
 };
+
+export const revenueAnalytics = async (req, res) => {
+  const data = await Invoice.aggregate([
+    {
+      $group: {
+        _id: { $month: "$createdAt" },
+        total: { $sum: "$amount" },
+      },
+    },
+  ]);
+
+  res.json(data);
+};

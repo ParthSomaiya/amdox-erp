@@ -1,14 +1,33 @@
 import cron from "node-cron";
+import { exec } from "child_process";
 import fs from "fs";
+import path from "path";
 
+// Backup folder
+const backupDir = path.join("backups");
+
+// Ensure folder exists
+if (!fs.existsSync(backupDir)) {
+  fs.mkdirSync(backupDir);
+}
+
+// ✅ MAIN FUNCTION
 export const startBackupJob = () => {
-  cron.schedule("0 2 * * *", async () => {
-    console.log("Running backup...");
+  console.log("✅ Backup scheduler started...");
 
-    // simple example (replace with mongodump in prod)
-    fs.writeFileSync(
-      `backup-${Date.now()}.json`,
-      JSON.stringify({ msg: "backup" })
-    );
+  // Daily at 2 AM
+  cron.schedule("0 2 * * *", () => {
+    const date = new Date().toISOString().split("T")[0];
+    const folderName = `${backupDir}/backup-${date}`;
+
+    const command = `mongodump --out ${folderName}`;
+
+    exec(command, (err) => {
+      if (err) {
+        console.error("❌ Backup failed:", err.message);
+      } else {
+        console.log("✅ Backup completed:", folderName);
+      }
+    });
   });
-};  
+};

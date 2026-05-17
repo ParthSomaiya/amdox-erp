@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 
 const permissionSchema = new mongoose.Schema({
-  name: String, // e.g. "CREATE_INVOICE"
+  name: { type: String, unique: true },
+  module: String,
 });
 
 export default mongoose.models.Permission ||

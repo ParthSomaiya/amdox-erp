@@ -6,14 +6,11 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ ENV LOAD
+// ENV LOAD
 dotenv.config({
   path: path.join(__dirname, "../../.env"),
 });
 
-console.log("CLIENT ID:", process.env.GOOGLE_CLIENT_ID);
-
-// ✅ PASSPORT
 import "./config/passport.js";
 
 import cors from "cors";
@@ -23,7 +20,7 @@ import rateLimit from "express-rate-limit";
 import { Server } from "socket.io";
 import { setSocket } from "./utils/notify.js";
 
-// 🔹 CORE ROUTES (OLD)
+// ROUTES
 import authRoutes from "./routes/authRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import hrRoutes from "./routes/hrRoutes.js";
@@ -31,25 +28,21 @@ import leaveRoutes from "./routes/leaveRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 import payrollRoutes from "./routes/payrollRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
-// import analyticsRoutes from "./routes/analyticsRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
 import pdfRoutes from "./routes/pdfRoutes.js";
 import lifecycleRoutes from "./routes/lifecycleRoutes.js";
 
-// 🔹 FINANCE
 import financeRoutes from "./routes/financeRoutes.js";
 import reportRoutes from "./modules/finance/routes/reportRoutes.js";
 import glRoutes from "./routes/glRoutes.js";
 
-// 🔹 SUPPLY CHAIN
 import productRoutes from "./routes/productRoutes.js";
 import vendorRoutes from "./routes/vendorRoutes.js";
 import poRoutes from "./routes/poRoutes.js";
 
-// 🔹 PROJECT
 import projectRoutes from "./modules/project/routes/projectRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
 
-// 🔹 JOB PORTAL
 import jobRoutes from "./modules/jobs/routes/jobRoutes.js";
 import applicationRoutes from "./modules/jobs/routes/applicationRoutes.js";
 
@@ -57,16 +50,12 @@ import adminRoutes from "./modules/admin/routes/adminRoutes.js";
 import analyticsRoutesNew from "./modules/analytics/routes/analyticsRoutes.js";
 
 import { startBackupJob } from "./modules/admin/services/backupService.js";
-
-startBackupJob();
-
 import { seedAdmin } from "./seed/adminSeeder.js";
-
-seedAdmin();
+import { seedPermissions } from "./modules/admin/services/permissionService.js";
 
 const app = express();
 
-// ✅ RATE LIMIT
+// RATE LIMIT
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -95,60 +84,65 @@ app.use(cors({
 
 app.use(express.json());
 
-// DB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+// ================= 🔥 CONNECT DB FIRST =================
+const startServer = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("✅ MongoDB Connected");
 
-// ================= ROUTES =================
+    // 🔥 RUN SEEDERS AFTER DB CONNECT
+    await seedAdmin();
+    await seedPermissions();
 
-// AUTH
-app.use("/api/auth", authRoutes);
+    // 🔥 START BACKUP
+    startBackupJob();
 
-// CORE
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/hr", hrRoutes);
-app.use("/api/leave", leaveRoutes);
-app.use("/api/attendance", attendanceRoutes);
-app.use("/api/payroll", payrollRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/analytics", analyticsRoutesNew);
-app.use("/api", pdfRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/lifecycle", lifecycleRoutes);
+    // ================= ROUTES =================
 
-// FINANCE
-app.use("/api/finance", financeRoutes);
-app.use("/api/reports", reportRoutes);
-app.use("/api/gl", glRoutes);
+    app.use("/api/auth", authRoutes);
 
-// SUPPLY CHAIN
-app.use("/api/products", productRoutes);
-app.use("/api/vendors", vendorRoutes);
-app.use("/api/po", poRoutes);
+    app.use("/api/dashboard", dashboardRoutes);
+    app.use("/api/hr", hrRoutes);
+    app.use("/api/leave", leaveRoutes);
+    app.use("/api/attendance", attendanceRoutes);
+    app.use("/api/payroll", payrollRoutes);
+    app.use("/api/notifications", notificationRoutes);
+    app.use("/api", analyticsRoutes);
+    app.use("/api", pdfRoutes);
+    app.use("/api/admin", adminRoutes);
+    app.use("/api/lifecycle", lifecycleRoutes);
 
-// PROJECT
-app.use("/api/projects", projectRoutes);
-app.use("/api/tasks", taskRoutes);
+    app.use("/api/finance", financeRoutes);
+    app.use("/api/reports", reportRoutes);
+    app.use("/api/gl", glRoutes);
 
-// JOB PORTAL
-app.use("/api/jobs", jobRoutes);
-app.use("/api/applications", applicationRoutes);
+    app.use("/api/products", productRoutes);
+    app.use("/api/vendors", vendorRoutes);
+    app.use("/api/po", poRoutes);
 
-// STATIC
-app.use("/uploads", express.static("uploads"));
+    app.use("/api/projects", projectRoutes);
+    app.use("/api/tasks", taskRoutes);
 
-app.use("/api/admin", adminRoutes);
+    app.use("/api/jobs", jobRoutes);
+    app.use("/api/applications", applicationRoutes);
 
+    app.use("/uploads", express.static("uploads"));
 
-// TEST
-app.get("/", (req, res) => {
-  res.send("ERP API Running...");
-});
+    app.use("/api/analytics", analyticsRoutesNew);
 
-// START
-const PORT = process.env.PORT || 5000;
+    app.get("/", (req, res) => {
+      res.send("ERP API Running...");
+    });
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+    // START SERVER
+    const PORT = process.env.PORT || 5000;
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+
+  } catch (err) {
+    console.error("❌ Server failed:", err);
+  }
+};
+
+startServer();

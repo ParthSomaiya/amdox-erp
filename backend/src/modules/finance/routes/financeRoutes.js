@@ -1,22 +1,78 @@
 import express from "express";
 import {
-  createAccount,
-  getAccounts
-} from "../controllers/accountController.js";
+  createInvoice,
+  markInvoicePaid,
+  getInvoices,
+  addExpense,
+  getExpenses,
+  getProfitAnalytics
+} from "../controllers/financeController.js";
 
 import {
-  createJournalEntry,
-  getJournalEntries
-} from "../controllers/journalController.js";
+  getFinanceAnalytics,
+  getMonthlyFinance,
+} from "../controllers/financeAnalyticsController.js";
+
+import { authMiddleware, protect } from "../middleware/authMiddleware.js";
+import { allowRoles } from "../middleware/roleMiddleware.js";
+import { PERMISSIONS } from "../config/permissions.js";
+import { checkPermission } from "../modules/admin/middleware/permissionMiddleware.js";
 
 const router = express.Router();
 
-// GL Accounts
-router.post("/accounts", createAccount);
-router.get("/accounts", getAccounts);
+// Invoice (view)
+router.get(
+  "/invoice",
+  authMiddleware,
+  allowRoles("FINANCE", "ADMIN"),
+  getInvoices
+);
 
-// Journal
-router.post("/journal", createJournalEntry);
-router.get("/journal", getJournalEntries);
+// Create invoice
+router.post(
+  "/invoice",
+  protect,
+  checkPermission("CREATE_INVOICE"),
+  createInvoice
+);
+
+// Mark paid
+router.post(
+  "/invoice/paid",
+  authMiddleware,
+  allowRoles("FINANCE", "ADMIN"),
+  markInvoicePaid
+);
+
+// Expense
+router.post(
+  "/expense",
+  authMiddleware,
+  allowRoles("FINANCE", "ADMIN"),
+  addExpense
+);
+
+// Analytics
+router.get(
+  "/analytics",
+  authMiddleware,
+  checkPermission(PERMISSIONS.VIEW_ANALYTICS),
+  getFinanceAnalytics
+);
+
+// Monthly chart
+router.get(
+  "/analytics/monthly",
+  authMiddleware,
+  checkPermission(PERMISSIONS.VIEW_ANALYTICS),
+  getMonthlyFinance
+);
+
+// Profit analytics
+router.get(
+  "/analytics/profit",
+  authMiddleware,
+  getProfitAnalytics
+);
 
 export default router;

@@ -17,7 +17,7 @@ import Payroll from "./pages/Payroll";
 import EmployeeRegister from "./pages/EmployeeRegister";
 import Jobs from "./pages/Jobs";
 import JobRegister from "./pages/JobRegister";
-import FinanceAnalytics from "./pages/FinanceAnalytics";
+// import FinanceAnalytics from "./pages/FinanceAnalytics";
 import GL from "./pages/GL";
 import Bills from "./pages/Bills";
 import Receivables from "./pages/Receivables";
@@ -69,7 +69,7 @@ function App() {
       <Route path="/register/employee" element={<EmployeeRegister />} />
       <Route path="/register/job" element={<JobRegister />} />
       <Route path="/register/employee/:token" element={<EmployeeRegister />} />
-      <Route path="/finance-analytics" element={<FinanceAnalytics />} />
+      {/* <Route path="/finance-analytics" element={<FinanceAnalytics />} /> */}
       <Route path="/gl" element={<GL />} />
       <Route path="/bills" element={<Bills />} />
       <Route path="/receivables" element={<Receivables />} />
