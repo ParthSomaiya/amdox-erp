@@ -1,31 +1,30 @@
 import Notification from "../models/Notification.js";
 
-let ioInstance = null;
+let io;
 
-// attach socket
-export const setSocket = (io) => {
-  ioInstance = io;
+export const setSocket = (socketIo) => {
+  io = socketIo;
 };
 
-// send notification
-export const sendNotification = async (
+export const sendNotification = async ({
   userId,
+  title,
   message,
-  type = "SYSTEM",
-  companyId
-) => {
-  // 1. Save in DB
-  const notification = await Notification.create({
-    userId,
-    companyId,
-    message,
-    type,
-  });
+  type = "INFO",
+}) => {
 
-  // 2. Real-time emit
-  if (ioInstance) {
-    ioInstance.to(userId.toString()).emit("notification", notification);
-  }
+  // save in DB
+  const notification =
+    await Notification.create({
+      userId,
+      title,
+      message,
+      type,
+    });
 
-  return notification;
+  // realtime emit
+  io.to(userId.toString()).emit(
+    "new_notification",
+    notification
+  );
 };

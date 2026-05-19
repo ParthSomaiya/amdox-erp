@@ -1,36 +1,117 @@
-import Task from "../modules/project/models/Task.js";
+import Task from "../models/Task.js";
+import { sendNotification } from "../../../utils/notify.js";
 
-// Create Task
-export const createTask = async (req, res) => {
-  const task = await Task.create(req.body);
-  res.json(task);
+// CREATE TASK
+export const createTask = async (
+  req,
+  res
+) => {
+
+  try {
+
+    const task =
+      await Task.create(req.body);
+
+    // 🔥 REALTIME NOTIFICATION
+    if (task.assignedTo) {
+
+      await sendNotification({
+
+        userId:
+          task.assignedTo,
+
+        title:
+          "New Task Assigned",
+
+        message:
+          `Task "${task.title}" assigned to you`,
+
+      });
+
+    }
+
+    res.status(201).json(task);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
 };
 
-// Kanban Tasks
-export const getTasksByProject = async (req, res) => {
-  const tasks = await Task.find({
-    projectId: req.params.projectId,
-  });
+// GET TASKS
+export const getTasksByProject =
+async (req, res) => {
 
-  res.json(tasks);
+  try {
+
+    const tasks =
+      await Task.find({
+        projectId:
+          req.params.projectId,
+      });
+
+    res.json(tasks);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
 };
 
-// Update Status (Drag Drop)
-export const updateTaskStatus = async (req, res) => {
-  const task = await Task.findByIdAndUpdate(
-    req.params.id,
-    { status: req.body.status },
-    { new: true }
-  );
+// UPDATE STATUS
+export const updateTaskStatus =
+async (req, res) => {
 
-  res.json(task);
+  try {
+
+    const task =
+      await Task.findByIdAndUpdate(
+        req.params.id,
+        {
+          status:
+            req.body.status,
+        },
+        {
+          new: true,
+        }
+      );
+
+    res.json(task);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
 };
 
-// Timeline (Gantt)
-export const getTimeline = async (req, res) => {
-  const tasks = await Task.find({
-    projectId: req.params.projectId,
-  });
+// GANTT TIMELINE
+export const getTimeline =
+async (req, res) => {
 
-  res.json(tasks); // frontend will render Gantt
+  try {
+
+    const tasks =
+      await Task.find({
+        projectId:
+          req.params.projectId,
+      });
+
+    res.json(tasks);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
 };

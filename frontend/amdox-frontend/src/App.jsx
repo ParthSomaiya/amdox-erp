@@ -38,11 +38,13 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import SecuritySettings from "./pages/admin/SecuritySettings";
 import TenantManagement from "./pages/admin/TenantManagement";
 import AuditLogs from "./pages/admin/AuditLogs";
-import DashboardAnalytics from "./pages/analytics/DashboardAnalytics";
+import AnalyticsDashboard from "./pages/analytics/AnalyticsDashboard";
 import FinanceAnalytics from "./pages/analytics/FinanceAnalytics";
 import ProjectAnalytics from "./pages/analytics/ProjectAnalytics";
-
-
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import CalendarPage from "./pages/CalendarPage";
+import TeamChat from "./pages/TeamChat";
 
 function App() {
   return (
@@ -90,9 +92,13 @@ function App() {
       <Route path="/admin/security" element={<SecuritySettings />} />
       <Route path="/admin/tenants" element={<TenantManagement />} />
       <Route path="/admin/audit" element={<AuditLogs />} />
-      <Route path="/analytics/dashboard" element={<DashboardAnalytics />} />
+      <Route path="/analytics/dashboard" element={<AnalyticsDashboard />} />
       <Route path="/analytics/finance" element={<FinanceAnalytics />} />
       <Route path="/analytics/projects" element={<ProjectAnalytics />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/calendar" element={<CalendarPage />} />
+      <Route path="/team-chat" element={<TeamChat />} />
     </Routes>
 
   );

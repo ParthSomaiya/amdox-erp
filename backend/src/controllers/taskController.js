@@ -1,13 +1,41 @@
 import Task from "../models/Task.js";
 import Project from "../models/Project.js";
+import Task from "../models/Task.js";
+import { sendNotification } from "../../../utils/notify.js";
 
-export const createTask = async (req, res) => {
-  const task = await Task.create({
-    ...req.body,
-    companyId: req.user.companyId,
-  });
+export const createTask = async (
+  req,
+  res
+) => {
 
-  res.json(task);
+  try {
+
+    const task =
+      await Task.create(req.body);
+
+    // 🔥 SEND REALTIME NOTIFICATION
+    await sendNotification({
+
+      userId:
+        task.assignedTo,
+
+      title:
+        "New Task Assigned",
+
+      message:
+        `Task "${task.title}" assigned to you`,
+
+    });
+
+    res.status(201).json(task);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
 };
 
 export const getTasks = async (req, res) => {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../utils/axiosInstance";
 
 // 🔥 Resume Viewer Component (same file ma add kariyu)
 function ResumeViewer({ url }) {

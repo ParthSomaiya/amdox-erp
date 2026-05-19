@@ -1,29 +1,44 @@
 import Notification from "../models/Notification.js";
 
-// GET all notifications
 export const getNotifications = async (req, res) => {
   try {
-    const data = await Notification.find({
-      userId: req.user.id,
-    }).sort({ createdAt: -1 });
 
-    res.json(data);
+    const notifications =
+      await Notification.find({
+        userId: req.user.id,
+      })
+        .sort({ createdAt: -1 });
+
+    res.json(notifications);
+
   } catch (err) {
-    res.status(500).json({ message: "Error fetching notifications" });
+
+    res.status(500).json({
+      message: err.message,
+    });
+
   }
 };
 
-// MARK as read
 export const markAsRead = async (req, res) => {
   try {
-    const { id } = req.params;
 
-    await Notification.findByIdAndUpdate(id, {
-      isRead: true,
+    await Notification.findByIdAndUpdate(
+      req.params.id,
+      {
+        read: true,
+      }
+    );
+
+    res.json({
+      message: "Notification updated",
     });
 
-    res.json({ message: "Marked as read" });
   } catch (err) {
-    res.status(500).json({ message: "Error updating notification" });
+
+    res.status(500).json({
+      message: err.message,
+    });
+
   }
 };

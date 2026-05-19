@@ -6,39 +6,90 @@ import Invoice from "../../finance/models/Invoice.js";
 import Task from "../../project/models/Task.js";
 
 // 📊 DASHBOARD SUMMARY
-export const getDashboardAnalytics = async (req, res) => {
+export const getDashboardAnalytics = async (
+  req,
+  res
+) => {
   try {
-    const companyId = req.user.companyId;
 
-    const employees = await User.countDocuments({ companyId });
+    const totalEmployees =
+      await User.countDocuments();
 
-    const leaves = await Leave.countDocuments({
-      companyId,
-      status: "APPROVED",
-    });
+    const totalProjects =
+      await Project.countDocuments();
 
-    const attendance = await Attendance.countDocuments({
-      companyId,
-    });
+    const totalJobs =
+      await Job.countDocuments();
 
-    const invoices = await Invoice.aggregate([
-      { $match: { companyId } },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$amount" },
+    // Employee roles
+    const employeeRoles =
+      await User.aggregate([
+        {
+          $group: {
+            _id: "$role",
+            count: { $sum: 1 },
+          },
         },
-      },
-    ]);
+      ]);
+
+    // Leave stats
+    const leaveStats =
+      await Leave.aggregate([
+        {
+          $group: {
+            _id: "$status",
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+
+    // Revenue
+    const invoices =
+      await Invoice.find();
+
+    const totalRevenue =
+      invoices.reduce(
+        (acc, i) => acc + i.amount,
+        0
+      );
+
+    // Monthly revenue
+    const monthlyFinance =
+      await Invoice.aggregate([
+        {
+          $group: {
+            _id: {
+              $month: "$createdAt",
+            },
+            revenue: {
+              $sum: "$amount",
+            },
+          },
+        },
+      ]);
+
+    const formattedFinance =
+      monthlyFinance.map((i) => ({
+        month: `Month ${i._id}`,
+        revenue: i.revenue,
+      }));
 
     res.json({
-      employees,
-      leaves,
-      attendance,
-      revenue: invoices[0]?.total || 0,
+      totalEmployees,
+      totalProjects,
+      totalJobs,
+      totalRevenue,
+      employeeRoles,
+      leaveStats,
+      monthlyFinance: formattedFinance,
     });
+
   } catch (err) {
-    res.status(500).json({ message: "Analytics error" });
+    console.log(err);
+
+    res.status(500).json({
+      message: "Analytics error",
+    });
   }
 };
 

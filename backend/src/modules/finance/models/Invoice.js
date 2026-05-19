@@ -11,6 +11,16 @@ const invoiceSchema = new mongoose.Schema(
       required: true,
     },
 
+    gst: {
+      type: Number,
+      default: 0,
+    },
+
+    total: {
+      type: Number,
+      default: 0,
+    },
+
     status: {
       type: String,
       enum: ["PENDING", "PAID", "PARTIAL"],

@@ -181,11 +181,11 @@ export default function Sidebar() {
               📑 Balance Sheet
             </Link>
 
-            {/* ✅ PERMISSION BASED LINK */}
-            {hasPermission(
-              permissions,
-              "CREATE_INVOICE"
-            ) && (
+            {
+              hasPermission(
+                permissions,
+                "CREATE_INVOICE"
+              ) && (
                 <Link
                   to="/create-invoice"
                   className={linkStyle}
@@ -241,8 +241,26 @@ export default function Sidebar() {
               🧩 Task Board
             </Link>
 
-            <Link to="/timeline" className={linkStyle}>
+            <Link
+              to="/timeline"
+              className={linkStyle}
+            >
               📅 Timeline
+            </Link>
+
+            <Link
+              to="/calendar"
+              className={linkStyle}
+            >
+              📆 Calendar
+            </Link>
+
+            {/* ✅ NEW TEAM CHAT */}
+            <Link
+              to="/team-chat"
+              className={linkStyle}
+            >
+              💬 Team Chat
             </Link>
           </>
         )}

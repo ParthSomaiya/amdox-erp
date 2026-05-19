@@ -7,12 +7,18 @@ import {
   verifyOTP,
   registerAdmin,
   registerUser,
-  login,
+  loginUser,
 } from "../controllers/authController.js";
 import Otp from "../models/Otp.js";
 import User from "../models/User.js";
 import passport from "../config/passport.js";
-import { registerEmployeeWithInvite } from "../controllers/authController.js";
+
+import {
+  refreshToken,
+  forgotPassword,
+  registerEmployeeWithInvite,
+  resetPassword,
+} from "../controllers/authController.js";
 
 const router = express.Router();
 
@@ -57,8 +63,23 @@ router.post("/verify-otp", async (req, res) => {
 
 router.post("/register-admin", registerAdmin);
 router.post("/register-user", registerUser);
-router.post("/login", login);
+router.post("/login", loginUser);
 router.post("/register-invite", registerEmployeeWithInvite);
+
+router.post(
+  "/forgot-password",
+  forgotPassword
+);
+
+router.post(
+  "/reset-password",
+  resetPassword
+);
+
+router.post(
+  "/refresh",
+  refreshToken
+);
 
 // 🔥 Redirect to Google
 router.get(

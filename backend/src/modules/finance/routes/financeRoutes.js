@@ -18,6 +18,10 @@ import { allowRoles } from "../middleware/roleMiddleware.js";
 import { PERMISSIONS } from "../config/permissions.js";
 import { checkPermission } from "../modules/admin/middleware/permissionMiddleware.js";
 
+import {
+  PERMISSIONS,
+} from "../config/permissions.js";
+
 const router = express.Router();
 
 // Invoice (view)
@@ -31,8 +35,10 @@ router.get(
 // Create invoice
 router.post(
   "/invoice",
-  protect,
-  checkPermission("CREATE_INVOICE"),
+  authMiddleware,
+  checkPermission(
+    PERMISSIONS.CREATE_INVOICE
+  ),
   createInvoice
 );
 

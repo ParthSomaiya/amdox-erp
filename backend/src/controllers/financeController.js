@@ -1,21 +1,45 @@
 import Invoice from "../models/Invoice.js";
 import Expense from "../models/Expense.js";
-
+import { calculateGST } from "../utils/gstCalculator.js";
+import { sendNotification } from "../utils/notify.js";
 
 // 📄 Create Invoice
 export const createInvoice = async (req, res) => {
-  try {
-    const { clientName, amount } = req.body;
 
-    const invoice = await Invoice.create({
-      clientName,
+  try {
+
+    const {
+      customerName,
       amount,
-      companyId: req.user.companyId,
+    } = req.body;
+
+    const invoice =
+      await Invoice.create({
+
+        customerName,
+
+        amount,
+
+        companyId:
+          req.companyId,
+      });
+
+    // 🔥 REALTIME NOTIFICATION
+    await sendNotification({
+      userId: req.user.id,
+      title: "Invoice Created",
+      message:
+        "New invoice added successfully",
     });
 
-    res.json(invoice);
+    res.status(201).json(invoice);
+
   } catch (err) {
-    res.status(500).json({ message: "Invoice error" });
+
+    res.status(500).json({
+      message: err.message,
+    });
+
   }
 };
 

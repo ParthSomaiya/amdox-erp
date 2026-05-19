@@ -11,6 +11,18 @@ const userSchema = new mongoose.Schema({
     enum: ["ADMIN", "HR", "FINANCE", "EMPLOYEE", "EMPLOYER", "JOB_SEEKER"],
   },
 
+  refreshToken: {
+    type: String,
+  },
+
+  resetToken: {
+    type: String,
+  },
+
+  resetTokenExpiry: {
+    type: Date,
+  },
+
   companyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",
@@ -20,6 +32,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+
 });
 
 export default mongoose.model("User", userSchema);

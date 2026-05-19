@@ -2,21 +2,18 @@ import mongoose from "mongoose";
 
 const permissionSchema = new mongoose.Schema(
   {
-    role: {
+    name: {
       type: String,
       required: true,
+      unique: true,
     },
-
-    permissions: [
-      {
-        type: String,
-      },
-    ],
   },
   {
     timestamps: true,
   }
 );
 
-export default mongoose.models.Permission ||
-  mongoose.model("Permission", permissionSchema);
+export default mongoose.model(
+  "Permission",
+  permissionSchema
+);

@@ -1,9 +1,31 @@
-export const calculateGST = (amount, rate = 18) => {
-  const gst = (amount * rate) / 100;
+export const calculateGST =
+  (
+    amount,
+    gstRate
+  ) => {
 
-  return {
-    cgst: gst / 2,
-    sgst: gst / 2,
-    total: amount + gst,
+    const gst =
+      (amount * gstRate) / 100;
+
+    const cgst =
+      gst / 2;
+
+    const sgst =
+      gst / 2;
+
+    return {
+
+      amount,
+
+      gstRate,
+
+      gst,
+
+      cgst,
+
+      sgst,
+
+      total:
+        amount + gst,
+    };
   };
-};
