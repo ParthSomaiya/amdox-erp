@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../utils/axiosInstance";
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
+
 
 export default function CalendarPage() {
   const [events, setEvents] = useState([]);
@@ -52,12 +50,30 @@ export default function CalendarPage() {
         📅 Calendar
       </h1>
 
-      <FullCalendar
-        plugins={[dayGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
-        events={events}
-        dateClick={handleDateClick}
-      />
+      <div className="space-y-4">
+        {events.map((event) => (
+          <div
+            key={event._id}
+            className="bg-white p-4 rounded shadow"
+          >
+            <h2 className="font-bold">
+              {event.title}
+            </h2>
+
+            <p>
+              Start:
+              {" "}
+              {new Date(event.start).toLocaleDateString()}
+            </p>
+
+            <p>
+              End:
+              {" "}
+              {new Date(event.end).toLocaleDateString()}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

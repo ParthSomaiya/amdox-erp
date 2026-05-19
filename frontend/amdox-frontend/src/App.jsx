@@ -45,6 +45,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import CalendarPage from "./pages/CalendarPage";
 import TeamChat from "./pages/TeamChat";
+import AddEmployee from "./pages/AddEmployee";
+import RegisterChoice from "./pages/RegisterChoice";
 
 function App() {
   return (
