@@ -158,19 +158,16 @@ export const registerUser = async (
 };
 
 // Login
-export const loginUser = async (
-  req,
-  res
-) => {
+export const loginUser =
+async (req, res) => {
 
   try {
 
     const {
       email,
-      password,
+      password
     } = req.body;
 
-    // CHECK USER
     const user =
       await User.findOne({
         email,
@@ -178,17 +175,13 @@ export const loginUser = async (
 
     if (!user) {
 
-      return res.status(400)
-        .json({
-
-          message:
-            "User not found",
-
-        });
+      return res.status(404).json({
+        message:
+          "User not found",
+      });
 
     }
 
-    // CHECK PASSWORD
     const isMatch =
       await bcrypt.compare(
         password,
@@ -197,28 +190,37 @@ export const loginUser = async (
 
     if (!isMatch) {
 
-      return res.status(400)
-        .json({
-
-          message:
-            "Invalid password",
-
-        });
+      return res.status(400).json({
+        message:
+          "Invalid credentials",
+      });
 
     }
 
-    // TOKEN
-    const token =
+    const accessToken =
       jwt.sign(
 
         {
-
           id: user._id,
           role: user.role,
-
         },
 
         process.env.JWT_SECRET,
+
+        {
+          expiresIn: "15m",
+        }
+
+      );
+
+    const refreshToken =
+      jwt.sign(
+
+        {
+          id: user._id,
+        },
+
+        process.env.JWT_REFRESH_SECRET,
 
         {
           expiresIn: "7d",
@@ -226,34 +228,27 @@ export const loginUser = async (
 
       );
 
-    // RESPONSE
     res.json({
 
-      token,
+      accessToken,
+      refreshToken,
 
       user: {
-
         id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
-
       },
 
     });
 
   } catch (err) {
 
-    console.log(
-      "LOGIN ERROR:",
-      err
-    );
+    console.log(err);
 
     res.status(500).json({
-
       message:
-        "Server Error",
-
+        err.message,
     });
 
   }

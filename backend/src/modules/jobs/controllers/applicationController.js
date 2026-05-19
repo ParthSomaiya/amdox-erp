@@ -4,7 +4,8 @@ export const applyJob = async (req, res) => {
   const app = await Application.create({
     jobId: req.body.jobId,
     userId: req.user.id,
-    resume: req.file.path,
+    resume:
+      req.file.path,
     companyId: req.companyId
   });
 
@@ -16,8 +17,8 @@ export const getApplicants = async (req, res) => {
   const apps = await Application.find({
     companyId: req.companyId
   })
-  .populate("jobId")
-  .populate("userId");
+    .populate("jobId")
+    .populate("userId");
 
   res.json(apps);
 };

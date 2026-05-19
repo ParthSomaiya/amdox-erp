@@ -1,65 +1,153 @@
-import { useEffect, useRef, useState } from "react";
-import axios from "axios";
-import Gantt from "frappe-gantt";
+import { useEffect, useState }
+from "react";
 
-import "../styles/gantt.css";
+import api
+from "../utils/axiosInstance";
 
 export default function Timeline() {
-  const ganttRef = useRef(null);
 
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] =
+    useState([]);
 
   useEffect(() => {
+
     fetchTasks();
+
   }, []);
 
-  useEffect(() => {
-    if (!tasks.length) return;
+  const fetchTasks =
+    async () => {
 
-    const formattedTasks = tasks.map((task) => ({
-      id: task._id,
-      name: task.title,
-      start: task.startDate,
-      end: task.endDate,
-      progress: task.progress || 0,
-    }));
+      try {
 
-    ganttRef.current.innerHTML = "";
+        const res =
+          await api.get(
+            "/tasks"
+          );
 
-    new Gantt(ganttRef.current, formattedTasks, {
-      view_mode: "Day",
-      language: "en",
-    });
-  }, [tasks]);
+        setTasks(
+          res.data
+        );
 
-  const fetchTasks = async () => {
-    try {
-      const res = await axios.get(
-        "http://localhost:5000/api/tasks",
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem(
-              "token"
-            )}`,
-          },
-        }
-      );
+      } catch (err) {
 
-      setTasks(res.data);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+        console.log(err);
+
+      }
+
+    };
+
+  const getDays =
+    (start, end) => {
+
+      const s =
+        new Date(start);
+
+      const e =
+        new Date(end);
+
+      const diff =
+        Math.ceil(
+
+          (e - s) /
+
+          (1000 * 60 * 60 * 24)
+
+        );
+
+      return diff > 0
+        ? diff
+        : 1;
+
+    };
 
   return (
+
     <div className="p-6">
+
       <h1 className="text-2xl font-bold mb-6">
+
         📅 Project Timeline
+
       </h1>
 
-      <div className="bg-white rounded shadow p-4 overflow-auto">
-        <svg ref={ganttRef}></svg>
+      <div className="space-y-5">
+
+        {tasks.map((task) => {
+
+          const days =
+            getDays(
+
+              task.startDate,
+
+              task.endDate
+
+            );
+
+          return (
+
+            <div
+              key={task._id}
+              className="bg-white p-4 rounded shadow"
+            >
+
+              <div className="flex justify-between mb-2">
+
+                <h2 className="font-semibold">
+
+                  {task.title}
+
+                </h2>
+
+                <span className="text-sm text-gray-500">
+
+                  {task.status}
+
+                </span>
+
+              </div>
+
+              <div className="w-full bg-gray-200 rounded h-6 overflow-hidden">
+
+                <div
+                  className="bg-blue-600 h-6 text-white text-xs flex items-center px-2"
+
+                  style={{
+                    width:
+                      `${days * 40}px`,
+                  }}
+                >
+
+                  {days} Days
+
+                </div>
+
+              </div>
+
+              <div className="text-sm text-gray-500 mt-2">
+
+                {new Date(
+                  task.startDate
+                ).toLocaleDateString()}
+
+                {" → "}
+
+                {new Date(
+                  task.endDate
+                ).toLocaleDateString()}
+
+              </div>
+
+            </div>
+
+          );
+
+        })}
+
       </div>
+
     </div>
+
   );
+
 }

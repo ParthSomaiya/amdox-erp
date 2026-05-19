@@ -1,49 +1,121 @@
 import { useState } from "react";
+import API from "../services/api";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+import MainLayout from "../layouts/MainLayout";
 
 export default function Login() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const navigate = useNavigate();
+
+    const [email, setEmail] =
+        useState("");
+
+    const [password, setPassword] =
+        useState("");
+
+    const navigate =
+        useNavigate();
 
     const handleLogin = async () => {
+
         try {
-            const res = await API.post("/auth/login", { email, password });
 
-            const token = res.data.token;
-            localStorage.setItem("token", token);
+            console.log("Sending login...");
 
-            const decoded = jwtDecode(token);
+            const res =
+                await fetch(
 
-            // 🔥 MAIN LOGIC
-            if (decoded.role === "JOB_SEEKER") {
-                navigate("/jobs");
-            } else {
-                navigate("/dashboard");
+                    "http://localhost:5000/api/auth/login",
+
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+                        },
+
+                        body: JSON.stringify({
+
+                            email,
+                            password,
+
+                        }),
+
+                    }
+
+                );
+
+            const data =
+                await res.json();
+
+            console.log(data);
+
+            if (!res.ok) {
+
+                alert(
+                    data.message ||
+                    "Login failed"
+                );
+
+                return;
+
             }
 
+            localStorage.setItem(
+                "token",
+                data.accessToken
+            );
+
+            localStorage.setItem(
+                "refreshToken",
+                data.refreshToken
+            );
+
+            localStorage.setItem(
+                "user",
+                JSON.stringify(data.user)
+            );
+
+            window.location.href =
+                "/dashboard";
+
         } catch (err) {
-            alert("Login failed");
+
+            console.log(err);
+
+            alert(
+                "Server connection failed"
+            );
+
         }
+
     };
 
     return (
+
         <div className="flex items-center justify-center h-screen bg-gray-100">
+
             <div className="bg-white p-8 rounded shadow w-80">
-                <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
+
+                <h2 className="text-2xl font-bold mb-4 text-center">
+                    Login
+                </h2>
 
                 <input
                     placeholder="Email"
                     className="w-full border p-2 mb-3"
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) =>
+                        setEmail(e.target.value)
+                    }
                 />
 
                 <input
                     placeholder="Password"
                     type="password"
                     className="w-full border p-2 mb-4"
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) =>
+                        setPassword(e.target.value)
+                    }
                 />
 
                 <button
@@ -52,7 +124,18 @@ export default function Login() {
                 >
                     Login
                 </button>
+
+                <a
+                    href="http://localhost:5000/api/auth/google"
+                    className="bg-red-500 text-white px-4 py-2 rounded block text-center mt-4"
+                >
+                    Login with Google
+                </a>
+
             </div>
+
         </div>
+
     );
+
 }

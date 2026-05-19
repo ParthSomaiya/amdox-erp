@@ -1,95 +1,82 @@
-import {
+import { useState }
+from "react";
 
-  useState,
-
-} from "react";
-
-import {
-
-  useParams,
-
-  useNavigate,
-
-} from "react-router-dom";
+import { useParams }
+from "react-router-dom";
 
 import api
 from "../utils/axiosInstance";
 
 export default function ResetPassword() {
 
-  const {
-    token,
-  } = useParams();
+  const { token } =
+    useParams();
 
-  const navigate =
-    useNavigate();
-
-  const [password,
-    setPassword] =
+  const [password, setPassword] =
     useState("");
 
-  const submit = async () => {
+  const handleReset =
+    async () => {
 
-    try {
+      try {
 
-      await api.post(
+        await api.post(
 
-        "/auth/reset-password",
+          `/auth/reset-password/${token}`,
 
-        {
-          token,
-          password,
-        }
+          {
+            password,
+          }
 
-      );
+        );
 
-      alert(
-        "Password updated"
-      );
+        alert(
+          "Password reset successful"
+        );
 
-      navigate("/login");
+      } catch (err) {
 
-    } catch (err) {
+        alert(
+          "Reset failed"
+        );
 
-      alert(
-        err.response.data.message
-      );
+      }
 
-    }
-
-  };
+    };
 
   return (
 
-    <div className="p-10">
+    <div className="flex items-center justify-center h-screen bg-gray-100">
 
-      <h1 className="text-2xl mb-4">
-        Reset Password
-      </h1>
+      <div className="bg-white p-8 rounded shadow w-96">
 
-      <input
+        <h1 className="text-2xl font-bold mb-5">
 
-        type="password"
+          Reset Password
 
-        placeholder="New Password"
+        </h1>
 
-        className="border p-2"
+        <input
+          type="password"
+          placeholder="New Password"
+          className="w-full border p-2 mb-4"
+          onChange={(e) =>
+            setPassword(
+              e.target.value
+            )
+          }
+        />
 
-        onChange={(e) =>
-          setPassword(e.target.value)
-        }
+        <button
+          onClick={handleReset}
+          className="w-full bg-blue-600 text-white p-2 rounded"
+        >
 
-      />
+          Reset Password
 
-      <button
+        </button>
 
-        onClick={submit}
-
-        className="bg-green-500 text-white px-4 py-2 ml-2"
-
-      >
-        Reset Password
-      </button>
+      </div>
 
     </div>
 

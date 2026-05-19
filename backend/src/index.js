@@ -10,7 +10,6 @@ import { Server } from "socket.io";
 import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
 import hpp from "hpp";
-import xss from "xss-clean";
 
 // ================= CONFIG =================
 import "./config/passport.js";
@@ -152,12 +151,14 @@ app.use(
 );
 
 // CORS
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  })
-);
+app.use(cors({
+
+  origin:
+    "http://localhost:5173",
+
+  credentials: true,
+
+}));
 
 // JSON
 app.use(express.json({
@@ -170,8 +171,6 @@ app.use(helmet());
 // 🔥 PREVENT NOSQL INJECTION
 app.use(mongoSanitize());
 
-// 🔥 PREVENT XSS
-app.use(xss());
 
 // 🔥 PREVENT HTTP PARAM POLLUTION
 app.use(hpp());

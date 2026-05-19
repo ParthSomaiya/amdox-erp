@@ -3,17 +3,35 @@ import multerS3 from "multer-s3";
 import s3 from "../config/s3.js";
 import path from "path";
 
+import {
+  CloudinaryStorage,
+}
+  from "multer-storage-cloudinary";
+
+import cloudinary
+  from "../config/cloudinary.js";
+
 // Storage config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/"); // folder
-  },
-  filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() + "-" + file.originalname.replace(/\s/g, "");
-    cb(null, uniqueName);
-  },
-});
+const storage =
+  new CloudinaryStorage({
+
+    cloudinary,
+
+    params: async (
+      req,
+      file
+    ) => ({
+
+      folder:
+        "amdox-erp",
+
+      resource_type:
+        "auto",
+
+    }),
+
+  });
+
 
 // File filter (ONLY PDF)
 const fileFilter = (req, file, cb) => {

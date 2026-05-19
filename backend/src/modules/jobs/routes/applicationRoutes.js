@@ -1,19 +1,57 @@
-import express from "express";
-import upload from "../middleware/uploadResume.js";
+import express
+from "express";
+
 import {
   applyJob,
   getApplicants,
+  updateStatus,
+}
+from "../controllers/applicationController.js";
+
+import {
+  authMiddleware,
+}
+from "../../../middleware/authMiddleware.js";
+
+import upload
+from "../../../middleware/uploadMiddleware.js";
+
+const router =
+  express.Router();
+
+// APPLY JOB
+router.post(
+
+  "/apply",
+
+  authMiddleware,
+
+  upload.single("resume"),
+
+  applyJob
+
+);
+
+// GET APPLICANTS
+router.get(
+
+  "/applicants",
+
+  authMiddleware,
+
+  getApplicants
+
+);
+
+// UPDATE STATUS
+router.put(
+
+  "/:id/status",
+
+  authMiddleware,
+
   updateStatus
-} from "../controllers/applicationController.js";
 
-import { protect } from "../../../middleware/authMiddleware.js";
-
-const router = express.Router();
-
-router.post("/apply", protect, upload.single("resume"), applyJob);
-
-router.get("/applicants", protect, getApplicants);
-
-router.put("/:id/status", protect, updateStatus);
+);
 
 export default router;

@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// MAIN API
 const api = axios.create({
 
   baseURL:
@@ -8,94 +7,51 @@ const api = axios.create({
 
 });
 
-// REQUEST INTERCEPTOR
+// 🔥 REQUEST INTERCEPTOR
 api.interceptors.request.use(
 
   (config) => {
 
     const token =
-      localStorage.getItem("token");
+      localStorage.getItem(
+        "token"
+      );
 
     if (token) {
 
       config.headers.Authorization =
-        `Bearer ${token}`;
+        token;
 
     }
 
     return config;
+
   }
 
 );
 
-// RESPONSE INTERCEPTOR
+// 🔥 RESPONSE INTERCEPTOR
 api.interceptors.response.use(
 
-  (response) => response,
+  (response) =>
+    response,
 
   async (error) => {
 
-    const originalRequest =
-      error.config;
-
-    // TOKEN EXPIRED
     if (
-
-      error.response?.status === 401 &&
-      !originalRequest._retry
-
+      error.response?.status === 401
     ) {
 
-      originalRequest._retry = true;
+      localStorage.clear();
 
-      try {
-
-        const refreshToken =
-          localStorage.getItem(
-            "refreshToken"
-          );
-
-        // REFRESH API
-        const res =
-          await axios.post(
-
-            "http://localhost:5000/api/auth/refresh",
-
-            {
-              refreshToken,
-            }
-
-          );
-
-        // SAVE NEW TOKEN
-        localStorage.setItem(
-
-          "token",
-
-          res.data.accessToken
-
-        );
-
-        // UPDATE HEADER
-        originalRequest.headers.Authorization =
-          `Bearer ${res.data.accessToken}`;
-
-        // RETRY REQUEST
-        return api(originalRequest);
-
-      } catch (err) {
-
-        // LOGOUT
-        localStorage.clear();
-
-        window.location.href =
-          "/login";
-
-      }
+      window.location.href =
+        "/login";
 
     }
 
-    return Promise.reject(error);
+    return Promise.reject(
+      error
+    );
 
   }
 

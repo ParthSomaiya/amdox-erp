@@ -1,93 +1,33 @@
-import {
-
-  useEffect,
-  useState,
-
-} from "react";
-
-import moment from "moment";
-
-import {
-
-  Calendar,
-  momentLocalizer,
-
-} from "react-big-calendar";
-
-import
-"react-big-calendar/lib/css/react-big-calendar.css";
+import { useEffect, useState }
+from "react";
 
 import api
 from "../utils/axiosInstance";
 
-const localizer =
-  momentLocalizer(moment);
-
 export default function CalendarPage() {
 
-  const [events,
-    setEvents] =
+  const [events, setEvents] =
     useState([]);
 
   useEffect(() => {
 
-    fetchCalendar();
+    fetchEvents();
 
   }, []);
 
-  const fetchCalendar =
+  const fetchEvents =
     async () => {
 
       try {
 
-        // LEAVES
-        const leaveRes =
-          await api.get(
-            "/leave"
-          );
-
-        // TASKS
-        const taskRes =
+        const res =
           await api.get(
             "/tasks"
           );
 
-        // LEAVE EVENTS
-        const leaveEvents =
-          leaveRes.data.map((l) => ({
-
-            title:
-              `Leave - ${l.employeeName}`,
-
-            start:
-              new Date(l.startDate),
-
-            end:
-              new Date(l.endDate),
-
-          }));
-
-        // TASK EVENTS
-        const taskEvents =
-          taskRes.data.map((t) => ({
-
-            title:
-              `Task - ${t.title}`,
-
-            start:
-              new Date(t.startDate),
-
-            end:
-              new Date(t.endDate),
-
-          }));
-
-        setEvents([
-
-          ...leaveEvents,
-          ...taskEvents,
-
-        ]);
+        setEvents(
+          res.data
+        );
 
       } catch (err) {
 
@@ -95,49 +35,64 @@ export default function CalendarPage() {
 
       }
 
-  };
+    };
 
   return (
 
     <div className="p-6">
 
-      <h1
-        className="
-          text-2xl
-          font-bold
-          mb-5
-        "
-      >
+      <h1 className="text-2xl font-bold mb-6">
 
-        📅 ERP Calendar
+        📅 Calendar
 
       </h1>
 
-      <div
-        className="
-          bg-white
-          p-4
-          rounded-lg
-          shadow
-          h-[700px]
-        "
-      >
+      <div className="space-y-4">
 
-        <Calendar
+        {events.map((event) => (
 
-          localizer={localizer}
+          <div
+            key={event._id}
+            className="bg-white p-4 rounded shadow"
+          >
 
-          events={events}
+            <h2 className="font-bold text-lg">
 
-          startAccessor="start"
+              {event.title}
 
-          endAccessor="end"
+            </h2>
 
-          style={{
-            height: "100%",
-          }}
+            <p className="text-gray-600">
 
-        />
+              Start:
+              {" "}
+              {new Date(
+                event.startDate
+              ).toLocaleDateString()}
+
+            </p>
+
+            <p className="text-gray-600">
+
+              End:
+              {" "}
+              {new Date(
+                event.endDate
+              ).toLocaleDateString()}
+
+            </p>
+
+            <p className="mt-2">
+
+              Status:
+              {" "}
+              {event.status}
+
+            </p>
+
+          </div>
+
+        ))}
 
       </div>
 
