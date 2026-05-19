@@ -1,103 +1,63 @@
-import { useEffect, useState }
-from "react";
-
-import api
-from "../utils/axiosInstance";
+import { useEffect, useState } from "react";
+import api from "../utils/axiosInstance";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
 
 export default function CalendarPage() {
-
-  const [events, setEvents] =
-    useState([]);
+  const [events, setEvents] = useState([]);
 
   useEffect(() => {
-
     fetchEvents();
-
   }, []);
 
-  const fetchEvents =
-    async () => {
+  const fetchEvents = async () => {
+    try {
+      const res = await api.get("/calendar");
 
-      try {
+      setEvents(
+        res.data.map((event) => ({
+          id: event._id,
+          title: event.title,
+          start: event.start,
+          end: event.end,
+        }))
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
-        const res =
-          await api.get(
-            "/tasks"
-          );
+  const handleDateClick = async (info) => {
+    const title = prompt("Event Title:");
 
-        setEvents(
-          res.data
-        );
+    if (!title) return;
 
-      } catch (err) {
+    try {
+      await api.post("/calendar", {
+        title,
+        start: info.dateStr,
+        end: info.dateStr,
+      });
 
-        console.log(err);
-
-      }
-
-    };
+      fetchEvents();
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   return (
-
     <div className="p-6">
-
       <h1 className="text-2xl font-bold mb-6">
-
         📅 Calendar
-
       </h1>
 
-      <div className="space-y-4">
-
-        {events.map((event) => (
-
-          <div
-            key={event._id}
-            className="bg-white p-4 rounded shadow"
-          >
-
-            <h2 className="font-bold text-lg">
-
-              {event.title}
-
-            </h2>
-
-            <p className="text-gray-600">
-
-              Start:
-              {" "}
-              {new Date(
-                event.startDate
-              ).toLocaleDateString()}
-
-            </p>
-
-            <p className="text-gray-600">
-
-              End:
-              {" "}
-              {new Date(
-                event.endDate
-              ).toLocaleDateString()}
-
-            </p>
-
-            <p className="mt-2">
-
-              Status:
-              {" "}
-              {event.status}
-
-            </p>
-
-          </div>
-
-        ))}
-
-      </div>
-
+      <FullCalendar
+        plugins={[dayGridPlugin, interactionPlugin]}
+        initialView="dayGridMonth"
+        events={events}
+        dateClick={handleDateClick}
+      />
     </div>
-
   );
-
 }

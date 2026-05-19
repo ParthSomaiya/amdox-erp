@@ -3,6 +3,7 @@ from "express";
 
 import {
   getMessages,
+  sendMessage
 } from "../controllers/chatController.js";
 
 import {
@@ -21,5 +22,8 @@ router.get(
   getMessages
 
 );
+
+router.post("/", sendMessage);
+router.get("/:id", getMessages);
 
 export default router;

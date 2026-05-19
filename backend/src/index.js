@@ -11,6 +11,8 @@ import helmet from "helmet";
 import mongoSanitize from "express-mongo-sanitize";
 import hpp from "hpp";
 
+import "./workers/emailWorker.js";
+
 // ================= CONFIG =================
 import "./config/passport.js";
 import { setSocket } from "./utils/notify.js";
@@ -57,6 +59,9 @@ import adminRoutes from "./modules/admin/routes/adminRoutes.js";
 import analyticsRoutesNew from "./modules/analytics/routes/analyticsRoutes.js";
 
 import chatRoutes from "./modules/chat/routes/chatRoutes.js";
+
+import calendarRoutes from "./modules/calendar/routes/calendarRoutes.js";
+
 
 import { sanitizeInput } from "./middleware/sanitizeMiddleware.js";
 
@@ -220,6 +225,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutesNew);
 
 app.use("/api/chat", chatRoutes);
+
+app.use("/api/calendar", calendarRoutes);
 
 // TEST ROUTE
 app.get("/", (req, res) => {

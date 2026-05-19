@@ -1,38 +1,23 @@
-import Message
-from "../models/Message.js";
+import Message from "../models/Message.js";
+import { getIO } from "../../../utils/socket.js";
 
-// GET ROOM MESSAGES
-export const getMessages =
-  async (req, res) => {
+export const sendMessage = async (req, res) => {
+  const msg = await Message.create(req.body);
 
-    try {
+  const io = getIO();
 
-      const messages =
-        await Message.find({
+  io.emit("new-message", msg);
 
-          room:
-            req.params.room,
+  res.json(msg);
+};
 
-        })
+export const getMessages = async (req, res) => {
+  const msgs = await Message.find({
+    $or: [
+      { senderId: req.params.id },
+      { receiverId: req.params.id },
+    ],
+  });
 
-        .populate(
-          "sender",
-          "name email"
-        )
-
-        .sort({
-          createdAt: 1,
-        });
-
-      res.json(messages);
-
-    } catch (err) {
-
-      res.status(500).json({
-        message:
-          err.message,
-      });
-
-    }
-
+  res.json(msgs);
 };

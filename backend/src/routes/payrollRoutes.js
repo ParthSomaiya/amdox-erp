@@ -31,6 +31,7 @@ router.put(
   markPaid
 );
 
+router.get("/payslip/:id", downloadPayslip);
 
 // 👨‍💼 View all payroll (Finance/Admin)
 router.get(

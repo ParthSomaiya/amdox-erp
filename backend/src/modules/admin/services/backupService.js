@@ -1,33 +1,25 @@
-import cron from "node-cron";
-import { exec } from "child_process";
 import fs from "fs";
-import path from "path";
+import mongoose from "mongoose";
 
-// Backup folder
-const backupDir = path.join("backups");
+export const createBackup = async () => {
+  const collections = await mongoose.connection.db
+    .listCollections()
+    .toArray();
 
-// Ensure folder exists
-if (!fs.existsSync(backupDir)) {
-  fs.mkdirSync(backupDir);
-}
+  const backup = {};
 
-// ✅ MAIN FUNCTION
-export const startBackupJob = () => {
-  console.log("✅ Backup scheduler started...");
+  for (let col of collections) {
+    const data = await mongoose.connection.db
+      .collection(col.name)
+      .find()
+      .toArray();
 
-  // Daily at 2 AM
-  cron.schedule("0 2 * * *", () => {
-    const date = new Date().toISOString().split("T")[0];
-    const folderName = `${backupDir}/backup-${date}`;
+    backup[col.name] = data;
+  }
 
-    const command = `mongodump --out ${folderName}`;
+  const fileName = `backup-${Date.now()}.json`;
 
-    exec(command, (err) => {
-      if (err) {
-        console.error("❌ Backup failed:", err.message);
-      } else {
-        console.log("✅ Backup completed:", folderName);
-      }
-    });
-  });
+  fs.writeFileSync(fileName, JSON.stringify(backup));
+
+  return fileName;
 };

@@ -22,8 +22,11 @@ export default function TenantManagement() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">🏢 Tenant Management</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        🏢 Tenant Management
+      </h1>
 
+      {/* CREATE */}
       <div className="bg-white p-4 rounded shadow mb-4">
         <input
           value={name}
@@ -39,6 +42,7 @@ export default function TenantManagement() {
         </button>
       </div>
 
+      {/* LIST */}
       <div className="space-y-2">
         {tenants.map((t) => (
           <div
@@ -46,7 +50,9 @@ export default function TenantManagement() {
             className="p-3 bg-gray-100 rounded flex justify-between"
           >
             <span>{t.name}</span>
-            <span>{t.active ? "🟢 Active" : "🔴 Inactive"}</span>
+            <span>
+              {t.active ? "🟢 Active" : "🔴 Inactive"}
+            </span>
           </div>
         ))}
       </div>

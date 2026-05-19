@@ -59,17 +59,12 @@ export default function Payroll() {
               </button>
 
               {/* 📥 Download */}
-              <button
-                onClick={() =>
-                  window.open(
-                    `http://localhost:5000/api/payroll/payslip/${payroll._id}`,
-                    "_blank"
-                  )
-                }
-                className="bg-green-600 text-white px-3 py-1 rounded"
+              <a
+                href={`http://localhost:5000/api/payroll/payslip/${id}`}
+                target="_blank"
               >
-                Download
-              </button>
+                Download Payslip
+              </a>
 
             </div>
           </div>

@@ -98,27 +98,32 @@ export const registerUser = async (
       });
 
     // 🔥 SEND EMAIL
-    await sendEmail({
+    await emailQueue.add(
 
-      to:
-        user.email,
+      "sendEmail",
 
-      subject:
-        "Welcome to Amdox ERP",
+      {
 
-      html: `
+        to: user.email,
 
-        <h2>
-          Welcome ${user.name}
-        </h2>
+        subject:
+          "Welcome to Amdox ERP",
 
-        <p>
-          Your account has been created successfully.
-        </p>
+        html: `
 
-      `,
+      <h2>
+        Welcome ${user.name}
+      </h2>
 
-    });
+      <p>
+        Your account has been created successfully.
+      </p>
+
+    `,
+
+      }
+
+    );
 
     // TOKEN
     const token =
@@ -159,101 +164,101 @@ export const registerUser = async (
 
 // Login
 export const loginUser =
-async (req, res) => {
+  async (req, res) => {
 
-  try {
+    try {
 
-    const {
-      email,
-      password
-    } = req.body;
-
-    const user =
-      await User.findOne({
+      const {
         email,
-      });
+        password
+      } = req.body;
 
-    if (!user) {
+      const user =
+        await User.findOne({
+          email,
+        });
 
-      return res.status(404).json({
-        message:
-          "User not found",
-      });
+      if (!user) {
 
-    }
+        return res.status(404).json({
+          message:
+            "User not found",
+        });
 
-    const isMatch =
-      await bcrypt.compare(
-        password,
-        user.password
-      );
+      }
 
-    if (!isMatch) {
+      const isMatch =
+        await bcrypt.compare(
+          password,
+          user.password
+        );
 
-      return res.status(400).json({
-        message:
-          "Invalid credentials",
-      });
+      if (!isMatch) {
 
-    }
+        return res.status(400).json({
+          message:
+            "Invalid credentials",
+        });
 
-    const accessToken =
-      jwt.sign(
+      }
 
-        {
+      const accessToken =
+        jwt.sign(
+
+          {
+            id: user._id,
+            role: user.role,
+          },
+
+          process.env.JWT_SECRET,
+
+          {
+            expiresIn: "15m",
+          }
+
+        );
+
+      const refreshToken =
+        jwt.sign(
+
+          {
+            id: user._id,
+          },
+
+          process.env.JWT_REFRESH_SECRET,
+
+          {
+            expiresIn: "7d",
+          }
+
+        );
+
+      res.json({
+
+        accessToken,
+        refreshToken,
+
+        user: {
           id: user._id,
+          name: user.name,
+          email: user.email,
           role: user.role,
         },
 
-        process.env.JWT_SECRET,
+      });
 
-        {
-          expiresIn: "15m",
-        }
+    } catch (err) {
 
-      );
+      console.log(err);
 
-    const refreshToken =
-      jwt.sign(
+      res.status(500).json({
+        message:
+          err.message,
+      });
 
-        {
-          id: user._id,
-        },
+    }
 
-        process.env.JWT_REFRESH_SECRET,
-
-        {
-          expiresIn: "7d",
-        }
-
-      );
-
-    res.json({
-
-      accessToken,
-      refreshToken,
-
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-
-    });
-
-  } catch (err) {
-
-    console.log(err);
-
-    res.status(500).json({
-      message:
-        err.message,
-    });
-
-  }
-
-};
+  };
 
 
 export const registerEmployeeWithInvite = async (req, res) => {
@@ -411,7 +416,7 @@ export const refreshToken =
       });
 
     }
-};
+  };
 
 export const forgotPassword =
   async (req, res) => {
@@ -495,7 +500,7 @@ export const forgotPassword =
 
     }
 
-};
+  };
 
 export const resetPassword =
   async (req, res) => {
@@ -560,4 +565,4 @@ export const resetPassword =
 
     }
 
-};
+  };
