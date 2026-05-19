@@ -1,18 +1,24 @@
-import Role from "../models/Role.js";
+import Permission from "../models/Permission.js";
 
-export const checkPermission = (permissionName) => {
+export const checkPermission = (permission) => {
   return async (req, res, next) => {
     try {
-      const user = req.user;
+      const role = req.user.role;
 
-      const role = await Role.findById(user.roleId)
-        .populate("permissions");
+      const rolePermissions = await Permission.findOne({
+        role,
+      });
 
-      const hasPermission = role.permissions.some(
-        (p) => p.name === permissionName
-      );
+      if (!rolePermissions) {
+        return res.status(403).json({
+          message: "No permissions found",
+        });
+      }
 
-      if (!hasPermission) {
+      const allowed =
+        rolePermissions.permissions.includes(permission);
+
+      if (!allowed) {
         return res.status(403).json({
           message: "Permission denied",
         });
@@ -20,7 +26,11 @@ export const checkPermission = (permissionName) => {
 
       next();
     } catch (err) {
-      res.status(500).json({ message: "Permission error" });
+      console.log(err);
+
+      res.status(500).json({
+        message: "Permission middleware error",
+      });
     }
   };
 };

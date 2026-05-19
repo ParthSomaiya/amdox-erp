@@ -1,0 +1,35 @@
+.gantt .bar {
+  fill: #2563eb;
+}
+
+.gantt .bar-progress {
+  fill: #16a34a;
+}
+
+.gantt .grid-header {
+  fill: #f3f4f6;
+}
+
+.gantt .grid-row {
+  fill: #ffffff;
+}
+
+.gantt .row-line {
+  stroke: #e5e7eb;
+}
+
+.gantt .tick {
+  stroke: #d1d5db;
+}
+
+.gantt .today-highlight {
+  fill: #fef3c7;
+}
+
+.gantt .arrow {
+  stroke: #6b7280;
+}
+
+.gantt-container {
+  overflow-x: auto;
+}

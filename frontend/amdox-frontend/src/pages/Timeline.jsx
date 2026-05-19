@@ -1,45 +1,64 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import Gantt from "frappe-gantt";
+
+import "../styles/gantt.css";
 
 export default function Timeline() {
+  const ganttRef = useRef(null);
+
   const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
     fetchTasks();
   }, []);
 
-  const fetchTasks = async () => {
-    const res = await axios.get("/api/tasks");
-    setTasks(res.data);
-  };
+  useEffect(() => {
+    if (!tasks.length) return;
 
-  const getDuration = (start, end) => {
-    const s = new Date(start);
-    const e = new Date(end);
-    return Math.max((e - s) / (1000 * 60 * 60 * 24), 1);
+    const formattedTasks = tasks.map((task) => ({
+      id: task._id,
+      name: task.title,
+      start: task.startDate,
+      end: task.endDate,
+      progress: task.progress || 0,
+    }));
+
+    ganttRef.current.innerHTML = "";
+
+    new Gantt(ganttRef.current, formattedTasks, {
+      view_mode: "Day",
+      language: "en",
+    });
+  }, [tasks]);
+
+  const fetchTasks = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/tasks",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem(
+              "token"
+            )}`,
+          },
+        }
+      );
+
+      setTasks(res.data);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">📅 Timeline (Gantt)</h1>
+      <h1 className="text-2xl font-bold mb-6">
+        📅 Project Timeline
+      </h1>
 
-      <div className="space-y-3">
-        {tasks.map((task) => {
-          const days = getDuration(task.startDate, task.endDate);
-
-          return (
-            <div key={task._id}>
-              <p className="text-sm">{task.title}</p>
-
-              <div className="bg-gray-200 h-4 rounded">
-                <div
-                  className="bg-green-500 h-4 rounded"
-                  style={{ width: `${days * 20}px` }}
-                />
-              </div>
-            </div>
-          );
-        })}
+      <div className="bg-white rounded shadow p-4 overflow-auto">
+        <svg ref={ganttRef}></svg>
       </div>
     </div>
   );

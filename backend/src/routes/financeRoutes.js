@@ -15,7 +15,8 @@ import {
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { getProfitAnalytics } from "../controllers/financeController.js";
 import { allowRoles } from "../middleware/roleMiddleware.js";
-import { checkPermission } from "../middleware/permissionMiddleware.js";
+import { checkPermission } from "../modules/admin/middleware/permissionMiddleware.js";
+
 import { PERMISSIONS } from "../config/permissions.js";
 
 const router = express.Router();
