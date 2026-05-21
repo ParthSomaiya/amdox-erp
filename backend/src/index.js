@@ -22,6 +22,9 @@ import "./config/passport.js";
 // ================= SOCKET =================
 import { setSocket } from "./utils/notify.js";
 
+// ================= SEEDERS =================
+import { seedAdmin } from "./seed/adminSeeder.js";
+
 // ================= ROUTES =================
 
 // AUTH
@@ -67,31 +70,46 @@ const io = new Server(server, {
 
 setSocket(io);
 
-// SOCKET EVENTS
+// ================= SOCKET EVENTS =================
 io.on("connection", (socket) => {
 
-  console.log("✅ User connected:", socket.id);
+  console.log(
+    "✅ User connected:",
+    socket.id
+  );
 
-  socket.on("join", (userId) => {
+  // USER ROOM
+  socket.on(
+    "join",
+    (userId) => {
 
-    socket.join(userId);
+      socket.join(userId);
 
-  });
+    }
+  );
 
-  socket.on("joinRoom", (room) => {
+  // CHAT ROOM
+  socket.on(
+    "joinRoom",
+    (room) => {
 
-    socket.join(room);
+      socket.join(room);
 
-  });
+    }
+  );
 
-  socket.on("sendMessage", (data) => {
+  // SEND MESSAGE
+  socket.on(
+    "sendMessage",
+    (data) => {
 
-    io.to(data.room).emit(
-      "receiveMessage",
-      data
-    );
+      io.to(data.room).emit(
+        "receiveMessage",
+        data
+      );
 
-  });
+    }
+  );
 
 });
 
@@ -102,7 +120,9 @@ app.use(
 
   rateLimit({
 
-    windowMs: 15 * 60 * 1000,
+    windowMs:
+      15 * 60 * 1000,
+
     max: 100,
 
   })
@@ -138,7 +158,7 @@ app.use(
 
 );
 
-// STATIC
+// STATIC FILES
 app.use(
   "/uploads",
   express.static("uploads")
@@ -147,35 +167,96 @@ app.use(
 // ================= ROUTES =================
 
 // AUTH
-app.use("/api/auth", authRoutes);
+app.use(
+  "/api/auth",
+  authRoutes
+);
 
 // CORE
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/hr", hrRoutes);
-app.use("/api/leave", leaveRoutes);
-app.use("/api/attendance", attendanceRoutes);
-app.use("/api/payroll", payrollRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/analytics", analyticsRoutes);
-app.use("/api/pdf", pdfRoutes);
-app.use("/api/lifecycle", lifecycleRoutes);
+app.use(
+  "/api/dashboard",
+  dashboardRoutes
+);
+
+app.use(
+  "/api/hr",
+  hrRoutes
+);
+
+app.use(
+  "/api/leave",
+  leaveRoutes
+);
+
+app.use(
+  "/api/attendance",
+  attendanceRoutes
+);
+
+app.use(
+  "/api/payroll",
+  payrollRoutes
+);
+
+app.use(
+  "/api/notifications",
+  notificationRoutes
+);
+
+app.use(
+  "/api/analytics",
+  analyticsRoutes
+);
+
+app.use(
+  "/api/pdf",
+  pdfRoutes
+);
+
+app.use(
+  "/api/lifecycle",
+  lifecycleRoutes
+);
 
 // FINANCE
-app.use("/api/finance", financeRoutes);
-app.use("/api/gl", glRoutes);
+app.use(
+  "/api/finance",
+  financeRoutes
+);
+
+app.use(
+  "/api/gl",
+  glRoutes
+);
 
 // SUPPLY CHAIN
-app.use("/api/products", productRoutes);
-app.use("/api/vendors", vendorRoutes);
-app.use("/api/po", poRoutes);
+app.use(
+  "/api/products",
+  productRoutes
+);
+
+app.use(
+  "/api/vendors",
+  vendorRoutes
+);
+
+app.use(
+  "/api/po",
+  poRoutes
+);
 
 // PROJECT
-app.use("/api/tasks", taskRoutes);
+app.use(
+  "/api/tasks",
+  taskRoutes
+);
 
 // TEST ROUTE
 app.get("/", (req, res) => {
 
-  res.send("✅ ERP API Running");
+  res.send(
+    "✅ ERP API Running"
+  );
 
 });
 
@@ -184,33 +265,47 @@ app.get("/", (req, res) => {
 const PORT =
   process.env.PORT || 5000;
 
-const startServer = async () => {
+const startServer =
+  async () => {
 
-  try {
+    try {
 
-    // CONNECT DB
-    await connectDB();
-
-    // START SERVER
-    server.listen(PORT, () => {
+      // CONNECT DATABASE
+      await connectDB();
 
       console.log(
-        `🚀 Server running on port ${PORT}`
+        "✅ MongoDB Connected"
       );
 
-    });
+      // RUN ADMIN SEEDER
+      await seedAdmin();
 
-  } catch (err) {
+      console.log(
+        "✅ Admin Seeder Done"
+      );
 
-    console.log(
-      "❌ Server Error"
-    );
+      // START SERVER
+      server.listen(PORT, () => {
 
-    console.log(err);
+        console.log(
+          `🚀 Server running on port ${PORT}`
+        );
 
-  }
+      });
 
-};
+    } catch (err) {
 
-// START
+      console.log(
+        "❌ Server Error"
+      );
+
+      console.log(
+        err.message
+      );
+
+    }
+
+  };
+
+// START APP
 startServer();
