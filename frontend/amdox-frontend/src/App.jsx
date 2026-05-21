@@ -1,7 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import InviteRegister from "./pages/InviteRegister";
@@ -17,7 +16,6 @@ import Payroll from "./pages/Payroll";
 import EmployeeRegister from "./pages/EmployeeRegister";
 import Jobs from "./pages/Jobs";
 import JobRegister from "./pages/JobRegister";
-// import FinanceAnalytics from "./pages/FinanceAnalytics";
 import GL from "./pages/GL";
 import Bills from "./pages/Bills";
 import Receivables from "./pages/Receivables";
@@ -54,7 +52,6 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/employees" element={<Employees />} />
       <Route path="/add-employee" element={<AddEmployee />} />
