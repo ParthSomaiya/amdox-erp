@@ -1,97 +1,125 @@
 import express from "express";
+
 import {
   generatePayroll,
   markPaid,
   getAllPayroll,
   getMyPayroll,
+  downloadPayslip,
 } from "../controllers/payrollController.js";
 
-// ✅ CORRECT IMPORTS
-import { authMiddleware } from "../middleware/authMiddleware.js";
-import { allowRoles } from "../middleware/roleMiddleware.js";
+import {
+  protect,
+} from "../middleware/authMiddleware.js";
+
 import upload from "../middleware/uploadMiddleware.js";
 
-const router = express.Router();
+const router =
+  express.Router();
 
 
-// 💰 Generate Payroll (Finance/Admin)
+// ==============================
+// ➕ GENERATE PAYROLL
+// ==============================
+
 router.post(
   "/generate",
-  authMiddleware,
-  checkPermission(PERMISSIONS.GENERATE_PAYROLL),
+
+  protect,
+
   generatePayroll
 );
 
 
-// 💰 Mark as Paid (Finance/Admin)
+// ==============================
+// 💰 MARK AS PAID
+// ==============================
+
 router.put(
-  "/pay",
-  authMiddleware,
-  allowRoles("FINANCE", "ADMIN"),
+  "/paid",
+
+  protect,
+
   markPaid
 );
 
-router.get("/payslip/:id", downloadPayslip);
 
-// 👨‍💼 View all payroll (Finance/Admin)
+// ==============================
+// 📋 ALL PAYROLL
+// ==============================
+
 router.get(
   "/",
-  authMiddleware,
-  checkPermission(PERMISSIONS.VIEW_PAYROLL),
+
+  protect,
+
   getAllPayroll
 );
 
-// 👤 Employee view own payroll
+
+// ==============================
+// 👤 MY PAYROLL
+// ==============================
+
 router.get(
   "/my",
-  authMiddleware,
-  allowRoles("EMPLOYEE"),
+
+  protect,
+
   getMyPayroll
 );
 
-router.post(
-  "/upload-payslip",
-  authMiddleware,
-  allowRoles("HR", "ADMIN", "FINANCE"),
-  upload.single("file"),
-  async (req, res) => {
-    try {
-      const { payrollId } = req.body;
 
-      // 👇 IMPORTANT CHANGE
-      const fileUrl = req.file.location;
-
-      const payroll = await Payroll.findByIdAndUpdate(
-        payrollId,
-        { payslip: fileUrl },
-        { new: true }
-      );
-
-      res.json(payroll);
-    } catch (err) {
-      res.status(500).json({ message: "Upload error" });
-    }
-  }
-);
+// ==============================
+// 📄 DOWNLOAD PAYSLIP
+// ==============================
 
 router.get(
   "/payslip/:id",
-  authMiddleware,
-  async (req, res) => {
-    const payroll = await Payroll.findById(req.params.id);
 
-    // Security check
-    if (
-      payroll.employeeId.toString() !== req.user.id &&
-      req.user.role !== "HR" &&
-      req.user.role !== "ADMIN"
-    ) {
-      return res.status(403).json({ message: "Access denied" });
+  protect,
+
+  downloadPayslip
+);
+
+
+// ==============================
+// 📁 UPLOAD PAYSLIP
+// ==============================
+
+router.post(
+
+  "/upload-payslip",
+
+  protect,
+
+  upload.single("file"),
+
+  async (req, res) => {
+
+    try {
+
+      res.json({
+
+        message:
+          "Payslip uploaded",
+
+        file:
+          req.file,
+
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        message:
+          err.message,
+      });
+
     }
 
-    // 👇 Redirect to S3 file
-    res.redirect(payroll.payslip);
   }
+
 );
 
 export default router;

@@ -1,5 +1,9 @@
 import express from "express";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
+
+import Invite from "../models/Invite.js";
+import User from "../models/User.js";
 
 import {
   addEmployee,
@@ -7,7 +11,6 @@ import {
   applyLeave,
   updateLeaveStatus,
   getLeaves,
-  createEmployee
 } from "../controllers/hrController.js";
 
 import {
@@ -18,127 +21,324 @@ import {
   getExpenses,
 } from "../controllers/financeController.js";
 
+import {
+  protect,
+  authMiddleware,
+} from "../middleware/authMiddleware.js";
 
-import Invite from "../models/Invite.js";
-
-import { authMiddleware } from "../middleware/authMiddleware.js";
-import { allowRoles } from "../middleware/roleMiddleware.js";
-import { protect } from "../middleware/authMiddleware.js";
-import { authorizeRoles } from "../middleware/roleMiddleware.js";
+import {
+  authorizeRoles,
+} from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.get("/invite/:token", async (req, res) => {
-  const invite = await Invite.findOne({ token: req.params.token });
 
-  if (!invite || invite.expiresAt < new Date()) {
-    return res.status(400).json({ message: "Invalid or expired invite" });
+// ==============================
+// 📩 INVITE GET
+// ==============================
+
+router.get(
+  "/invite/:token",
+
+  async (req, res) => {
+
+    try {
+
+      const invite =
+        await Invite.findOne({
+          token:
+            req.params.token,
+        });
+
+      if (
+        !invite ||
+        invite.expiresAt <
+          new Date()
+      ) {
+
+        return res.status(400).json({
+          message:
+            "Invalid or expired invite",
+        });
+
+      }
+
+      res.json(invite);
+
+    } catch (err) {
+
+      res.status(500).json({
+        message:
+          err.message,
+      });
+
+    }
+
   }
-
-  res.json(invite);
-});
-
-// 📩 Invite System
-router.post("/invite", authMiddleware, async (req, res) => {
-  const { email, role } = req.body;
-
-  const token = crypto.randomBytes(20).toString("hex");
-
-  await Invite.create({
-    email,
-    role,
-    companyId: req.user.companyId,
-    token,
-    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-  });
-
-  const inviteLink = `http://localhost:5173/invite/${token}`;
-
-  console.log("Invite Link:", inviteLink);
-
-  res.json({ message: "Invite sent" });
-});
+);
 
 
-router.post("/register-invite", async (req, res) => {
-  const { token, password } = req.body;
+// ==============================
+// 📩 CREATE INVITE
+// ==============================
 
-  const invite = await Invite.findOne({ token });
+router.post(
+  "/invite",
 
-  if (!invite) {
-    return res.status(400).json({ message: "Invalid invite" });
+  protect,
+
+  async (req, res) => {
+
+    try {
+
+      const {
+        email,
+        role,
+      } = req.body;
+
+      const token =
+        crypto
+          .randomBytes(20)
+          .toString("hex");
+
+      await Invite.create({
+
+        email,
+        role,
+
+        companyId:
+          req.user.companyId,
+
+        token,
+
+        expiresAt:
+          new Date(
+            Date.now() +
+            24 *
+              60 *
+              60 *
+              1000
+          ),
+
+      });
+
+      const inviteLink =
+        `http://localhost:5173/invite/${token}`;
+
+      console.log(
+        "Invite Link:",
+        inviteLink
+      );
+
+      res.json({
+        message:
+          "Invite sent",
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        message:
+          err.message,
+      });
+
+    }
+
   }
+);
 
-  const hashed = await bcrypt.hash(password, 10);
 
-  const user = await User.create({
-    email: invite.email,
-    password: hashed,
-    role: invite.role,
-    companyId: invite.companyId,
-  });
+// ==============================
+// 👤 REGISTER VIA INVITE
+// ==============================
 
-  await Invite.deleteOne({ token });
+router.post(
+  "/register-invite",
 
-  res.json({ message: "Account created via invite" });
-});
+  async (req, res) => {
 
-// Employee Management
-router.post("/add", protect, authorizeRoles("ADMIN", "HR"), addEmployee);
-router.get("/", protect, authorizeRoles("ADMIN", "HR"), getEmployees);
+    try {
 
-// 📅 Leave
+      const {
+        token,
+        password,
+      } = req.body;
+
+      const invite =
+        await Invite.findOne({
+          token,
+        });
+
+      if (!invite) {
+
+        return res.status(400).json({
+          message:
+            "Invalid invite",
+        });
+
+      }
+
+      const hashed =
+        await bcrypt.hash(
+          password,
+          10
+        );
+
+      await User.create({
+
+        email:
+          invite.email,
+
+        password:
+          hashed,
+
+        role:
+          invite.role,
+
+        companyId:
+          invite.companyId,
+
+      });
+
+      await Invite.deleteOne({
+        token,
+      });
+
+      res.json({
+        message:
+          "Account created via invite",
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        message:
+          err.message,
+      });
+
+    }
+
+  }
+);
+
+
+// ==============================
+// 👨‍💼 EMPLOYEES
+// ==============================
+
+router.post(
+  "/add",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "HR"
+  ),
+
+  addEmployee
+);
+
+router.get(
+  "/",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "HR"
+  ),
+
+  getEmployees
+);
+
+
+// ==============================
+// 📅 LEAVE
+// ==============================
+
 router.post(
   "/leave",
-  authMiddleware,
-  checkPermission(PERMISSIONS.APPLY_LEAVE),
+
+  protect,
+
   applyLeave
 );
 
 router.get(
   "/leave",
-  authMiddleware,
-  allowRoles("HR", "ADMIN"),
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "HR"
+  ),
+
   getLeaves
 );
 
-router.post(
-  "/leave",
-  authMiddleware,
-  checkPermission(PERMISSIONS.APPROVE_LEAVE),
+router.put(
+  "/leave/status",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "HR"
+  ),
+
   updateLeaveStatus
 );
 
-// Invoice
-router.post("/invoice", authMiddleware, createInvoice);
-router.get("/invoice", authMiddleware, getInvoices);
-router.post("/invoice/paid", authMiddleware, markInvoicePaid);
 
-// Expense
-router.post("/expense", authMiddleware, addExpense);
-router.get("/expense", authMiddleware, getExpenses);
+// ==============================
+// 💰 INVOICE
+// ==============================
 
-// HR + ADMIN
-// Get employees
-router.get(
-  "/employees",
+router.post(
+  "/invoice",
+
   protect,
-  attachCompany,
-  async (req, res) => {
-    const data = await User.find({
-      companyId: req.companyId,
-    });
 
-    res.json(data);
-  }
+  createInvoice
 );
 
-// Add employee
+router.get(
+  "/invoice",
+
+  protect,
+
+  getInvoices
+);
+
 router.post(
-  "/employees",
-  authMiddleware,
-  checkPermission(PERMISSIONS.ADD_EMPLOYEE),
-  createEmployee
+  "/invoice/paid",
+
+  protect,
+
+  markInvoicePaid
+);
+
+
+// ==============================
+// 💸 EXPENSE
+// ==============================
+
+router.post(
+  "/expense",
+
+  protect,
+
+  addExpense
+);
+
+router.get(
+  "/expense",
+
+  protect,
+
+  getExpenses
 );
 
 export default router;

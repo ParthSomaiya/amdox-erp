@@ -1,80 +1,150 @@
 import Task from "../models/Task.js";
-import Project from "../models/Project.js";
-import Task from "../models/Task.js";
-import { sendNotification } from "../../../utils/notify.js";
 
-export const createTask = async (
-  req,
-  res
-) => {
 
-  try {
+// ==============================
+// ➕ CREATE TASK
+// ==============================
 
-    const task =
-      await Task.create(req.body);
+export const createTask =
+  async (req, res) => {
 
-    // 🔥 SEND REALTIME NOTIFICATION
-    await sendNotification({
+    try {
 
-      userId:
-        task.assignedTo,
+      const task =
+        await Task.create({
 
-      title:
-        "New Task Assigned",
+          ...req.body,
 
-      message:
-        `Task "${task.title}" assigned to you`,
+          companyId:
+            req.user.companyId,
 
-    });
+        });
 
-    res.status(201).json(task);
+      res.json(task);
 
-  } catch (err) {
+    } catch (err) {
 
-    res.status(500).json({
-      message: err.message,
-    });
+      res.status(500).json({
+        message:
+          err.message,
+      });
 
-  }
-};
+    }
 
-export const getTasks = async (req, res) => {
-  const { projectId } = req.query;
+  };
 
-  const data = await Task.find({
-    projectId,
-    companyId: req.user.companyId,
-  }).populate("assignedTo", "name");
 
-  res.json(data);
-};
+// ==============================
+// 📋 GET TASKS
+// ==============================
 
-export const updateTaskStatus = async (req, res) => {
-  const { id, status } = req.body;
+export const getTasks =
+  async (req, res) => {
 
-  const task = await Task.findByIdAndUpdate(
-    id,
-    { status },
-    { new: true }
-  );
+    try {
 
-  res.json(task);
-};
+      const tasks =
+        await Task.find({
 
-// 💰 Budget tracking (hours → cost)
-export const logHours = async (req, res) => {
-  const { taskId, hours, costPerHour } = req.body;
+          companyId:
+            req.user.companyId,
 
-  const task = await Task.findById(taskId);
+        });
 
-  task.hours = (task.hours || 0) + hours;
-  await task.save();
+      res.json(tasks);
 
-  const cost = hours * costPerHour;
+    } catch (err) {
 
-  await Project.findByIdAndUpdate(task.projectId, {
-    $inc: { spent: cost },
-  });
+      res.status(500).json({
+        message:
+          err.message,
+      });
 
-  res.json({ message: "Hours logged & budget updated" });
-};
+    }
+
+  };
+
+
+// ==============================
+// 🔄 UPDATE STATUS
+// ==============================
+
+export const updateTaskStatus =
+  async (req, res) => {
+
+    try {
+
+      const {
+        taskId,
+        status,
+      } = req.body;
+
+      const task =
+        await Task.findByIdAndUpdate(
+
+          taskId,
+
+          { status },
+
+          { new: true }
+
+        );
+
+      res.json(task);
+
+    } catch (err) {
+
+      res.status(500).json({
+        message:
+          err.message,
+      });
+
+    }
+
+  };
+
+
+// ==============================
+// ⏱ LOG HOURS
+// ==============================
+
+export const logHours =
+  async (req, res) => {
+
+    try {
+
+      const {
+        taskId,
+        hours,
+      } = req.body;
+
+      const task =
+        await Task.findById(taskId);
+
+      if (!task) {
+
+        return res.status(404).json({
+          message:
+            "Task not found",
+        });
+
+      }
+
+      task.loggedHours =
+        (task.loggedHours || 0)
+        + Number(hours);
+
+      await task.save();
+
+      res.json(task);
+
+    } catch (err) {
+
+      res.status(500).json({
+        message:
+          err.message,
+      });
+
+    }
+
+  };
