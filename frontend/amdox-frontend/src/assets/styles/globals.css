@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Inter, sans-serif;
+  background: #0f172a;
+  color: white;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2563eb;
+  border-radius: 20px;
+}
+
+.app-bg {
+  background:
+    radial-gradient(circle at top left, #1e3a8a, transparent 35%),
+    radial-gradient(circle at bottom right, #7c3aed, transparent 30%),
+    #020617;
+
+  min-height: 100vh;
+}
