@@ -61,7 +61,10 @@ export const markInvoicePaid = async (req, res) => {
 // 📄 Get Invoices
 export const getInvoices = async (req, res) => {
   const data = await Invoice.find({
-    companyId: req.user.companyId,
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
   });
 
   res.json(data);
@@ -130,8 +133,8 @@ export const getProfitAnalytics = async (req, res) => {
 
     // 🔥 Merge both
     const months = [
-      "Jan","Feb","Mar","Apr","May","Jun",
-      "Jul","Aug","Sep","Oct","Nov","Dec"
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
 
     const result = months.map((m, index) => {

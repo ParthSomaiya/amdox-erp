@@ -1,10 +1,19 @@
 import nodemailer from "nodemailer";
 
-// TRANSPORTER
+// ==============================
+// 📧 TRANSPORTER
+// ==============================
+
 const transporter =
   nodemailer.createTransport({
 
-    service: "gmail",
+    host:
+      process.env.EMAIL_HOST,
+
+    port:
+      process.env.EMAIL_PORT,
+
+    secure: false,
 
     auth: {
 
@@ -18,39 +27,49 @@ const transporter =
 
   });
 
-// SEND EMAIL
-export const sendEmail = async ({
-  to,
-  subject,
-  html,
-}) => {
 
-  try {
+// ==============================
+// 📩 SEND EMAIL
+// ==============================
 
-    await transporter.sendMail({
+export const sendEmail =
+  async ({
 
-      from:
-        `"Amdox ERP" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    html,
 
-      to,
+  }) => {
 
-      subject,
+    try {
 
-      html,
+      await transporter.sendMail({
 
-    });
+        from:
+          `"Amdox ERP" <${process.env.EMAIL_USER}>`,
 
-    console.log(
-      "✅ Email sent:",
-      to
-    );
+        to,
 
-  } catch (err) {
+        subject,
 
-    console.log(
-      "❌ Email error:",
-      err.message
-    );
+        html,
 
-  }
-};
+      });
+
+      console.log(
+        "✅ Email sent:",
+        to
+      );
+
+    } catch (err) {
+
+      console.log(
+        "❌ Email error:",
+        err.message
+      );
+
+      throw err;
+
+    }
+
+  };

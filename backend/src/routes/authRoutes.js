@@ -1,104 +1,150 @@
 import express from "express";
-import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import {
-  sendOTP,
-  verifyOTP,
-  registerAdmin,
-  registerUser,
-  loginUser,
-} from "../controllers/authController.js";
-import Otp from "../models/Otp.js";
-import User from "../models/User.js";
+
 import passport from "../config/passport.js";
 
+import Otp from "../models/Otp.js";
+import User from "../models/User.js";
+
 import {
+
+  sendOTP,
+  verifyOTP,
+
+  registerAdmin,
+  registerUser,
+
+  loginUser,
+
   refreshToken,
+
   forgotPassword,
-  registerEmployeeWithInvite,
   resetPassword,
+
+  registerEmployeeWithInvite,
+
 } from "../controllers/authController.js";
 
 const router = express.Router();
 
-router.post("/send-otp", async (req, res) => {
-  const { email } = req.body;
+// ================= OTP SEND =================
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+router.post(
+  "/send-otp",
+  sendOTP
+);
 
-  await Otp.create({
-    email,
-    otp,
-    expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-  });
+// ================= OTP VERIFY =================
 
-  console.log("OTP:", otp); // for testing
+router.post(
+  "/verify-otp",
+  verifyOTP
+);
 
-  res.json({ message: "OTP sent" });
-});
+// ================= REGISTER ADMIN =================
 
-router.post("/verify-otp", async (req, res) => {
-  const { email, otp, password, role } = req.body;
+router.post(
+  "/register-admin",
+  registerAdmin
+);
 
-  const record = await Otp.findOne({ email, otp });
+// ================= REGISTER USER =================
 
-  if (!record || record.expiresAt < new Date()) {
-    return res.status(400).json({ message: "Invalid OTP" });
-  }
+router.post(
+  "/register-user",
+  registerUser
+);
 
-  const hashed = await bcrypt.hash(password, 10);
+// ================= LOGIN =================
 
-  const user = await User.create({
-    email,
-    password: hashed,
-    role: role || "EMPLOYEE",
-  });
+router.post(
+  "/login",
+  loginUser
+);
 
-  // ✅ ADD HERE (after success)
-  await Otp.deleteMany({ email });
+// ================= REGISTER INVITE =================
 
-  res.json({ message: "Registered successfully" });
-});
+router.post(
+  "/register-invite",
+  registerEmployeeWithInvite
+);
 
-router.post("/register-admin", registerAdmin);
-router.post("/register-user", registerUser);
-router.post("/login", loginUser);
-router.post("/register-invite", registerEmployeeWithInvite);
+// ================= FORGOT PASSWORD =================
 
 router.post(
   "/forgot-password",
   forgotPassword
 );
 
+// ================= RESET PASSWORD =================
+
 router.post(
   "/reset-password",
   resetPassword
 );
+
+// ================= REFRESH TOKEN =================
 
 router.post(
   "/refresh",
   refreshToken
 );
 
-// 🔥 Redirect to Google
+// ================= GOOGLE LOGIN =================
+
 router.get(
+
   "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+
+  passport.authenticate(
+
+    "google",
+
+    {
+      scope: ["profile", "email"],
+    }
+
+  )
+
 );
 
-// 🔥 Callback
+// ================= GOOGLE CALLBACK =================
+
 router.get(
+
   "/google/callback",
-  passport.authenticate("google", { session: false }),
+
+  passport.authenticate(
+
+    "google",
+
+    {
+      session: false,
+    }
+
+  ),
+
   (req, res) => {
+
     const token = jwt.sign(
-      { id: req.user._id },
+
+      {
+        id: req.user._id,
+      },
+
       process.env.JWT_SECRET
+
     );
 
-    res.redirect(`http://localhost:5173/login-success?token=${token}`);
+    res.redirect(
+
+      `http://localhost:5173/login-success?token=${token}`
+
+    );
+
   }
+
 );
 
 export default router;

@@ -30,7 +30,7 @@ export const applyLeave = async (req, res) => {
   const { fromDate, toDate, reason } = req.body;
 
   const leave = await Leave.create({
-    employeeId: req.user.userId,
+    employeeId: req.user.id,
     companyId: req.user.companyId,
     fromDate,
     toDate,
