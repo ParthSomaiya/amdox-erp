@@ -367,11 +367,9 @@ export const registerEmployeeWithInvite = async (req, res) => {
 
   try {
 
-    const {
-      token,
-      name,
-      password,
-    } = req.body;
+    const { name } = req.body;
+    const { token } = req.params;
+    const { password } = req.body;
 
     const invite = await Invite.findOne({
       token,

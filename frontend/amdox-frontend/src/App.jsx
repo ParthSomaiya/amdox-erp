@@ -64,13 +64,11 @@ function App() {
       <Route path="/payroll" element={<PayrollList />} />
       <Route path="/my-payslip" element={<MyPayslip />} />
       <Route path="/analytics" element={<Analytics />} />
-      <Route path="/payroll" element={<Payroll />} />
       <Route path="/register" element={<RegisterChoice />} />
       <Route path="/jobs" element={<Jobs />} />
       <Route path="/register/employee" element={<EmployeeRegister />} />
       <Route path="/register/job" element={<JobRegister />} />
       <Route path="/register/employee/:token" element={<EmployeeRegister />} />
-      {/* <Route path="/finance-analytics" element={<FinanceAnalytics />} /> */}
       <Route path="/gl" element={<GL />} />
       <Route path="/bills" element={<Bills />} />
       <Route path="/receivables" element={<Receivables />} />

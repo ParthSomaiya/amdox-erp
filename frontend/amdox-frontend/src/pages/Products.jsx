@@ -25,7 +25,7 @@ export default function Products() {
           {products.map((p) => (
             <tr key={p._id}>
               <td>{p.name}</td>
-              <td>{p.stock}</td>
+              <td>{p.quantity}</td>
               <td>₹{p.price}</td>
             </tr>
           ))}

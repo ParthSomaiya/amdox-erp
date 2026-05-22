@@ -9,14 +9,14 @@ export const createInvoice = async (req, res) => {
   try {
 
     const {
-      customerName,
+      clientName,
       amount,
     } = req.body;
 
     const invoice =
       await Invoice.create({
 
-        customerName,
+        clientName,
 
         amount,
 

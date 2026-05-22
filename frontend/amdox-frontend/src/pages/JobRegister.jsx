@@ -1,3 +1,6 @@
+import { useState } from "react";
+import API from "../services/api";
+
 export default function JobRegister() {
   const [data, setData] = useState({});
 

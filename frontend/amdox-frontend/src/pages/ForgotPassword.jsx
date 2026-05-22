@@ -1,8 +1,7 @@
 import { useState }
 from "react";
 
-import api
-from "../utils/axiosInstance";
+import API from "../services/api";
 
 export default function ForgotPassword() {
 

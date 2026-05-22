@@ -4,8 +4,7 @@ from "react";
 import { useParams }
 from "react-router-dom";
 
-import api
-from "../utils/axiosInstance";
+import API from "../services/api";
 
 export default function ResetPassword() {
 

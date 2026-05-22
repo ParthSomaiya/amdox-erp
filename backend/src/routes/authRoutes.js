@@ -80,7 +80,7 @@ router.post(
 // ================= RESET PASSWORD =================
 
 router.post(
-  "/reset-password",
+  "/reset-password/:token",
   resetPassword
 );
 

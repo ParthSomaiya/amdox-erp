@@ -28,7 +28,7 @@ export default function MainLayout({ children }) {
 
     socket.emit("join", user.id);
 
-    socket.on("notification", (data) => {
+    socket.on("new_notification", (data) => {
       console.log("New Notification:", data);
 
       // Add real-time notification
@@ -47,7 +47,7 @@ export default function MainLayout({ children }) {
 
       setNotifications((prev) =>
         prev.map((n) =>
-          n._id === id ? { ...n, isRead: true } : n
+          n._id === id ? { ...n, read: true } : n
         )
       );
     } catch (err) {

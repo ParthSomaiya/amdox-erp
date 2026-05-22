@@ -68,8 +68,6 @@ const io = new Server(server, {
 
 });
 
-setSocket(io);
-
 // ================= SOCKET EVENTS =================
 io.on("connection", (socket) => {
 
