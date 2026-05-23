@@ -19,6 +19,9 @@ import "./workers/emailWorker.js";
 // ================= CONFIG =================
 import "./config/passport.js";
 
+import "./cron/interviewReminder.js";
+
+
 // ================= SOCKET =================
 import { setSocket } from "./utils/notify.js";
 

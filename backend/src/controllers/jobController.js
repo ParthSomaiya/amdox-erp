@@ -1,5 +1,10 @@
 import Job from "../models/Job.js";
 import Applicant from "../models/Applicant.js";
+import { parseResume }
+  from "../utils/resumeParser.js";
+import {
+  sendInterviewMail,
+} from "../utils/sendInterviewMail.js";
 
 
 // =========================
@@ -153,39 +158,37 @@ export const deleteJob = async (req, res) => {
 // APPLY JOB
 // =========================
 
-export const applyJob = async (req, res) => {
-  try {
+export const applyJob =
+  async (req, res) => {
 
-    const applicant = await Applicant.create({
+    const parsed =
+      await parseResume(
+        req.file.path
+      );
 
-      name: req.body.name,
-      email: req.body.email,
-      phone: req.body.phone,
+    const applicant =
+      await Applicant.create({
 
-      experience:
-        req.body.experience,
+        name:
+          req.body.name,
 
-      skills: req.body.skills,
+        email:
+          req.body.email,
 
-      jobId: req.params.jobId,
+        jobId:
+          req.params.jobId,
 
-      resume:
-        req.file?.path || "",
+        resume:
+          req.file.path,
 
-      status: "APPLIED",
+        parsedData:
+          parsed,
 
-    });
+      });
 
-    res.status(201).json(applicant);
+    res.json(applicant);
 
-  } catch (err) {
-
-    res.status(500).json({
-      message: err.message,
-    });
-
-  }
-};
+  };
 
 
 // =========================
@@ -252,7 +255,7 @@ export const getSingleApplicant =
 
     }
 
-};
+  };
 
 
 // =========================
@@ -281,6 +284,26 @@ export const updateApplicantStatus =
 
         );
 
+
+      // =========================
+      // SEND INTERVIEW EMAIL
+      // =========================
+
+      if (
+        req.body.interviewDate
+      ) {
+
+        await sendInterviewMail(
+
+          applicant.email,
+
+          req.body.interviewDate
+
+        );
+
+      }
+
+
       res.json(applicant);
 
     } catch (err) {
@@ -291,7 +314,7 @@ export const updateApplicantStatus =
 
     }
 
-};
+  };
 
 
 // =========================
@@ -320,4 +343,4 @@ export const deleteApplicant =
 
     }
 
-};
+  };

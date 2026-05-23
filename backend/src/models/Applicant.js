@@ -30,6 +30,19 @@ const applicantSchema =
         default: "APPLIED",
       },
 
+      parsedData: {
+
+        skills: [String],
+
+        experience: String,
+
+        education: String,
+
+        rawText: String,
+
+      },
+
+
       interviewDate: Date,
 
       notes: String,
