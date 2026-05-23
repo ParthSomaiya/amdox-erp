@@ -53,6 +53,9 @@ import poRoutes from "./routes/poRoutes.js";
 // PROJECT
 import taskRoutes from "./routes/taskRoutes.js";
 
+import paymentRoutes from "./routes/paymentRoutes.js";
+
+
 // ================= APP =================
 const app = express();
 
@@ -247,6 +250,11 @@ app.use(
 app.use(
   "/api/tasks",
   taskRoutes
+);
+
+app.use(
+  "/api/payment",
+  paymentRoutes
 );
 
 app.use("/api/admin", adminRoutes);

@@ -21,11 +21,25 @@ export default function LeaveManagement() {
         <div key={l._id}>
           {l.employeeId?.email} | {l.fromDate} - {l.toDate} | {l.status}
 
-          <button onClick={() => updateStatus(l._id, "APPROVED")}>
+          <button
+            onClick={() =>
+              API.put(
+                `/hr/leave/approve/${leave._id}`
+              )
+            }
+            className="bg-green-600 text-white px-3 py-1 rounded"
+          >
             Approve
           </button>
 
-          <button onClick={() => updateStatus(l._id, "REJECTED")}>
+          <button
+            onClick={() =>
+              API.put(
+                `/hr/leave/reject/${leave._id}`
+              )
+            }
+            className="bg-red-600 text-white px-3 py-1 rounded ml-2"
+          >
             Reject
           </button>
         </div>

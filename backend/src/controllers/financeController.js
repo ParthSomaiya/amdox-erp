@@ -6,41 +6,33 @@ import { sendNotification } from "../utils/notify.js";
 // 📄 Create Invoice
 export const createInvoice = async (req, res) => {
 
-  try {
+  const count =
+    await Invoice.countDocuments();
 
-    const {
-      clientName,
-      amount,
-    } = req.body;
+  const invoiceNumber =
+    `INV-2026-${String(count + 1).padStart(3, "0")}`;
 
-    const invoice =
-      await Invoice.create({
+  const invoice =
+    await Invoice.create({
 
-        clientName,
+      invoiceNumber,
 
-        amount,
+      customerName:
+        req.body.customerName,
 
-        companyId:
-          req.companyId,
-      });
+      amount:
+        req.body.amount,
 
-    // 🔥 REALTIME NOTIFICATION
-    await sendNotification({
-      userId: req.user.id,
-      title: "Invoice Created",
-      message:
-        "New invoice added successfully",
+      gst:
+        req.body.gst,
+
+      companyId:
+        req.user.companyId,
+
     });
 
-    res.status(201).json(invoice);
+  res.json(invoice);
 
-  } catch (err) {
-
-    res.status(500).json({
-      message: err.message,
-    });
-
-  }
 };
 
 
@@ -158,3 +150,46 @@ export const getProfitAnalytics = async (req, res) => {
     res.status(500).json({ message: "Monthly analytics error" });
   }
 };
+
+export const getProfitLoss =
+  async (req, res) => {
+
+    const invoices =
+      await Invoice.find({
+        companyId:
+          req.user.companyId,
+      });
+
+    const expenses =
+      await Expense.find({
+        companyId:
+          req.user.companyId,
+      });
+
+    const revenue =
+      invoices.reduce(
+        (a, b) =>
+          a + b.totalAmount,
+        0
+      );
+
+    const expenseTotal =
+      expenses.reduce(
+        (a, b) =>
+          a + b.amount,
+        0
+      );
+
+    res.json({
+
+      revenue,
+
+      expenses:
+        expenseTotal,
+
+      profit:
+        revenue - expenseTotal,
+
+    });
+
+  };

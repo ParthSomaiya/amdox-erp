@@ -26,41 +26,47 @@ export default function CreateInvoice() {
 
   return (
     <MainLayout>
-      <h2 className="text-xl font-bold mb-4">Create Invoice</h2>
 
-      <input
-        type="number"
-        placeholder="Amount"
-        className="border p-2 mb-2"
-        onChange={(e) => setAmount(Number(e.target.value))}
-      />
+      <div className="bg-white p-6 rounded shadow">
 
-      <input
-        type="number"
-        placeholder="GST %"
-        className="border p-2 mb-2"
-        value={gstRate}
-        onChange={(e) => setGstRate(Number(e.target.value))}
-      />
+        <h2 className="text-2xl font-bold mb-4">
+          Create Invoice
+        </h2>
 
-      <button onClick={calculateGST} className="bg-blue-500 text-white px-4 py-2">
-        Calculate GST
-      </button>
+        <input
+          type="number"
+          placeholder="Amount"
+          className="border p-2 mb-2"
+          onChange={(e) => setAmount(Number(e.target.value))}
+        />
 
-      {result.total && (
-        <div className="mt-4">
-          <p>CGST: ₹{result.cgst}</p>
-          <p>SGST: ₹{result.sgst}</p>
-          <p>Total: ₹{result.total}</p>
-        </div>
-      )}
+        <input
+          type="number"
+          placeholder="GST %"
+          className="border p-2 mb-2"
+          value={gstRate}
+          onChange={(e) => setGstRate(Number(e.target.value))}
+        />
 
-      <button
-        onClick={createInvoice}
-        className="bg-green-600 text-white px-4 py-2 mt-4"
-      >
-        Create Invoice
-      </button>
+        <button onClick={calculateGST} className="bg-blue-500 text-white px-4 py-2">
+          Calculate GST
+        </button>
+
+        {result.total && (
+          <div className="mt-4">
+            <p>CGST: ₹{result.cgst}</p>
+            <p>SGST: ₹{result.sgst}</p>
+            <p>Total: ₹{result.total}</p>
+          </div>
+        )}
+
+        <button
+          onClick={createInvoice}
+          className="bg-green-600 text-white px-4 py-2 mt-4"
+        >
+          Create Invoice
+        </button>
+      </div>
     </MainLayout>
   );
 }

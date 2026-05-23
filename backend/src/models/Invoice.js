@@ -12,6 +12,19 @@ const invoiceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",
   },
+  invoiceNumber: {
+    type: String,
+    unique: true,
+  },
+  tdsPercentage: {
+    type: Number,
+    default: 0,
+  },
+
+  tdsAmount: {
+    type: Number,
+    default: 0,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

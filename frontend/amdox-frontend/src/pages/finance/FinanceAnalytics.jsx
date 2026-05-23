@@ -13,11 +13,7 @@ import {
 } from "recharts";
 
 export default function FinanceAnalytics() {
-    const [data, setData] = useState({
-        revenue: 0,
-        expense: 0,
-        profit: 0,
-    });
+    const [data, setData] = useState([]);
 
     useEffect(() => {
         API.get("/finance/analytics")
@@ -39,11 +35,52 @@ export default function FinanceAnalytics() {
         { name: "Profit", value: data.profit },
     ];
 
+    const expenses = data.map((d) => ({
+        month: d.month,
+        amount: d.expense,
+    }));
+
     return (
         <div className="p-6">
             <h2 className="text-2xl font-bold mb-6">
                 Monthly Finance Analytics
             </h2>
+
+            {/* 📊 Revenue Bar Chart */}
+            <div className="bg-white p-5 rounded shadow">
+                <h3 className="mb-3">
+                    Revenue Chart
+                </h3>
+
+                <BarChart
+                    width={700}
+                    height={300}
+                    data={data}
+                >
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="revenue" />
+                </BarChart>
+            </div>
+
+            {/* 💸 Expense Chart */}
+            <div className="bg-white p-5 rounded shadow">
+                <h3 className="mb-3">
+                    Expense Chart
+                </h3>
+
+                <BarChart
+                    width={600}
+                    height={300}
+                    data={expenses}
+                >
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="amount" />
+                </BarChart>
+            </div>
 
             <div className="grid md:grid-cols-2 gap-6">
 

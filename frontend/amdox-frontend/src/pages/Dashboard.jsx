@@ -32,6 +32,17 @@ export default function Dashboard() {
       });
   }, []);
 
+  const [analytics, setAnalytics] =
+    useState({});
+
+  useEffect(() => {
+
+    API.get("/hr/analytics")
+      .then((res) =>
+        setAnalytics(res.data)
+      );
+
+  }, []);
   return (
     <MainLayout>
 
@@ -65,6 +76,22 @@ export default function Dashboard() {
               <h3 className="text-gray-500">Payroll</h3>
               <p className="text-2xl font-bold">
                 {data?.stats?.payroll || 0}
+              </p>
+            </div>
+
+            <div className="bg-white p-5 shadow rounded">
+              <h3>Total Employees</h3>
+
+              <p className="text-2xl font-bold">
+                {analytics.totalEmployees}
+              </p>
+            </div>
+
+            <div className="bg-white p-5 shadow rounded">
+              <h3>Total Leaves</h3>
+
+              <p className="text-2xl font-bold">
+                {analytics.totalLeaves}
               </p>
             </div>
 

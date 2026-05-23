@@ -291,6 +291,26 @@ router.put(
   updateLeaveStatus
 );
 
+router.put(
+  "/leave/approve/:id",
+  authMiddleware,
+  authorize("HR", "ADMIN"),
+  approveLeave
+);
+
+router.put(
+  "/leave/reject/:id",
+  authMiddleware,
+  authorize("HR", "ADMIN"),
+  rejectLeave
+);
+
+router.get(
+  "/analytics",
+  authMiddleware,
+  authorize("HR", "ADMIN"),
+  hrAnalytics
+);
 
 // ==============================
 // 💰 INVOICE

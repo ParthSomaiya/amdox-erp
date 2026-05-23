@@ -16,14 +16,43 @@ export default function AddEmployee() {
   };
 
   return (
-    <div>
-      <h2>Add Employee</h2>
+    <div className="max-w-lg mx-auto bg-white shadow p-6 rounded">
 
-      <input placeholder="Name" onChange={(e) => setName(e.target.value)} />
-      <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
-      <input placeholder="Position" onChange={(e) => setPosition(e.target.value)} />
+      <h2 className="text-2xl font-bold mb-5">
+        Add Employee
+      </h2>
 
-      <button onClick={handleSubmit}>Add</button>
+      <input
+        className="border p-2 w-full mb-3 rounded"
+        placeholder="Name"
+        onChange={(e) =>
+          setName(e.target.value)
+        }
+      />
+
+      <input
+        className="border p-2 w-full mb-3 rounded"
+        placeholder="Email"
+        onChange={(e) =>
+          setEmail(e.target.value)
+        }
+      />
+
+      <input
+        className="border p-2 w-full mb-3 rounded"
+        placeholder="Position"
+        onChange={(e) =>
+          setPosition(e.target.value)
+        }
+      />
+
+      <button
+        onClick={handleSubmit}
+        className="bg-blue-600 text-white px-5 py-2 rounded"
+      >
+        Add Employee
+      </button>
+
     </div>
   );
 }
