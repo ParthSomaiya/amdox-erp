@@ -55,6 +55,7 @@ import taskRoutes from "./routes/taskRoutes.js";
 
 import paymentRoutes from "./routes/paymentRoutes.js";
 
+import inventoryRoutes from "./routes/inventoryRoutes.js";
 
 // ================= APP =================
 const app = express();
@@ -258,6 +259,11 @@ app.use(
 );
 
 app.use("/api/admin", adminRoutes);
+
+app.use(
+  "/api/inventory",
+  inventoryRoutes
+);
 
 // TEST ROUTE
 app.get("/", (req, res) => {

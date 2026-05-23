@@ -9,6 +9,14 @@ const productSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",
   },
+  barcode: {
+    type: String,
+    unique: true,
+  },
+  lowStockLimit: {
+    type: Number,
+    default: 5,
+  },
 }, { timestamps: true });
 
 export default mongoose.model("Product", productSchema);

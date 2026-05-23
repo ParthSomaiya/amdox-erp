@@ -1,11 +1,9 @@
 import mongoose from "mongoose";
 
-const warehouseSchema =
+const categorySchema =
   new mongoose.Schema({
 
     name: String,
-
-    address: String,
 
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -15,6 +13,6 @@ const warehouseSchema =
   });
 
 export default mongoose.model(
-  "Warehouse",
-  warehouseSchema
+  "ProductCategory",
+  categorySchema
 );
