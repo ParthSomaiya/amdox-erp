@@ -65,6 +65,9 @@ import projectRoutes from "./routes/projectRoutes.js";
 
 import jobRoutes from "./routes/jobRoutes.js";
 
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+
+
 // ================= APP =================
 const app = express();
 
@@ -293,6 +296,10 @@ app.use(
   jobRoutes
 );
 
+app.use(
+  "/api/subscription",
+  subscriptionRoutes
+);
 
 // TEST ROUTE
 app.get("/", (req, res) => {

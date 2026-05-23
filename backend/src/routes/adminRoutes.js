@@ -16,6 +16,9 @@ import {
   getTenantAnalytics,
   saveSettings,
   getSettings,
+  getAllCompanies,
+  suspendCompany,
+  
 } from "../controllers/adminController.js";
 
 
@@ -173,5 +176,18 @@ router.get(
   getSettings
 );
 
+router.get(
+  "/companies",
+  protect,
+  authorizeRoles("SUPER_ADMIN"),
+  getAllCompanies
+);
+
+router.put(
+  "/companies/suspend/:id",
+  protect,
+  authorizeRoles("SUPER_ADMIN"),
+  suspendCompany
+);
 
 export default router;

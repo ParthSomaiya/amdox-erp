@@ -1,13 +1,13 @@
-import IORedis from "ioredis";
+import { createClient } from "redis";
 
-const connection =
-  new IORedis({
+const redisClient =
+  createClient({
 
-    host: "127.0.0.1",
-    port: 6379,
-
-    maxRetriesPerRequest: null,
+    url:
+      "redis://127.0.0.1:6379",
 
   });
 
-export default connection;
+redisClient.connect();
+
+export default redisClient;

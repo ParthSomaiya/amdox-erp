@@ -433,3 +433,33 @@ export const getSettings = async (req, res) => {
 
   }
 };
+
+export const getAllCompanies =
+  async (req, res) => {
+
+    const companies =
+      await Company.find();
+
+    res.json(companies);
+
+};
+
+export const suspendCompany =
+  async (req, res) => {
+
+    const company =
+      await Company.findByIdAndUpdate(
+
+        req.params.id,
+
+        {
+          suspended: true,
+        },
+
+        { new: true }
+
+      );
+
+    res.json(company);
+
+};
