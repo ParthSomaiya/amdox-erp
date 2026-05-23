@@ -42,6 +42,7 @@ import jobRoutes from "./routes/jobRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import sprintRoutes from "./routes/sprintRoutes.js";
 import timeRoutes from "./routes/timeRoutes.js";
+import aiRoutes from "./ai/aiRoutes.js";
 
 // ================= SOCKET =================
 import { initSocket } from "./socket/notificationSocket.js";
@@ -100,6 +101,8 @@ app.use("/api/jobs", jobRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/sprint", sprintRoutes);
 app.use("/api/time", timeRoutes);
+app.use("/api/ai", aiRoutes);
+
 
 // ================= ROOT =================
 app.get("/", (req, res) => {
