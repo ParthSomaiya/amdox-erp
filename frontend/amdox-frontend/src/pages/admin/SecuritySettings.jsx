@@ -1,74 +1,78 @@
 import { useState } from "react";
+import API from "../../services/api";
+import MainLayout from "../../layouts/MainLayout";
 
 export default function SecuritySettings() {
-  const [minLength, setMinLength] = useState(8);
-  const [twoFA, setTwoFA] = useState(false);
-  const [jwtExpiry, setJwtExpiry] = useState(15);
-  const [loginLimit, setLoginLimit] = useState(5);
+
+  const [passwordMinLength,
+    setPasswordMinLength] =
+      useState(8);
+
+  const [enable2FA,
+    setEnable2FA] =
+      useState(false);
+
+  const save = async () => {
+
+    await API.post(
+      "/admin/settings",
+      {
+        securitySettings: {
+          passwordMinLength,
+          enable2FA,
+        },
+      }
+    );
+
+    alert("Security settings saved");
+
+  };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">
-        🔐 Security Settings
+    <MainLayout>
+
+      <h1 className="text-2xl font-bold mb-5">
+        Security Settings
       </h1>
 
-      <div className="bg-white p-4 rounded shadow space-y-5">
+      <div className="bg-white p-5 shadow rounded">
 
-        {/* PASSWORD POLICY */}
-        <div>
-          <label className="block font-semibold">
-            Password Min Length
-          </label>
+        <input
+          type="number"
+          value={passwordMinLength}
+          onChange={(e) =>
+            setPasswordMinLength(
+              e.target.value
+            )
+          }
+          className="border p-2 mb-4 w-full"
+        />
+
+        <label className="flex items-center gap-2 mb-4">
+
           <input
-            type="number"
-            value={minLength}
-            onChange={(e) => setMinLength(e.target.value)}
-            className="border p-2 w-40"
+            type="checkbox"
+            checked={enable2FA}
+            onChange={(e) =>
+              setEnable2FA(
+                e.target.checked
+              )
+            }
           />
-        </div>
 
-        {/* JWT EXPIRY */}
-        <div>
-          <label className="block font-semibold">
-            JWT Expiry (minutes)
-          </label>
-          <input
-            type="number"
-            value={jwtExpiry}
-            onChange={(e) => setJwtExpiry(e.target.value)}
-            className="border p-2 w-40"
-          />
-        </div>
+          Enable 2FA
 
-        {/* 2FA */}
-        <div>
-          <label className="block font-semibold">
-            Two Factor Auth
-          </label>
-          <button
-            onClick={() => setTwoFA(!twoFA)}
-            className={`px-4 py-2 rounded ${
-              twoFA ? "bg-green-600 text-white" : "bg-gray-400"
-            }`}
-          >
-            {twoFA ? "Enabled" : "Disabled"}
-          </button>
-        </div>
+        </label>
 
-        {/* LOGIN LIMIT */}
-        <div>
-          <label className="block font-semibold">
-            Login Attempt Limit
-          </label>
-          <input
-            type="number"
-            value={loginLimit}
-            onChange={(e) => setLoginLimit(e.target.value)}
-            className="border p-2 w-40"
-          />
-        </div>
+        <button
+          onClick={save}
+          className="bg-blue-600 text-white px-5 py-2 rounded"
+        >
+          Save
+        </button>
 
       </div>
-    </div>
+
+    </MainLayout>
   );
 }

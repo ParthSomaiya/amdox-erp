@@ -1,36 +1,69 @@
 import { useEffect, useState } from "react";
 import API from "../../services/api";
+import MainLayout from "../../layouts/MainLayout";
 
 export default function AdminSettings() {
-  const [settings, setSettings] = useState([]);
+
+  const [settings, setSettings] =
+    useState({
+      companySettings: {},
+    });
 
   useEffect(() => {
-    API.get("/admin/settings").then((res) => {
-      setSettings(res.data);
-    });
+
+    API.get("/admin/settings")
+      .then((res) => {
+        if (res.data) {
+          setSettings(res.data);
+        }
+      });
+
   }, []);
 
-  const updateSetting = async (key, value) => {
-    await API.post("/admin/settings", { key, value });
+  const save = async () => {
+
+    await API.post(
+      "/admin/settings",
+      settings
+    );
+
+    alert("Settings saved");
+
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold">⚙️ Admin Settings</h1>
+    <MainLayout>
 
-      {settings.map((s) => (
-        <div key={s._id} className="mt-4">
-          <label>{s.key}</label>
+      <h1 className="text-2xl font-bold mb-5">
+        Admin Settings
+      </h1>
 
-          <input
-            className="border p-2 ml-2"
-            defaultValue={s.value}
-            onBlur={(e) =>
-              updateSetting(s.key, e.target.value)
-            }
-          />
-        </div>
-      ))}
-    </div>
+      <input
+        placeholder="Company Name"
+        className="border p-2 w-full mb-3"
+        value={
+          settings.companySettings
+            ?.companyName || ""
+        }
+        onChange={(e) =>
+          setSettings({
+            ...settings,
+            companySettings: {
+              ...settings.companySettings,
+              companyName:
+                e.target.value,
+            },
+          })
+        }
+      />
+
+      <button
+        onClick={save}
+        className="bg-blue-600 text-white px-5 py-2 rounded"
+      >
+        Save Settings
+      </button>
+
+    </MainLayout>
   );
 }

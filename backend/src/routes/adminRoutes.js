@@ -6,10 +6,26 @@ import {
   updateCompany,
   getAdminStats,
   getAuditLogs,
+  getUsers,
+  updateUser,
+  deleteUser,
+  suspendUser,
+  activateUser,
+  changeRole,
+  assignPermissions,
+  getTenantAnalytics,
+  saveSettings,
+  getSettings,
 } from "../controllers/adminController.js";
 
+
+import {
+  protect,
+  authorize,
+  authMiddleware,
+} from "../middleware/authMiddleware.js";
+
 import { backupDB } from "../utils/backup.js";
-import { authMiddleware } from "../middleware/authMiddleware.js";
 import { allowRoles } from "../middleware/roleMiddleware.js";
 import { checkPermission } from "../middleware/permissionMiddleware.js";
 import { PERMISSIONS } from "../config/permissions.js";
@@ -56,13 +72,6 @@ router.get(
   getAdminStats
 );
 
-// 📜 Audit logs
-router.get(
-  "/logs",
-  authMiddleware,
-  checkPermission(PERMISSIONS.MANAGE_USERS),
-  getAuditLogs
-);
 
 router.get(
   "/backup",
@@ -73,5 +82,96 @@ router.get(
     res.json({ message: "Backup started" });
   }
 );
+
+// USERS
+router.get(
+  "/users",
+  protect,
+  authorize("ADMIN"),
+  getUsers
+);
+
+router.put(
+  "/users/:id",
+  protect,
+  authorize("ADMIN"),
+  updateUser
+);
+
+router.delete(
+  "/users/:id",
+  protect,
+  authorize("ADMIN"),
+  deleteUser
+);
+
+
+// SUSPEND / ACTIVATE
+router.put(
+  "/users/:id/suspend",
+  protect,
+  authorize("ADMIN"),
+  suspendUser
+);
+
+router.put(
+  "/users/:id/activate",
+  protect,
+  authorize("ADMIN"),
+  activateUser
+);
+
+
+// ROLE UPDATE
+router.put(
+  "/users/:id/role",
+  protect,
+  authorize("ADMIN"),
+  changeRole
+);
+
+
+// PERMISSIONS
+router.put(
+  "/users/:id/permissions",
+  protect,
+  authorize("ADMIN"),
+  assignPermissions
+);
+
+
+// AUDIT LOGS
+router.get(
+  "/audit-logs",
+  protect,
+  authorize("ADMIN"),
+  getAuditLogs
+);
+
+
+// ANALYTICS
+router.get(
+  "/tenant-analytics",
+  protect,
+  authorize("ADMIN"),
+  getTenantAnalytics
+);
+
+
+// SETTINGS
+router.post(
+  "/settings",
+  protect,
+  authorize("ADMIN"),
+  saveSettings
+);
+
+router.get(
+  "/settings",
+  protect,
+  authorize("ADMIN"),
+  getSettings
+);
+
 
 export default router;

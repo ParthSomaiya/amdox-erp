@@ -3,6 +3,7 @@ import Company from "../models/Company.js";
 import AuditLog from "../models/AuditLog.js";
 import Leave from "../models/Leave.js";
 import Payroll from "../models/Payroll.js";
+import SystemSettings from "../models/SystemSettings.js";
 
 // 📊 Admin dashboard stats
 export const getAdminStats = async (req, res) => {
@@ -31,16 +32,6 @@ export const getAdminStats = async (req, res) => {
   }
 };
 
-// 📜 Audit logs
-export const getAuditLogs = async (req, res) => {
-  const logs = await AuditLog.find({
-    companyId: req.user.companyId,
-  })
-    .populate("performedBy", "email")
-    .sort({ createdAt: -1 });
-
-  res.json(logs);
-};
 
 // 👥 Get all users (same company)
 export const getAllUsers = async (req, res) => {
@@ -143,22 +134,302 @@ export const updateUserRole = async (req, res) => {
 };
 
 
-// ❌ Delete user
-export const deleteUser = async (req, res) => {
-  try {
-    const { userId } = req.params;
+// ================= USERS =================
 
-    const user = await User.findOneAndDelete({
-      _id: userId,
+// GET ALL USERS
+export const getUsers = async (req, res) => {
+  try {
+
+    const users = await User.find({
       companyId: req.user.companyId,
+    }).select("-password");
+
+    res.json(users);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
     });
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+  }
+};
+
+
+// UPDATE USER
+export const updateUser = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      req.body,
+      { new: true }
+    );
+
+    await AuditLog.create({
+      companyId: req.user.companyId,
+      action: "UPDATE_USER",
+      performedBy: req.user.id,
+      targetUser: user._id,
+    });
+
+    res.json(user);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
+
+
+// DELETE USER
+export const deleteUser = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    await User.findByIdAndDelete(id);
+
+    await AuditLog.create({
+      companyId: req.user.companyId,
+      action: "DELETE_USER",
+      performedBy: req.user.id,
+      targetUser: id,
+    });
+
+    res.json({
+      message: "User deleted",
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
+
+
+// SUSPEND USER
+export const suspendUser = async (req, res) => {
+  try {
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        isActive: false,
+      },
+      { new: true }
+    );
+
+    res.json(user);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
+
+
+// ACTIVATE USER
+export const activateUser = async (req, res) => {
+  try {
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        isActive: true,
+      },
+      { new: true }
+    );
+
+    res.json(user);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
+
+
+// CHANGE ROLE
+export const changeRole = async (req, res) => {
+  try {
+
+    const { role } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { role },
+      { new: true }
+    );
+
+    await AuditLog.create({
+      companyId: req.user.companyId,
+      action: "CHANGE_ROLE",
+      performedBy: req.user.id,
+      targetUser: user._id,
+    });
+
+    res.json(user);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
+
+
+// SAVE PERMISSIONS
+export const assignPermissions = async (req, res) => {
+  try {
+
+    const { permissions } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { permissions },
+      { new: true }
+    );
+
+    res.json(user);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
+
+
+// GET AUDIT LOGS
+export const getAuditLogs = async (req, res) => {
+  try {
+
+    const logs = await AuditLog.find({
+      companyId: req.user.companyId,
+    })
+      .populate("performedBy", "name email")
+      .populate("targetUser", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json(logs);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
+
+
+// TENANT ANALYTICS
+export const getTenantAnalytics = async (req, res) => {
+  try {
+
+    const totalTenants =
+      await Company.countDocuments();
+
+    const totalUsers =
+      await User.countDocuments();
+
+    const activeUsers =
+      await User.countDocuments({
+        isActive: true,
+      });
+
+    res.json({
+      totalTenants,
+      totalUsers,
+      activeUsers,
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
+
+
+// SAVE SETTINGS
+export const saveSettings = async (req, res) => {
+  try {
+
+    let settings =
+      await SystemSettings.findOne({
+        companyId: req.user.companyId,
+      });
+
+    if (!settings) {
+
+      settings =
+        await SystemSettings.create({
+          companyId:
+            req.user.companyId,
+          ...req.body,
+        });
+
+    } else {
+
+      Object.assign(
+        settings,
+        req.body
+      );
+
+      await settings.save();
+
     }
 
-    res.json({ message: "User deleted" });
+    res.json(settings);
+
   } catch (err) {
-    res.status(500).json({ message: "Error deleting user" });
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+};
+
+
+// GET SETTINGS
+export const getSettings = async (req, res) => {
+  try {
+
+    const settings =
+      await SystemSettings.findOne({
+        companyId: req.user.companyId,
+      });
+
+    res.json(settings);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
   }
 };

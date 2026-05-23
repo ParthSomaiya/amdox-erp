@@ -29,7 +29,7 @@ import { seedAdmin } from "./seed/adminSeeder.js";
 
 // AUTH
 import authRoutes from "./routes/authRoutes.js";
-
+import adminRoutes from "./routes/adminRoutes.js";
 // CORE
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import hrRoutes from "./routes/hrRoutes.js";
@@ -248,6 +248,8 @@ app.use(
   "/api/tasks",
   taskRoutes
 );
+
+app.use("/api/admin", adminRoutes);
 
 // TEST ROUTE
 app.get("/", (req, res) => {

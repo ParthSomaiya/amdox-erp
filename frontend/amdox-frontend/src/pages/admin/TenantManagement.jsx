@@ -1,61 +1,63 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../services/api";
+import MainLayout from "../../layouts/MainLayout";
 
 export default function TenantManagement() {
-  const [tenants, setTenants] = useState([]);
-  const [name, setName] = useState("");
 
-  const fetchTenants = async () => {
-    const res = await axios.get("/api/admin/tenant");
-    setTenants(res.data);
-  };
-
-  const createTenant = async () => {
-    await axios.post("/api/admin/tenant", { name });
-    setName("");
-    fetchTenants();
-  };
+  const [analytics, setAnalytics] =
+    useState({});
 
   useEffect(() => {
-    fetchTenants();
+
+    API.get(
+      "/admin/tenant-analytics"
+    ).then((res) => {
+      setAnalytics(res.data);
+    });
+
   }, []);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">
-        🏢 Tenant Management
+    <MainLayout>
+
+      <h1 className="text-2xl font-bold mb-5">
+        Tenant Management
       </h1>
 
-      {/* CREATE */}
-      <div className="bg-white p-4 rounded shadow mb-4">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Tenant Name"
-          className="border p-2 mr-2"
-        />
-        <button
-          onClick={createTenant}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Add Tenant
-        </button>
+      <div className="grid grid-cols-3 gap-5">
+
+        <div className="bg-white p-5 shadow rounded">
+          <h2 className="text-lg font-semibold">
+            Total Tenants
+          </h2>
+
+          <p className="text-3xl mt-2">
+            {analytics.totalTenants}
+          </p>
+        </div>
+
+        <div className="bg-white p-5 shadow rounded">
+          <h2 className="text-lg font-semibold">
+            Total Users
+          </h2>
+
+          <p className="text-3xl mt-2">
+            {analytics.totalUsers}
+          </p>
+        </div>
+
+        <div className="bg-white p-5 shadow rounded">
+          <h2 className="text-lg font-semibold">
+            Active Users
+          </h2>
+
+          <p className="text-3xl mt-2">
+            {analytics.activeUsers}
+          </p>
+        </div>
+
       </div>
 
-      {/* LIST */}
-      <div className="space-y-2">
-        {tenants.map((t) => (
-          <div
-            key={t._id}
-            className="p-3 bg-gray-100 rounded flex justify-between"
-          >
-            <span>{t.name}</span>
-            <span>
-              {t.active ? "🟢 Active" : "🔴 Inactive"}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+    </MainLayout>
   );
 }
