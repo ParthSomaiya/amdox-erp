@@ -2,6 +2,8 @@ import Employee from "../models/Employee.js";
 import Leave from "../models/Leave.js";
 import LeaveBalance from "../models/LeaveBalance.js";
 import User from "../models/User.js";
+import Payroll from "../models/Payroll.js";
+
 
 // Add Employee (Admin / HR)
 export const addEmployee = async (req, res) => {
@@ -228,3 +230,177 @@ export const searchEmployees =
     }
 
   };
+
+
+// ==============================
+// AUTO GENERATE PAYROLL
+// ==============================
+
+export const generatePayroll =
+  async (req, res) => {
+
+    try {
+
+      const employees =
+        await Employee.find({
+          companyId:
+            req.user.companyId,
+        });
+
+      const payrolls = [];
+
+      for (const emp of employees) {
+
+        const basicSalary =
+          emp.salary || 30000;
+
+        const bonus = 2000;
+
+        const deductions = 1000;
+
+        const netSalary =
+          basicSalary +
+          bonus -
+          deductions;
+
+        const payroll =
+          await Payroll.create({
+
+            employeeId:
+              emp.userId,
+
+            companyId:
+              req.user.companyId,
+
+            basicSalary,
+
+            bonus,
+
+            deductions,
+
+            netSalary,
+
+            month:
+              req.body.month,
+          });
+
+        payrolls.push(payroll);
+
+      }
+
+      res.json({
+        message:
+          "Payroll Generated",
+        payrolls,
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        message:
+          err.message,
+      });
+
+    }
+
+};
+
+// ==============================
+// BIOMETRIC SYNC
+// ==============================
+
+export const biometricSync =
+  async (req, res) => {
+
+    try {
+
+      const {
+        employeeId,
+        checkIn,
+        checkOut,
+      } = req.body;
+
+      const totalHours =
+        (
+          new Date(checkOut) -
+          new Date(checkIn)
+        ) /
+        (1000 * 60 * 60);
+
+      const attendance =
+        await Attendance.create({
+
+          employeeId,
+
+          companyId:
+            req.user.companyId,
+
+          checkIn,
+
+          checkOut,
+
+          totalHours,
+        });
+
+      res.json(attendance);
+
+    } catch (err) {
+
+      res.status(500).json({
+        message:
+          err.message,
+      });
+
+    }
+
+};
+
+// ==============================
+// AI LEAVE PREDICTION
+// ==============================
+
+export const leavePrediction =
+  async (req, res) => {
+
+    try {
+
+      const leaves =
+        await Leave.find({
+          employeeId:
+            req.params.id,
+        });
+
+      const totalLeaves =
+        leaves.length;
+
+      let prediction =
+        "LOW";
+
+      if (totalLeaves > 10) {
+        prediction = "HIGH";
+      } else if (
+        totalLeaves > 5
+      ) {
+        prediction =
+          "MEDIUM";
+      }
+
+      res.json({
+        employeeId:
+          req.params.id,
+
+        totalLeaves,
+
+        prediction,
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        message:
+          err.message,
+      });
+
+    }
+
+};

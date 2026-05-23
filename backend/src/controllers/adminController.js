@@ -4,6 +4,88 @@ import AuditLog from "../models/AuditLog.js";
 import Leave from "../models/Leave.js";
 import Payroll from "../models/Payroll.js";
 import SystemSettings from "../models/SystemSettings.js";
+import Project from "../models/Project.js";
+import Invoice from "../models/Invoice.js";
+import Expense from "../models/Expense.js";
+
+
+// ==============================
+// ADMIN DASHBOARD
+// ==============================
+
+export const adminDashboard =
+  async (req, res) => {
+
+    try {
+
+      const totalUsers =
+        await User.countDocuments();
+
+      const totalProjects =
+        await Project.countDocuments();
+
+      const totalInvoices =
+        await Invoice.countDocuments();
+
+      const totalRevenueData =
+        await Invoice.aggregate([
+          {
+            $group: {
+              _id: null,
+              total: {
+                $sum: "$amount",
+              },
+            },
+          },
+        ]);
+
+      const totalExpenseData =
+        await Expense.aggregate([
+          {
+            $group: {
+              _id: null,
+              total: {
+                $sum: "$amount",
+              },
+            },
+          },
+        ]);
+
+      const totalRevenue =
+        totalRevenueData[0]?.total || 0;
+
+      const totalExpenses =
+        totalExpenseData[0]?.total || 0;
+
+      res.json({
+
+        totalUsers,
+
+        totalProjects,
+
+        totalInvoices,
+
+        totalRevenue,
+
+        totalExpenses,
+
+        profit:
+          totalRevenue -
+          totalExpenses,
+
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        message:
+          err.message,
+      });
+
+    }
+
+  };
+
 
 // 📊 Admin dashboard stats
 export const getAdminStats = async (req, res) => {
@@ -442,7 +524,7 @@ export const getAllCompanies =
 
     res.json(companies);
 
-};
+  };
 
 export const suspendCompany =
   async (req, res) => {
@@ -462,4 +544,4 @@ export const suspendCompany =
 
     res.json(company);
 
-};
+  };

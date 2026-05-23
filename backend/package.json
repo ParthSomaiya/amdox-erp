@@ -38,6 +38,8 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "pdfkit": "^0.18.0",
+    "plaid": "^42.2.0",
+    "razorpay": "^2.9.6",
     "redis": "^5.12.1",
     "socket.io": "^4.8.3",
     "stripe": "^22.1.1",

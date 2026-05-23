@@ -12,10 +12,21 @@ import {
   getMonthlyFinance,
 } from "../controllers/financeAnalyticsController.js";
 
-import { authMiddleware } from "../middleware/authMiddleware.js";
-import { getProfitAnalytics } from "../controllers/financeController.js";
-import { allowRoles } from "../middleware/roleMiddleware.js";
+import { 
+  authMiddleware,
+  protect,
+} from "../middleware/authMiddleware.js";
+
+import { 
+  allowRoles,
+  authorizeRoles,
+ } from "../middleware/roleMiddleware.js";
 import { checkPermission } from "../modules/admin/middleware/permissionMiddleware.js";
+
+import { 
+  createJournalEntry,
+  getProfitAnalytics,
+} from "../controllers/financeController.js";
 
 import { PERMISSIONS } from "../config/permissions.js";
 
@@ -67,6 +78,13 @@ router.post(
   addExpense
 );
 
+router.post(
+  "/journal",
+
+  protect,
+
+  createJournalEntry
+);
 
 router.get("/expense", authMiddleware, getExpenses);
 

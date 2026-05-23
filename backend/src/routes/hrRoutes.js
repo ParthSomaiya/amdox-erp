@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 
 import Invite from "../models/Invite.js";
 import User from "../models/User.js";
+import Leave from "../models/Leave.js";
 
 import {
   addEmployee,
@@ -15,6 +16,9 @@ import {
   approveLeave,
   rejectLeave,
   hrAnalytics,
+  generatePayroll,
+  biometricSync,
+  leavePrediction,
 } from "../controllers/hrController.js";
 
 import {
@@ -365,5 +369,40 @@ router.get(
 
   getExpenses
 );
+
+router.post(
+  "/payroll/generate",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "HR"
+  ),
+
+  generatePayroll
+);
+
+router.post(
+  "/attendance/biometric",
+
+  protect,
+
+  biometricSync
+);
+
+router.get(
+  "/leave/prediction/:id",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "HR"
+  ),
+
+  leavePrediction
+);
+
 
 export default router;

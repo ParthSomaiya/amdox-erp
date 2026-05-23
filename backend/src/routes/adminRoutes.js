@@ -18,18 +18,23 @@ import {
   getSettings,
   getAllCompanies,
   suspendCompany,
+  adminDashboard,
   
 } from "../controllers/adminController.js";
 
 
 import {
-  protect,
   authorize,
+  protect,
   authMiddleware,
 } from "../middleware/authMiddleware.js";
 
 import { backupDB } from "../utils/backup.js";
-import { allowRoles } from "../middleware/roleMiddleware.js";
+import { 
+  allowRoles,
+  authorizeRoles,
+} from "../middleware/roleMiddleware.js";
+
 import { checkPermission } from "../middleware/permissionMiddleware.js";
 import { PERMISSIONS } from "../config/permissions.js";
 
@@ -188,6 +193,16 @@ router.put(
   protect,
   authorizeRoles("SUPER_ADMIN"),
   suspendCompany
+);
+
+router.get(
+  "/dashboard",
+  protect,
+  authorizeRoles(
+    "ADMIN",
+    "SUPER_ADMIN"
+  ),
+  adminDashboard
 );
 
 export default router;

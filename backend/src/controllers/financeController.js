@@ -2,6 +2,109 @@ import Invoice from "../models/Invoice.js";
 import Expense from "../models/Expense.js";
 import { calculateGST } from "../utils/gstCalculator.js";
 import { sendNotification } from "../utils/notify.js";
+import JournalEntry from "../models/JournalEntry.js";
+import Ledger from "../models/Ledger.js";
+import plaid from "../config/plaid.js";
+
+// ===================================
+// CREATE JOURNAL ENTRY
+// ===================================
+
+export const createJournalEntry =
+  async (req, res) => {
+
+    try {
+
+      const {
+        description,
+        entries,
+      } = req.body;
+
+      const journal =
+        await JournalEntry.create({
+
+          companyId:
+            req.user.companyId,
+
+          description,
+
+          entries,
+        });
+
+      // 🔥 AUTO LEDGER POSTING
+
+      for (const item of entries) {
+
+        const existing =
+          await Ledger.findOne({
+
+            companyId:
+              req.user.companyId,
+
+            account:
+              item.account,
+          });
+
+        if (existing) {
+
+          if (
+            item.type ===
+            "DEBIT"
+          ) {
+
+            existing.debit +=
+              item.amount;
+
+            existing.balance +=
+              item.amount;
+
+          } else {
+
+            existing.credit +=
+              item.amount;
+
+            existing.balance -=
+              item.amount;
+          }
+
+          await existing.save();
+
+        } else {
+
+          await Ledger.create({
+
+            companyId:
+              req.user.companyId,
+
+            account:
+              "Sales",
+
+            credit:
+              result.total,
+
+            balance:
+              -result.total,
+
+            reference:
+              invoice._id,
+          });
+
+        }
+
+      }
+
+      res.json(journal);
+
+    } catch (err) {
+
+      res.status(500).json({
+        message:
+          err.message,
+      });
+
+    }
+
+  };
 
 // 📄 Create Invoice
 export const createInvoice = async (req, res) => {
@@ -190,6 +293,49 @@ export const getProfitLoss =
       profit:
         revenue - expenseTotal,
 
+    });
+
+  };
+
+export const bankBalance =
+  async (req, res) => {
+
+    const response =
+      await plaid.accountsBalanceGet({
+
+        access_token:
+          req.body.accessToken,
+      });
+
+    res.json(
+      response.data
+    );
+
+  };
+
+export const auditReport =
+  async (req, res) => {
+
+    const ledgers =
+      await Ledger.find({
+        companyId:
+          req.user.companyId,
+      });
+
+    const journals =
+      await JournalEntry.find({
+        companyId:
+          req.user.companyId,
+      });
+
+    res.json({
+
+      ledgers,
+
+      journals,
+
+      generatedAt:
+        new Date(),
     });
 
   };
