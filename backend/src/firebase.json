@@ -1,15 +1,13 @@
-import admin from "firebase-admin";
-import fs from "fs";
-
-const serviceAccount = JSON.parse(
-  fs.readFileSync(
-    new URL("../firebase.json", import.meta.url),
-    "utf8"
-  )
-);
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
-
-export default admin;
+{
+  "type": "service_account",
+  "project_id": "amdox-erp-cf808",
+  "private_key_id": "4b868b72ed774192ea1ddd44e9d1f0d10af89d6c",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCqqmkCKt/UBtG8\n5Uyj4X2nGpdDWjpbZE81tQ3zJd/i9zZOG405UddBXROI3dvIGy6tXcH3bn3UHDFS\n0nFESDuHm6X0cUlO9foePoJEWxJI//vIbiVAwdjpGTQzXleBSf9zE5Jlhp8L4M29\nMcFZoxlfE8zgADFR2K3x2kn3dKY1kdLY6PfJTwrGCnpOcxM66UcvgHRqmiMPnIs0\nfrM4stask2X91ZSYVFnOxEkFWF2MIE3fBeU+wM4fNdsRYwyGxiTPdhAydk5XmLEv\n5dkiGD4hUNOomM5qlpn4eQH2cwx2ZSkDteZ0/BE9tBcL+RL7omre2ugnNEfr8jOm\npubhims/AgMBAAECggEAAM4BlJdF01cdlgFBSThNQgfYwahe2b7YyN89XfZPDlPK\nqN7FWFjMN2CoQ38cOR5EB7xi5XBUTvUaFZKx5IX3ksZoV/6JcpcMt3CZ+4miakOG\nDvcC1UXC3df6hZsrPIKsxmW/r3yPdhDELCCQ4nkW3waYkzUJJtWmWBCnDmk1dsS9\nPwEWxqpRrXhIvqPpVNFONAeisxSJIuaQxBk7oszUtZ1iYXFPnpYlGrUdalNrmV5N\niBLdfpqoItcleMfzCCxDHrfQFlk6x5YR/sWZwQBoo21/DsqBPcPUzmBL3ePbdXo0\n/AY+raJznckLBrlL+ehgT29gytbIBEb1kRDh/pfFNQKBgQDSKka+vUniAFl8PTp3\nTr0x8N5GfxQ9Xl7B9uCBcI07irmUstC4Wt/rIVIhV6VcQ+vi04qkcD++UP64CSJG\nYMxSHlvAg6nFUnnzNdGOrID9PYuEKvWGkGhRhbGthqjlQCQrzi+wNkCVVCvf4OkR\nSCWhBXyzmzvldkyoWu0B/Rnx6wKBgQDP4tb4qblCvfQDlZ/LdZ95xSpoHrD1Nw3d\nW53vThogW/xzMxfCHaemgFHGVX5X/m293mL9I9si24dLEQ1D2OxNt8yK9goK/RUG\nigV77IUWGEGTLzzVPlKBV7wRGJVWOs7aediT/kA5CRcD6ljN7cdv/3s4sBgvcMCt\nGNG1FeeC/QKBgBXe2GXZBOtD5gwLwx3PT9j2m+ryJoUMYQgGTO6ra8cadJ2Izjeh\nHVQ2r3lQyaCEYPPF19Os6rU/cIJuUObKA/k3t4ydJvmlz5MDsr8KLJIt6WrjnZFX\nTcPOCeNo9AKHXjxAxK2tt6LSk45EtXxa6a+MBqIaMW17lhae/7MJR73pAoGBAJwC\nsa/Vt6nF4j1aaZyIPlFlTUjsV4L/eRE5c1InO+YzAkb1/gt4s9t5i2UbvgCNeZA3\nN/SflxIWy/bi6iCTx+sfV4ql0K2kdsX8iNcSjmIhe/zYQ4AJEGPvEr2FxHT9F0XQ\nkV+nPE1RbAtNMK4Cl1yOz8ugI9ZeeMquyJpswNyFAoGAbMUsn7PnXI7Xs0a6V8xz\nTZ55kE/VgvODvL9oN2hMOCBg/na00o10qYCK3qsLdulbAncSYWks2AuzuYcwgEiO\nwNXSDb5bLfpbcbUukfkLB071JTnoQWljUQdYV8ClX537KtOT6ezVaCZW2WMSOAXO\nJVkDXSMXXTtiTwXMxFSfvAk=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@amdox-erp-cf808.iam.gserviceaccount.com",
+  "client_id": "114269346057741078436",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40amdox-erp-cf808.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
