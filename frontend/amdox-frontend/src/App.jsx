@@ -37,7 +37,7 @@ import SecuritySettings from "./pages/admin/SecuritySettings";
 import TenantManagement from "./pages/admin/TenantManagement";
 import AuditLogs from "./pages/admin/AuditLogs";
 import AnalyticsDashboard from "./pages/analytics/AnalyticsDashboard";
-import FinanceAnalytics from "./pages/analytics/FinanceAnalytics";
+import FinanceAnalytics from "./pages/finance/FinanceAnalytics";
 import ProjectAnalytics from "./pages/analytics/ProjectAnalytics";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";

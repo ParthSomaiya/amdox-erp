@@ -57,6 +57,11 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 
 import inventoryRoutes from "./routes/inventoryRoutes.js";
 
+import socketHandler from "./socket/socket.js";
+
+import chatRoutes from "./routes/chatRoutes.js";
+
+
 // ================= APP =================
 const app = express();
 
@@ -67,10 +72,15 @@ const server = http.createServer(app);
 const io = new Server(server, {
 
   cors: {
-    origin: "*",
+    origin:
+      "http://localhost:5173",
+
+    credentials: true,
   },
 
 });
+
+socketHandler(io);
 
 // ================= SOCKET EVENTS =================
 io.on("connection", (socket) => {
@@ -263,6 +273,11 @@ app.use("/api/admin", adminRoutes);
 app.use(
   "/api/inventory",
   inventoryRoutes
+);
+
+app.use(
+  "/api/chat",
+  chatRoutes
 );
 
 // TEST ROUTE
