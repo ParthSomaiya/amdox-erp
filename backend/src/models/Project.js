@@ -2,29 +2,63 @@ import mongoose from "mongoose";
 
 const projectSchema = new mongoose.Schema(
   {
-    name: String,
+    // 🔥 Company
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
+
+    // 🔥 Basic Info
+    name: {
+      type: String,
+      required: true,
+    },
+
     description: String,
+
+    // 🔥 Dates
     startDate: Date,
     endDate: Date,
 
-    budget: Number,
+    // 🔥 Budget
+    budget: {
+      type: Number,
+      default: 0,
+    },
+
     spent: {
       type: Number,
       default: 0,
     },
 
+    // 🔥 Team Members
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    // 🔥 Status
     status: {
       type: String,
-      enum: ["PLANNED", "IN_PROGRESS", "COMPLETED"],
+
+      enum: [
+        "PLANNED",
+        "IN_PROGRESS",
+        "COMPLETED",
+      ],
+
       default: "PLANNED",
     },
-
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-    },
   },
+
   { timestamps: true }
 );
 
-export default mongoose.model("Project", projectSchema);
+export default
+  mongoose.models.Project ||
+  mongoose.model(
+    "Project",
+    projectSchema
+  );

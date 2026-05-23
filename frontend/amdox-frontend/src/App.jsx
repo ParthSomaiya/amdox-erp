@@ -45,6 +45,10 @@ import CalendarPage from "./pages/CalendarPage";
 import TeamChat from "./pages/TeamChat";
 import AddEmployee from "./pages/AddEmployee";
 import RegisterChoice from "./pages/RegisterChoice";
+import ProjectsDashboard from "./pages/projects/ProjectsDashboard";
+import KanbanBoard from "./pages/projects/KanbanBoard";
+import CreateProject from "./pages/projects/CreateProject";
+
 
 function App() {
   return (
@@ -96,6 +100,20 @@ function App() {
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/calendar" element={<CalendarPage />} />
       <Route path="/team-chat" element={<TeamChat />} />
+      <Route
+        path="/projects/dashboard"
+        element={<ProjectsDashboard />}
+      />
+
+      <Route
+        path="/projects/board"
+        element={<KanbanBoard />}
+      />
+
+      <Route
+        path="/projects/create"
+        element={<CreateProject />}
+      />
     </Routes>
 
   );

@@ -61,6 +61,8 @@ import socketHandler from "./socket/socket.js";
 
 import chatRoutes from "./routes/chatRoutes.js";
 
+import projectRoutes from "./routes/projectRoutes.js";
+
 
 // ================= APP =================
 const app = express();
@@ -278,6 +280,11 @@ app.use(
 app.use(
   "/api/chat",
   chatRoutes
+);
+
+app.use(
+  "/api/projects",
+  projectRoutes
 );
 
 // TEST ROUTE
