@@ -6,6 +6,9 @@ import helmet from "helmet";
 import hpp from "hpp";
 import rateLimit from "express-rate-limit";
 import { Server } from "socket.io";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import { notificationSocket } from "./socket/notificationSocket.js";
+
 
 // ================= LOAD ENV =================
 dotenv.config();
@@ -93,6 +96,9 @@ const io = new Server(server, {
 });
 
 socketHandler(io);
+
+// SOCKET
+notificationSocket(io);
 
 // ================= SOCKET EVENTS =================
 io.on("connection", (socket) => {
@@ -316,6 +322,8 @@ app.use(
   "/api/time",
   timeRoutes
 );
+
+app.use("/api/notifications", notificationRoutes);
 
 // TEST ROUTE
 app.get("/", (req, res) => {

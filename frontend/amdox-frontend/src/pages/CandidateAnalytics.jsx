@@ -28,8 +28,8 @@ export default function CandidateAnalytics() {
             res.data.forEach((a) => {
 
                 grouped[a.status] =
-                    (grouped[a.status] || 0)
-                \+ 1;
+                    (grouped[a.status] || 0) 
+                    \+ 1;
 
             });
 
