@@ -11,6 +11,10 @@ import {
   applyLeave,
   updateLeaveStatus,
   getLeaves,
+
+  approveLeave,
+  rejectLeave,
+  hrAnalytics,
 } from "../controllers/hrController.js";
 
 import {
