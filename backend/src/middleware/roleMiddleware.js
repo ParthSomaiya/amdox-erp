@@ -1,4 +1,3 @@
-// 🎯 Role-based access control
 export const allowRoles = (...allowedRoles) => {
   return (req, res, next) => {
     try {

@@ -166,7 +166,6 @@ router.get(
 );
 
 
-// SETTINGS
 router.post(
   "/settings",
   protect,

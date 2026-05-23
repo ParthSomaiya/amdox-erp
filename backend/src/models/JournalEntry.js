@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
 
+
+// journal 
+
 const journalSchema =
   new mongoose.Schema(
     {

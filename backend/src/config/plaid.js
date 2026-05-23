@@ -1,5 +1,7 @@
 import { Configuration, PlaidApi, PlaidEnvironments } from "plaid";
 
+// plaid
+
 const configuration = new Configuration({
   basePath: PlaidEnvironments.sandbox,
 
@@ -18,3 +20,4 @@ const plaidClient =
   new PlaidApi(configuration);
 
 export default plaidClient;
+

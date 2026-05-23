@@ -9,9 +9,6 @@ import Invoice from "../models/Invoice.js";
 import Expense from "../models/Expense.js";
 
 
-// ==============================
-// ADMIN DASHBOARD
-// ==============================
 
 export const adminDashboard =
   async (req, res) => {

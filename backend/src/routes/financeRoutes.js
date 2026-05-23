@@ -40,7 +40,6 @@ router.get(
   getFinanceAnalytics
 );
 
-// Monthly charts
 router.get(
   "/analytics/monthly",
   authMiddleware,

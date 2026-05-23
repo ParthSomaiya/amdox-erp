@@ -5,7 +5,6 @@ import User from "../models/User.js";
 import Payroll from "../models/Payroll.js";
 
 
-// Add Employee (Admin / HR)
 export const addEmployee = async (req, res) => {
   const { userId, position, salary } = req.body;
 

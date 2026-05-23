@@ -6,9 +6,6 @@ import JournalEntry from "../models/JournalEntry.js";
 import Ledger from "../models/Ledger.js";
 import plaid from "../config/plaid.js";
 
-// ===================================
-// CREATE JOURNAL ENTRY
-// ===================================
 
 export const createJournalEntry =
   async (req, res) => {

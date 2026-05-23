@@ -1,6 +1,8 @@
 import razorpay
   from "../config/razorpay.js";
 
+// create razopay
+
 export const createRazorpayOrder =
   async (req, res) => {
 
