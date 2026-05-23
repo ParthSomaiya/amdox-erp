@@ -22,8 +22,9 @@ import {
 } from "../controllers/financeController.js";
 
 import {
-  protect,
   authMiddleware,
+  authorize,
+  protect,
 } from "../middleware/authMiddleware.js";
 
 import {
