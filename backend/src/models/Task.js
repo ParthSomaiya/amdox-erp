@@ -2,75 +2,66 @@ import mongoose from "mongoose";
 
 const taskSchema = new mongoose.Schema(
   {
-    // 🔥 Company
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-    },
+    title: String,
 
-    // 🔥 Project
+    description: String,
+
     projectId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
     },
 
-    // 🔥 Assigned User
+    sprintId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Sprint",
+    },
+
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
 
-    // 🔥 Task Info
-    title: {
-      type: String,
-      required: true,
-    },
-
-    description: String,
-
-    // 🔥 Priority
-    priority: {
-      type: String,
-
-      enum: [
-        "LOW",
-        "MEDIUM",
-        "HIGH",
-      ],
-
-      default: "MEDIUM",
-    },
-
-    // 🔥 Status
     status: {
       type: String,
-
       enum: [
         "TODO",
         "IN_PROGRESS",
         "DONE",
       ],
-
       default: "TODO",
     },
 
-    // 🔥 Hours Tracking
+    priority: {
+      type: String,
+      enum: [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+      ],
+      default: "MEDIUM",
+    },
+
+    estimatedHours: {
+      type: Number,
+      default: 0,
+    },
+
     loggedHours: {
       type: Number,
       default: 0,
     },
 
-    // 🔥 Deadline
-    dueDate: Date,
-  },
+    startDate: Date,
 
+    dueDate: Date,
+
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
+  },
   { timestamps: true }
 );
 
-// 🔥 Overwrite error avoid
-export default
-  mongoose.models.Task ||
-  mongoose.model(
-    "Task",
-    taskSchema
-  );
+export default mongoose.models.Task ||
+  mongoose.model("Task", taskSchema);

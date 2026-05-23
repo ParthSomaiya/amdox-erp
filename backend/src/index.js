@@ -67,6 +67,9 @@ import jobRoutes from "./routes/jobRoutes.js";
 
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 
+import sprintRoutes from "./routes/sprintRoutes.js";
+import timeRoutes from "./routes/timeRoutes.js";
+
 
 // ================= APP =================
 const app = express();
@@ -299,6 +302,16 @@ app.use(
 app.use(
   "/api/subscription",
   subscriptionRoutes
+);
+
+app.use(
+  "/api/sprint",
+  sprintRoutes
+);
+
+app.use(
+  "/api/time",
+  timeRoutes
 );
 
 // TEST ROUTE
