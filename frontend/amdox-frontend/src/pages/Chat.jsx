@@ -169,13 +169,56 @@ export default function Chat() {
     };
 
 
+  // ==========================
+  // REACT MESSAGE
+  // ==========================
+
+  const reactMessage =
+    async (id, emoji) => {
+
+      await API.put(
+        `/chat/reaction/${id}`,
+        { emoji }
+      );
+
+      const res =
+        await API.get(
+          `/chat/message/${selectedChat._id}`
+        );
+
+      setMessages(res.data);
+
+    };
+
+
+  // ==========================
+  // DELETE MESSAGE
+  // ==========================
+
+  const deleteMessage =
+    async (id) => {
+
+      await API.put(
+        `/chat/delete/${id}`
+      );
+
+      const res =
+        await API.get(
+          `/chat/message/${selectedChat._id}`
+        );
+
+      setMessages(res.data);
+
+    };
+
+
   return (
 
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-gray-100">
 
       {/* SIDEBAR */}
 
-      <div className="w-1/4 border-r p-4">
+      <div className="w-1/4 border-r bg-white p-4">
 
         <h2 className="text-2xl font-bold mb-5">
           Chats
@@ -190,7 +233,7 @@ export default function Chat() {
               openChat(c)
             }
 
-            className="p-3 border rounded mb-2 cursor-pointer"
+            className="p-3 border rounded mb-2 cursor-pointer hover:bg-gray-100"
           >
 
             <p className="font-semibold">
@@ -234,15 +277,90 @@ export default function Chat() {
 
             <div
               key={m._id}
-              className="mb-3"
+              className="mb-5"
             >
 
-              <p className="font-bold">
+              <p className="font-bold mb-1">
                 {m.sender?.name}
               </p>
 
-              <div className="bg-gray-100 p-3 rounded inline-block">
+              <div className="bg-white shadow p-3 rounded inline-block">
+
                 {m.message}
+
+                {m.edited && (
+                  <span className="text-xs text-gray-500 ml-2">
+                    edited
+                  </span>
+                )}
+
+              </div>
+
+              {/* REACTIONS */}
+
+              <div className="flex gap-2 mt-2">
+
+                <button
+                  onClick={() =>
+                    reactMessage(
+                      m._id,
+                      "❤️"
+                    )
+                  }
+                >
+                  ❤️
+                </button>
+
+                <button
+                  onClick={() =>
+                    reactMessage(
+                      m._id,
+                      "🔥"
+                    )
+                  }
+                >
+                  🔥
+                </button>
+
+                <button
+                  onClick={() =>
+                    reactMessage(
+                      m._id,
+                      "😂"
+                    )
+                  }
+                >
+                  😂
+                </button>
+
+                <button
+                  onClick={() =>
+                    deleteMessage(
+                      m._id
+                    )
+                  }
+                  className="text-red-500"
+                >
+                  Delete
+                </button>
+
+              </div>
+
+
+              {/* SHOW REACTIONS */}
+
+              <div className="flex gap-2 mt-1">
+
+                {m.reactions?.map(
+                  (r, i) => (
+
+                    <span key={i}>
+                      {r.emoji}
+                    </span>
+
+                  )
+                )}
+
               </div>
 
             </div>
@@ -260,7 +378,7 @@ export default function Chat() {
 
         {selectedChat && (
 
-          <div className="border-t p-4 flex gap-3">
+          <div className="border-t bg-white p-4 flex gap-3">
 
             <input
               value={text}

@@ -152,3 +152,121 @@ export const getMessages =
     }
 
 };
+
+
+// ==========================
+// REACT MESSAGE
+// ==========================
+
+export const reactMessage =
+  async (req, res) => {
+
+    try {
+
+      const { emoji } = req.body;
+
+      const message =
+        await Message.findById(
+          req.params.id
+        );
+
+      message.reactions.push({
+
+        userId: req.user._id,
+        emoji,
+
+      });
+
+      await message.save();
+
+      res.json(message);
+
+    } catch (err) {
+
+      res.status(500).json({
+        message: err.message,
+      });
+
+    }
+
+};
+
+
+// ==========================
+// EDIT MESSAGE
+// ==========================
+
+export const editMessage =
+  async (req, res) => {
+
+    try {
+
+      const message =
+        await Message.findById(
+          req.params.id
+        );
+
+      message.editHistory.push({
+
+        oldMessage:
+          message.message,
+
+        editedAt:
+          new Date(),
+
+      });
+
+      message.message =
+        req.body.message;
+
+      message.edited = true;
+
+      await message.save();
+
+      res.json(message);
+
+    } catch (err) {
+
+      res.status(500).json({
+        message: err.message,
+      });
+
+    }
+
+};
+
+
+// ==========================
+// DELETE MESSAGE
+// ==========================
+
+export const deleteMessage =
+  async (req, res) => {
+
+    try {
+
+      const message =
+        await Message.findById(
+          req.params.id
+        );
+
+      message.deletedForEveryone = true;
+
+      message.message =
+        "Message Deleted";
+
+      await message.save();
+
+      res.json({
+        message: "Deleted",
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        message: err.message,
+      });
+
+    }
+
+};

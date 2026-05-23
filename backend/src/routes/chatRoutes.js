@@ -5,6 +5,9 @@ import {
   getChats,
   sendMessage,
   getMessages,
+  reactMessage,
+  editMessage,
+  deleteMessage,
 } from "../controllers/chatController.js";
 
 import {
@@ -45,6 +48,24 @@ router.get(
   "/message/:chatId",
   protect,
   getMessages
+);
+
+router.put(
+  "/reaction/:id",
+  protect,
+  reactMessage
+);
+
+router.put(
+  "/edit/:id",
+  protect,
+  editMessage
+);
+
+router.put(
+  "/delete/:id",
+  protect,
+  deleteMessage
 );
 
 export default router;
