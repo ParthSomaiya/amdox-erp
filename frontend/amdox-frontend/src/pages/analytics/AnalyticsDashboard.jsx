@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import axios from "axios";
 
 import {
@@ -21,14 +20,14 @@ import {
 } from "chart.js";
 
 import {
-
   BarChart,
   Bar as ReBar,
   XAxis,
   YAxis,
   Tooltip as ReTooltip,
   ResponsiveContainer,
-
+  LineChart,
+  Line as ReLine,
 } from "recharts";
 
 ChartJS.register(
@@ -44,6 +43,10 @@ ChartJS.register(
 
 export default function AnalyticsDashboard() {
 
+  // ===================================
+  // STATES
+  // ===================================
+
   const [data, setData] =
     useState(null);
 
@@ -53,50 +56,155 @@ export default function AnalyticsDashboard() {
   const [finance, setFinance] =
     useState([]);
 
+  const [loading, setLoading] =
+    useState(true);
+
   const [from, setFrom] =
     useState("");
 
   const [to, setTo] =
     useState("");
 
+  const [autoRefresh, setAutoRefresh] =
+    useState(true);
 
-  // =========================
-  // FETCH DATA
-  // =========================
-
-  useEffect(() => {
-
-    fetchAnalytics();
-
-    fetchKpis();
-
-    fetchFinance();
-
-  }, []);
+  const [selectedChart, setSelectedChart] =
+    useState("revenue");
 
 
-  // =========================
-  // DASHBOARD ANALYTICS
-  // =========================
+  // ===================================
+  // FETCH ALL DATA
+  // ===================================
 
-  const fetchAnalytics =
+  const fetchAllData =
     async () => {
 
       try {
 
+        setLoading(true);
+
+        const token =
+          localStorage.getItem(
+            "token"
+          );
+
+        const headers = {
+          Authorization:
+            `Bearer ${token}`,
+        };
+
+        // =========================
+        // DASHBOARD
+        // =========================
+
+        const dashboardRes =
+          await axios.get(
+            "http://localhost:5000/api/analytics/dashboard",
+            { headers }
+          );
+
+        setData(
+          dashboardRes.data
+        );
+
+        // =========================
+        // KPI
+        // =========================
+
+        const kpiRes =
+          await axios.get(
+            "http://localhost:5000/api/analytics/kpis",
+            { headers }
+          );
+
+        setKpis(
+          kpiRes.data
+        );
+
+        // =========================
+        // FINANCE
+        // =========================
+
+        const financeRes =
+          await axios.get(
+            "http://localhost:5000/api/analytics/finance",
+            { headers }
+          );
+
+        setFinance(
+          financeRes.data.revenue || []
+        );
+
+      } catch (err) {
+
+        console.log(err);
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
+
+  // ===================================
+  // INITIAL LOAD
+  // ===================================
+
+  useEffect(() => {
+
+    fetchAllData();
+
+  }, []);
+
+
+  // ===================================
+  // AUTO REFRESH
+  // ===================================
+
+  useEffect(() => {
+
+    if (!autoRefresh) return;
+
+    const interval =
+      setInterval(() => {
+
+        fetchAllData();
+
+      }, 10000);
+
+    return () =>
+      clearInterval(interval);
+
+  }, [autoRefresh]);
+
+
+  // ===================================
+  // APPLY FILTER
+  // ===================================
+
+  const applyFilters =
+    async () => {
+
+      try {
+
+        const token =
+          localStorage.getItem(
+            "token"
+          );
+
+        const headers = {
+          Authorization:
+            `Bearer ${token}`,
+        };
+
         const res =
           await axios.get(
 
-            "http://localhost:5000/api/analytics/dashboard",
+            `http://localhost:5000/api/analytics/dashboard?from=${from}&to=${to}`,
 
-            {
-              headers: {
-
-                Authorization:
-                  `Bearer ${localStorage.getItem("token")}`,
-
-              },
-            }
+            { headers }
 
           );
 
@@ -111,107 +219,37 @@ export default function AnalyticsDashboard() {
     };
 
 
-  // =========================
-  // KPI DATA
-  // =========================
+  // ===================================
+  // LOADING UI
+  // ===================================
 
-  const fetchKpis =
-    async () => {
-
-      try {
-
-        const res =
-          await axios.get(
-
-            "http://localhost:5000/api/analytics/kpis",
-
-            {
-              headers: {
-
-                Authorization:
-                  `Bearer ${localStorage.getItem("token")}`,
-
-              },
-            }
-
-          );
-
-        setKpis(res.data);
-
-      } catch (err) {
-
-        console.log(err);
-
-      }
-
-    };
-
-
-  // =========================
-  // FINANCE ANALYTICS
-  // =========================
-
-  const fetchFinance =
-    async () => {
-
-      try {
-
-        const res =
-          await axios.get(
-
-            "http://localhost:5000/api/analytics/finance",
-
-            {
-              headers: {
-
-                Authorization:
-                  `Bearer ${localStorage.getItem("token")}`,
-
-              },
-            }
-
-          );
-
-        setFinance(
-          res.data.revenue
-        );
-
-      } catch (err) {
-
-        console.log(err);
-
-      }
-
-    };
-
-
-  // =========================
-  // LOADING
-  // =========================
-
-  if (!data) {
+  if (loading) {
 
     return (
-      <div className="p-6">
-        Loading...
+
+      <div className="p-10 text-xl font-semibold">
+
+        Loading Analytics...
+
       </div>
+
     );
 
   }
 
 
-  // =========================
-  // CHART JS DATA
-  // =========================
+  // ===================================
+  // CHART DATA
+  // ===================================
 
-  // EMPLOYEE BAR CHART
+  // EMPLOYEE BAR
 
   const employeeChart = {
 
     labels:
-      data.employeeRoles.map(
+      data?.employeeRoles?.map(
         (i) => i._id
-      ),
+      ) || [],
 
     datasets: [
 
@@ -219,9 +257,12 @@ export default function AnalyticsDashboard() {
         label: "Employees",
 
         data:
-          data.employeeRoles.map(
+          data?.employeeRoles?.map(
             (i) => i.count
-          ),
+          ) || [],
+
+        backgroundColor:
+          "#3B82F6",
       },
 
     ],
@@ -229,22 +270,28 @@ export default function AnalyticsDashboard() {
   };
 
 
-  // LEAVE PIE CHART
+  // LEAVE PIE
 
   const leaveChart = {
 
     labels:
-      data.leaveStats.map(
+      data?.leaveStats?.map(
         (i) => i._id
-      ),
+      ) || [],
 
     datasets: [
 
       {
         data:
-          data.leaveStats.map(
+          data?.leaveStats?.map(
             (i) => i.count
-          ),
+          ) || [],
+
+        backgroundColor: [
+          "#10B981",
+          "#EF4444",
+          "#F59E0B",
+        ],
       },
 
     ],
@@ -252,14 +299,14 @@ export default function AnalyticsDashboard() {
   };
 
 
-  // FINANCE LINE CHART
+  // FINANCE LINE
 
   const financeChart = {
 
     labels:
-      data.monthlyFinance.map(
+      data?.monthlyFinance?.map(
         (i) => i.month
-      ),
+      ) || [],
 
     datasets: [
 
@@ -267,9 +314,17 @@ export default function AnalyticsDashboard() {
         label: "Revenue",
 
         data:
-          data.monthlyFinance.map(
+          data?.monthlyFinance?.map(
             (i) => i.revenue
-          ),
+          ) || [],
+
+        borderColor:
+          "#2563EB",
+
+        backgroundColor:
+          "#93C5FD",
+
+        tension: 0.4,
       },
 
     ],
@@ -277,25 +332,36 @@ export default function AnalyticsDashboard() {
   };
 
 
-  // =========================
+  // ===================================
   // UI
-  // =========================
+  // ===================================
 
   return (
 
-    <div className="p-6 space-y-8 bg-gray-100 min-h-screen">
+    <div className="min-h-screen bg-gray-100 p-6">
 
+      {/* =================================== */}
       {/* HEADER */}
+      {/* =================================== */}
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
 
-        <h1 className="text-3xl font-bold">
-          📊 Analytics Dashboard
-        </h1>
+        <div>
 
-        {/* DATE FILTERS */}
+          <h1 className="text-4xl font-bold">
+            📊 Analytics Dashboard
+          </h1>
 
-        <div className="flex gap-3">
+          <p className="text-gray-500 mt-1">
+            Real-time company insights
+          </p>
+
+        </div>
+
+
+        {/* FILTERS */}
+
+        <div className="flex flex-wrap gap-3">
 
           <input
             type="date"
@@ -303,7 +369,7 @@ export default function AnalyticsDashboard() {
             onChange={(e) =>
               setFrom(e.target.value)
             }
-            className="border p-2 rounded"
+            className="border px-3 py-2 rounded bg-white"
           />
 
           <input
@@ -312,117 +378,228 @@ export default function AnalyticsDashboard() {
             onChange={(e) =>
               setTo(e.target.value)
             }
-            className="border p-2 rounded"
+            className="border px-3 py-2 rounded bg-white"
           />
+
+          <button
+            onClick={applyFilters}
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Apply Filter
+          </button>
+
+          <button
+            onClick={() =>
+              setAutoRefresh(
+                !autoRefresh
+              )
+            }
+            className={`px-4 py-2 rounded text-white ${
+              autoRefresh
+                ? "bg-green-600"
+                : "bg-gray-500"
+            }`}
+          >
+            {
+              autoRefresh
+                ? "Live ON"
+                : "Live OFF"
+            }
+          </button>
 
         </div>
 
       </div>
 
 
+      {/* =================================== */}
       {/* KPI CARDS */}
+      {/* =================================== */}
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
 
-        <div className="bg-blue-100 shadow rounded p-5">
+        <div className="bg-white rounded-xl shadow p-6 border-l-4 border-blue-600">
+
           <p className="text-gray-500">
             Revenue
           </p>
 
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-3xl font-bold mt-2">
             ₹{kpis.revenue || 0}
           </h2>
+
         </div>
 
-        <div className="bg-red-100 shadow rounded p-5">
+
+        <div className="bg-white rounded-xl shadow p-6 border-l-4 border-red-500">
+
           <p className="text-gray-500">
             Expenses
           </p>
 
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-3xl font-bold mt-2">
             ₹{kpis.expenses || 0}
           </h2>
+
         </div>
 
-        <div className="bg-green-100 shadow rounded p-5">
+
+        <div className="bg-white rounded-xl shadow p-6 border-l-4 border-green-600">
+
           <p className="text-gray-500">
             Profit
           </p>
 
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-3xl font-bold mt-2">
             ₹{kpis.profit || 0}
           </h2>
+
         </div>
 
-        <div className="bg-yellow-100 shadow rounded p-5">
+
+        <div className="bg-white rounded-xl shadow p-6 border-l-4 border-yellow-500">
+
           <p className="text-gray-500">
             Employees
           </p>
 
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-3xl font-bold mt-2">
             {kpis.employees || 0}
           </h2>
+
         </div>
 
       </div>
 
 
-      {/* OLD CARDS */}
+      {/* =================================== */}
+      {/* SECONDARY CARDS */}
+      {/* =================================== */}
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
 
-        <div className="bg-white shadow rounded p-4">
+        <div className="bg-white rounded-xl shadow p-5">
+
           <p className="text-gray-500">
             Total Employees
           </p>
 
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-3xl font-bold mt-2">
             {data.totalEmployees}
           </h2>
+
         </div>
 
-        <div className="bg-white shadow rounded p-4">
+
+        <div className="bg-white rounded-xl shadow p-5">
+
           <p className="text-gray-500">
             Projects
           </p>
 
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-3xl font-bold mt-2">
             {data.totalProjects}
           </h2>
+
         </div>
 
-        <div className="bg-white shadow rounded p-4">
+
+        <div className="bg-white rounded-xl shadow p-5">
+
           <p className="text-gray-500">
             Jobs
           </p>
 
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-3xl font-bold mt-2">
             {data.totalJobs}
           </h2>
+
         </div>
 
-        <div className="bg-white shadow rounded p-4">
+
+        <div className="bg-white rounded-xl shadow p-5">
+
           <p className="text-gray-500">
             Total Revenue
           </p>
 
-          <h2 className="text-3xl font-bold">
+          <h2 className="text-3xl font-bold mt-2">
             ₹{data.totalRevenue}
           </h2>
+
         </div>
 
       </div>
 
 
-      {/* CHARTJS CHARTS */}
+      {/* =================================== */}
+      {/* CHART SELECTOR */}
+      {/* =================================== */}
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="bg-white rounded-xl shadow p-5 mb-8 flex gap-4 flex-wrap">
+
+        <button
+          onClick={() =>
+            setSelectedChart(
+              "revenue"
+            )
+          }
+          className={`px-4 py-2 rounded ${
+            selectedChart ===
+            "revenue"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200"
+          }`}
+        >
+          Revenue
+        </button>
+
+        <button
+          onClick={() =>
+            setSelectedChart(
+              "employees"
+            )
+          }
+          className={`px-4 py-2 rounded ${
+            selectedChart ===
+            "employees"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200"
+          }`}
+        >
+          Employees
+        </button>
+
+        <button
+          onClick={() =>
+            setSelectedChart(
+              "leave"
+            )
+          }
+          className={`px-4 py-2 rounded ${
+            selectedChart ===
+            "leave"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200"
+          }`}
+        >
+          Leave
+        </button>
+
+      </div>
+
+
+      {/* =================================== */}
+      {/* CHARTS */}
+      {/* =================================== */}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
 
         {/* EMPLOYEE */}
 
-        <div className="bg-white p-4 rounded shadow">
+        <div className="bg-white rounded-xl shadow p-5">
 
-          <h2 className="font-bold mb-4">
+          <h2 className="text-xl font-bold mb-5">
             Employee Roles
           </h2>
 
@@ -433,10 +610,10 @@ export default function AnalyticsDashboard() {
 
         {/* LEAVE */}
 
-        <div className="bg-white p-4 rounded shadow">
+        <div className="bg-white rounded-xl shadow p-5">
 
-          <h2 className="font-bold mb-4">
-            Leave Status
+          <h2 className="text-xl font-bold mb-5">
+            Leave Analytics
           </h2>
 
           <Pie data={leaveChart} />
@@ -446,11 +623,13 @@ export default function AnalyticsDashboard() {
       </div>
 
 
+      {/* =================================== */}
       {/* MONTHLY REVENUE */}
+      {/* =================================== */}
 
-      <div className="bg-white p-4 rounded shadow">
+      <div className="bg-white rounded-xl shadow p-5 mb-10">
 
-        <h2 className="font-bold mb-4">
+        <h2 className="text-2xl font-bold mb-6">
           Monthly Revenue
         </h2>
 
@@ -459,36 +638,82 @@ export default function AnalyticsDashboard() {
       </div>
 
 
+      {/* =================================== */}
       {/* RECHARTS */}
+      {/* =================================== */}
 
-      <div className="bg-white p-6 rounded shadow">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <h2 className="text-2xl font-bold mb-5">
-          Revenue Analytics
-        </h2>
+        {/* BAR */}
 
-        <ResponsiveContainer
-          width="100%"
-          height={350}
-        >
+        <div className="bg-white rounded-xl shadow p-5">
 
-          <BarChart data={finance}>
+          <h2 className="text-2xl font-bold mb-5">
+            Revenue Analytics
+          </h2>
 
-            <XAxis
-              dataKey="_id.month"
-            />
+          <ResponsiveContainer
+            width="100%"
+            height={350}
+          >
 
-            <YAxis />
+            <BarChart data={finance}>
 
-            <ReTooltip />
+              <XAxis
+                dataKey="_id.month"
+              />
 
-            <ReBar
-              dataKey="revenue"
-            />
+              <YAxis />
 
-          </BarChart>
+              <ReTooltip />
 
-        </ResponsiveContainer>
+              <ReBar
+                dataKey="revenue"
+                fill="#2563EB"
+              />
+
+            </BarChart>
+
+          </ResponsiveContainer>
+
+        </div>
+
+
+        {/* LINE */}
+
+        <div className="bg-white rounded-xl shadow p-5">
+
+          <h2 className="text-2xl font-bold mb-5">
+            Revenue Trend
+          </h2>
+
+          <ResponsiveContainer
+            width="100%"
+            height={350}
+          >
+
+            <LineChart data={finance}>
+
+              <XAxis
+                dataKey="_id.month"
+              />
+
+              <YAxis />
+
+              <ReTooltip />
+
+              <ReLine
+                type="monotone"
+                dataKey="revenue"
+                stroke="#16A34A"
+                strokeWidth={3}
+              />
+
+            </LineChart>
+
+          </ResponsiveContainer>
+
+        </div>
 
       </div>
 

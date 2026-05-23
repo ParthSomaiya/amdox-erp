@@ -1,13 +1,11 @@
-import { createClient } from "redis";
+import Redis from "ioredis";
 
-const redisClient =
-  createClient({
+const redis = new Redis({
+  host: "127.0.0.1",
+  port: 6379,
 
-    url:
-      "redis://127.0.0.1:6379",
+  // 🔥 IMPORTANT FOR BULLMQ
+  maxRetriesPerRequest: null,
+});
 
-  });
-
-redisClient.connect();
-
-export default redisClient;
+export default redis;

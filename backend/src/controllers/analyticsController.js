@@ -258,3 +258,206 @@ export const exportAnalyticsPDF =
     doc.end();
 
 };
+
+export const getDashboardAnalytics =
+  async (req, res) => {
+
+    try {
+
+      // 🔥 CHECK CACHE
+      const cached =
+        await redisClient.get(
+          "dashboard_analytics"
+        );
+
+      if (cached) {
+
+        return res.json(
+          JSON.parse(cached)
+        );
+
+      }
+
+      // 🔥 DB QUERIES
+      const totalEmployees =
+        await User.countDocuments();
+
+      const totalProjects =
+        await Project.countDocuments();
+
+      const totalRevenue =
+        await Invoice.aggregate([
+          {
+            $group: {
+              _id: null,
+              total: {
+                $sum: "$amount",
+              },
+            },
+          },
+        ]);
+
+      const data = {
+        totalEmployees,
+        totalProjects,
+        totalRevenue:
+          totalRevenue[0]?.total || 0,
+      };
+
+      // 🔥 SAVE CACHE
+      await redisClient.set(
+        "dashboard_analytics",
+        JSON.stringify(data),
+        {
+          EX: 60,
+        }
+      );
+
+      res.json(data);
+
+    } catch (err) {
+
+      res.status(500).json({
+        message: err.message,
+      });
+
+    }
+
+};
+
+export const aiAnalytics =
+  async (req, res) => {
+
+    try {
+
+      const revenue =
+        await Invoice.aggregate([
+          {
+            $group: {
+              _id: null,
+              total: {
+                $sum: "$amount",
+              },
+            },
+          },
+        ]);
+
+      const expenses =
+        await Expense.aggregate([
+          {
+            $group: {
+              _id: null,
+              total: {
+                $sum: "$amount",
+              },
+            },
+          },
+        ]);
+
+      const profit =
+        (revenue[0]?.total || 0)
+        -
+        (expenses[0]?.total || 0);
+
+      let insight =
+        "Business Stable";
+
+      if (profit < 0) {
+        insight =
+          "⚠️ Expenses higher than revenue";
+      }
+
+      if (profit > 500000) {
+        insight =
+          "🚀 Strong financial growth";
+      }
+
+      res.json({
+        revenue:
+          revenue[0]?.total || 0,
+
+        expenses:
+          expenses[0]?.total || 0,
+
+        profit,
+
+        insight,
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        message: err.message,
+      });
+
+    }
+
+};
+
+export const predictiveAnalytics =
+  async (req, res) => {
+
+    try {
+
+      const monthlyRevenue =
+        await Invoice.aggregate([
+
+          {
+            $group: {
+
+              _id: {
+                month: {
+                  $month: "$createdAt",
+                },
+              },
+
+              revenue: {
+                $sum: "$amount",
+              },
+
+            },
+          },
+
+          {
+            $sort: {
+              "_id.month": 1,
+            },
+          },
+
+        ]);
+
+      let prediction = 0;
+
+      if (
+        monthlyRevenue.length >= 2
+      ) {
+
+        const last =
+          monthlyRevenue[
+            monthlyRevenue.length - 1
+          ].revenue;
+
+        const prev =
+          monthlyRevenue[
+            monthlyRevenue.length - 2
+          ].revenue;
+
+        prediction =
+          last + (last - prev);
+
+      }
+
+      res.json({
+        nextMonthPrediction:
+          prediction,
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        message: err.message,
+      });
+
+    }
+
+};

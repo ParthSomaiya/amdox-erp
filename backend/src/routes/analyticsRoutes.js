@@ -1,12 +1,16 @@
 import express from "express";
 import {
-    getAnalytics,
-    financeAnalytics,
-    hrAnalytics,
-    getKPIs,
+  getAnalytics,
+  financeAnalytics,
+  hrAnalytics,
+  getKPIs,
 
-    exportAnalyticsCSV,
-    exportAnalyticsPDF,
+  exportAnalyticsCSV,
+  exportAnalyticsPDF,
+
+  getDashboardAnalytics,
+  aiAnalytics,
+  predictiveAnalytics,
 } from "../controllers/analyticsController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -44,6 +48,21 @@ router.get(
   "/export/pdf",
   protect,
   exportAnalyticsPDF
+);
+
+router.get(
+  "/dashboard",
+  getDashboardAnalytics
+);
+
+router.get(
+  "/ai",
+  aiAnalytics
+);
+
+router.get(
+  "/predict",
+  predictiveAnalytics
 );
 
 export default router;
