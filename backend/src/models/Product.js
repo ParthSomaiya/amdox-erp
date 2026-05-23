@@ -13,6 +13,8 @@ const productSchema = new mongoose.Schema({
     type: String,
     unique: true,
   },
+  qrCode: String,
+
   lowStockLimit: {
     type: Number,
     default: 5,

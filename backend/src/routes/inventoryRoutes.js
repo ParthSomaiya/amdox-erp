@@ -5,7 +5,9 @@ import {
   createProduct,
   getProducts,
   getLowStockProducts,
-
+  generateBarcode,
+  generateQRCode,
+  autoReorder,
 } from "../controllers/inventoryController.js";
 
 import {
@@ -35,5 +37,24 @@ router.get(
   protect,
   getLowStockProducts
 );
+
+router.get(
+  "/barcode/:productId",
+  protect,
+  generateBarcode
+);
+
+router.get(
+  "/qrcode/:id",
+  protect,
+  generateQRCode
+);
+
+router.get(
+  "/auto-reorder",
+  protect,
+  autoReorder
+);
+
 
 export default router;
