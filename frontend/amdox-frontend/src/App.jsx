@@ -48,7 +48,9 @@ import RegisterChoice from "./pages/RegisterChoice";
 import ProjectsDashboard from "./pages/projects/ProjectsDashboard";
 import KanbanBoard from "./pages/projects/KanbanBoard";
 import CreateProject from "./pages/projects/CreateProject";
-
+import Careers from "./pages/jobs/Careers";
+import ApplyJob from "./pages/jobs/ApplyJob";
+import Applicants from "./pages/jobs/Applicants";
 
 function App() {
   return (
@@ -114,8 +116,22 @@ function App() {
         path="/projects/create"
         element={<CreateProject />}
       />
-    </Routes>
+      <Route
+        path="/careers"
+        element={<Careers />}
+      />
 
+      <Route
+        path="/jobs/apply/:id"
+        element={<ApplyJob />}
+      />
+
+      <Route
+        path="/admin/applicants"
+        element={<Applicants />}
+      />
+      
+    </Routes>
   );
 }
 

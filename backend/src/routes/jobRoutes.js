@@ -1,10 +1,73 @@
 import express from "express";
-import { createJob, getJobs } from "../controllers/jobController.js";
-import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", authMiddleware, createJob);
-router.get("/", getJobs);
+import {
+
+  createJob,
+  getJobs,
+
+  applyJob,
+
+  getApplicants,
+
+  updateApplicantStatus,
+
+} from "../controllers/jobController.js";
+
+import upload
+from "../config/multer.js";
+
+import {
+  protect,
+} from "../middleware/authMiddleware.js";
+
+
+// =========================
+// JOBS
+// =========================
+
+router.post(
+  "/",
+  protect,
+  createJob
+);
+
+router.get(
+  "/",
+  getJobs
+);
+
+
+// =========================
+// APPLY
+// =========================
+
+router.post(
+  "/apply/:jobId",
+
+  upload.single(
+    "resume"
+  ),
+
+  applyJob
+);
+
+
+// =========================
+// APPLICANTS
+// =========================
+
+router.get(
+  "/applicants",
+  protect,
+  getApplicants
+);
+
+router.put(
+  "/applicant/:id",
+  protect,
+  updateApplicantStatus
+);
 
 export default router;

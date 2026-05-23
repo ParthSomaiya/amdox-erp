@@ -63,6 +63,7 @@ import chatRoutes from "./routes/chatRoutes.js";
 
 import projectRoutes from "./routes/projectRoutes.js";
 
+import jobRoutes from "./routes/jobRoutes.js";
 
 // ================= APP =================
 const app = express();
@@ -285,6 +286,11 @@ app.use(
 app.use(
   "/api/projects",
   projectRoutes
+);
+
+app.use(
+  "/api/jobs",
+  jobRoutes
 );
 
 // TEST ROUTE
