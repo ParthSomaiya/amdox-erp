@@ -51,6 +51,8 @@ import CreateProject from "./pages/projects/CreateProject";
 import Careers from "./pages/jobs/Careers";
 import ApplyJob from "./pages/jobs/ApplyJob";
 import Applicants from "./pages/jobs/Applicants";
+import Notifications from "./pages/notifications/Notifications";
+
 
 function App() {
   return (
@@ -102,35 +104,13 @@ function App() {
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/calendar" element={<CalendarPage />} />
       <Route path="/team-chat" element={<TeamChat />} />
-      <Route
-        path="/projects/dashboard"
-        element={<ProjectsDashboard />}
-      />
-
-      <Route
-        path="/projects/board"
-        element={<KanbanBoard />}
-      />
-
-      <Route
-        path="/projects/create"
-        element={<CreateProject />}
-      />
-      <Route
-        path="/careers"
-        element={<Careers />}
-      />
-
-      <Route
-        path="/jobs/apply/:id"
-        element={<ApplyJob />}
-      />
-
-      <Route
-        path="/admin/applicants"
-        element={<Applicants />}
-      />
-      
+      <Route path="/projects/dashboard" element={<ProjectsDashboard />} />
+      <Route path="/projects/board" element={<KanbanBoard />} />
+      <Route path="/projects/create" element={<CreateProject />} />
+      <Route path="/careers" element={<Careers />} />
+      <Route path="/jobs/apply/:id" element={<ApplyJob />} />
+      <Route path="/admin/applicants" element={<Applicants />} />
+      <Route path="/notifications" element={<Notifications />} />
     </Routes>
   );
 }

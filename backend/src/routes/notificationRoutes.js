@@ -1,24 +1,91 @@
 import express from "express";
 
+const router = express.Router();
+
 import {
+
+  createNotification,
+
   getNotifications,
-  markAsRead,
+
+  markRead,
+
+  markAllRead,
+
+  deleteNotification,
+
+  sendEmailNotification,
+
 } from "../controllers/notificationController.js";
 
-import { authMiddleware } from "../middleware/authMiddleware.js";
+import {
+  protect,
+} from "../middleware/authMiddleware.js";
 
-const router = express.Router();
+
+// ==============================
+// GET
+// ==============================
 
 router.get(
   "/",
-  authMiddleware,
+  protect,
   getNotifications
 );
 
+
+// ==============================
+// CREATE
+// ==============================
+
+router.post(
+  "/",
+  protect,
+  createNotification
+);
+
+
+// ==============================
+// MARK READ
+// ==============================
+
 router.put(
-  "/:id/read",
-  authMiddleware,
-  markAsRead
+  "/read/:id",
+  protect,
+  markRead
+);
+
+
+// ==============================
+// MARK ALL READ
+// ==============================
+
+router.put(
+  "/read-all",
+  protect,
+  markAllRead
+);
+
+
+// ==============================
+// DELETE
+// ==============================
+
+router.delete(
+  "/:id",
+  protect,
+  deleteNotification
+);
+
+
+// ==============================
+// EMAIL
+// ==============================
+
+router.post(
+  "/email",
+  protect,
+  sendEmailNotification
 );
 
 export default router;
