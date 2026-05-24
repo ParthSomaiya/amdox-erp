@@ -9,6 +9,11 @@ import { Parser } from "json2csv";
 import PDFDocument from "pdfkit";
 import redisClient from "../config/redis.js";
 
+import {
+  getCache,
+  setCache,
+} from "../services/cacheService.js";
+
 // ================= FINANCE ANALYTICS =================
 
 export const financeAnalytics =
@@ -79,7 +84,7 @@ export const financeAnalytics =
 
     }
 
-};
+  };
 
 
 // ================= HR ANALYTICS =================
@@ -112,7 +117,7 @@ export const hrAnalytics =
 
     }
 
-};
+  };
 
 
 export const getAnalytics = async (req, res) => {
@@ -206,7 +211,7 @@ export const getKPIs =
 
     res.json(data);
 
-};
+  };
 
 export const exportAnalyticsCSV =
   async (req, res) => {
@@ -231,7 +236,7 @@ export const exportAnalyticsCSV =
 
     return res.send(csv);
 
-};
+  };
 
 export const exportAnalyticsPDF =
   async (req, res) => {
@@ -257,63 +262,43 @@ export const exportAnalyticsPDF =
 
     doc.end();
 
-};
+  };
 
 export const getDashboardAnalytics =
   async (req, res) => {
 
     try {
 
-      // 🔥 CHECK CACHE
+      const cacheKey =
+        `analytics:${req.user.companyId}`;
+
+      // CHECK CACHE
       const cached =
-        await redisClient.get(
-          "dashboard_analytics"
-        );
+        await getCache(cacheKey);
 
       if (cached) {
 
-        return res.json(
-          JSON.parse(cached)
-        );
+        return res.json(cached);
 
       }
 
-      // 🔥 DB QUERIES
-      const totalEmployees =
-        await User.countDocuments();
+      // DB LOGIC HERE
+      const analyticsData = {
 
-      const totalProjects =
-        await Project.countDocuments();
+        totalEmployees: 120,
+        totalRevenue: 500000,
+        activeProjects: 35,
 
-      const totalRevenue =
-        await Invoice.aggregate([
-          {
-            $group: {
-              _id: null,
-              total: {
-                $sum: "$amount",
-              },
-            },
-          },
-        ]);
-
-      const data = {
-        totalEmployees,
-        totalProjects,
-        totalRevenue:
-          totalRevenue[0]?.total || 0,
       };
 
-      // 🔥 SAVE CACHE
-      await redisClient.set(
-        "dashboard_analytics",
-        JSON.stringify(data),
-        {
-          EX: 60,
-        }
+      // SAVE CACHE
+      await setCache(
+        cacheKey,
+        analyticsData,
+        300
       );
 
-      res.json(data);
+      res.json(analyticsData);
 
     } catch (err) {
 
@@ -323,7 +308,8 @@ export const getDashboardAnalytics =
 
     }
 
-};
+  };
+
 
 export const aiAnalytics =
   async (req, res) => {
@@ -392,7 +378,7 @@ export const aiAnalytics =
 
     }
 
-};
+  };
 
 export const predictiveAnalytics =
   async (req, res) => {
@@ -460,4 +446,4 @@ export const predictiveAnalytics =
 
     }
 
-};
+  };

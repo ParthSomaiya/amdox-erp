@@ -1,4 +1,5 @@
 import express from "express";
+
 import {
   getAllUsers,
   changeUserRole,
@@ -19,9 +20,7 @@ import {
   getAllCompanies,
   suspendCompany,
   adminDashboard,
-  
 } from "../controllers/adminController.js";
-
 
 import {
   authorize,
@@ -29,22 +28,33 @@ import {
   authMiddleware,
 } from "../middleware/authMiddleware.js";
 
-import { backupDB } from "../utils/backup.js";
-import { 
+import {
   allowRoles,
   authorizeRoles,
 } from "../middleware/roleMiddleware.js";
 
-import { checkPermission } from "../middleware/permissionMiddleware.js";
-import { PERMISSIONS } from "../config/permissions.js";
+import {
+  checkPermission,
+} from "../middleware/permissionMiddleware.js";
+
+import {
+  PERMISSIONS,
+} from "../config/permissions.js";
+
+import backupDB from "../utils/backupDB.js";
 
 const router = express.Router();
+
+
+// ================= USERS =================
 
 // 👥 Get all users
 router.get(
   "/users",
   authMiddleware,
-  checkPermission(PERMISSIONS.MANAGE_USERS),
+  checkPermission(
+    PERMISSIONS.MANAGE_USERS
+  ),
   getAllUsers
 );
 
@@ -52,7 +62,9 @@ router.get(
 router.put(
   "/role",
   authMiddleware,
-  checkPermission(PERMISSIONS.MANAGE_USERS),
+  checkPermission(
+    PERMISSIONS.MANAGE_USERS
+  ),
   changeUserRole
 );
 
@@ -60,7 +72,9 @@ router.put(
 router.put(
   "/deactivate",
   authMiddleware,
-  checkPermission(PERMISSIONS.MANAGE_USERS),
+  checkPermission(
+    PERMISSIONS.MANAGE_USERS
+  ),
   deactivateUser
 );
 
@@ -68,32 +82,64 @@ router.put(
 router.put(
   "/company",
   authMiddleware,
-  checkPermission(PERMISSIONS.MANAGE_USERS),
+  checkPermission(
+    PERMISSIONS.MANAGE_USERS
+  ),
   updateCompany
 );
 
-// 📊 Admin stats
+
+// ================= ADMIN STATS =================
+
 router.get(
   "/stats",
   authMiddleware,
-  checkPermission(PERMISSIONS.VIEW_ANALYTICS),
+  checkPermission(
+    PERMISSIONS.VIEW_ANALYTICS
+  ),
   getAdminStats
 );
 
 
-router.get(
+// ================= BACKUP =================
+
+router.post(
   "/backup",
-  authMiddleware,
-  allowRoles("ADMIN"),
+  protect,
+  authorizeRoles(
+    "ADMIN",
+    "SUPER_ADMIN"
+  ),
   async (req, res) => {
-    backupDB();
-    res.json({ message: "Backup started" });
+
+    try {
+
+      await backupDB();
+
+      res.json({
+        success: true,
+        message:
+          "✅ Backup Started Successfully",
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+
+    }
+
   }
 );
 
+
+// ================= USERS CRUD =================
+
 // USERS
 router.get(
-  "/users",
+  "/all-users",
   protect,
   authorize("ADMIN"),
   getUsers
@@ -114,7 +160,9 @@ router.delete(
 );
 
 
-// SUSPEND / ACTIVATE
+// ================= USER STATUS =================
+
+// SUSPEND
 router.put(
   "/users/:id/suspend",
   protect,
@@ -122,6 +170,7 @@ router.put(
   suspendUser
 );
 
+// ACTIVATE
 router.put(
   "/users/:id/activate",
   protect,
@@ -129,6 +178,8 @@ router.put(
   activateUser
 );
 
+
+// ================= ROLE =================
 
 // ROLE UPDATE
 router.put(
@@ -139,7 +190,9 @@ router.put(
 );
 
 
-// PERMISSIONS
+// ================= PERMISSIONS =================
+
+// ASSIGN PERMISSIONS
 router.put(
   "/users/:id/permissions",
   protect,
@@ -147,6 +200,8 @@ router.put(
   assignPermissions
 );
 
+
+// ================= AUDIT =================
 
 // AUDIT LOGS
 router.get(
@@ -157,7 +212,9 @@ router.get(
 );
 
 
-// ANALYTICS
+// ================= TENANT =================
+
+// TENANT ANALYTICS
 router.get(
   "/tenant-analytics",
   protect,
@@ -166,6 +223,9 @@ router.get(
 );
 
 
+// ================= SETTINGS =================
+
+// SAVE SETTINGS
 router.post(
   "/settings",
   protect,
@@ -173,6 +233,7 @@ router.post(
   saveSettings
 );
 
+// GET SETTINGS
 router.get(
   "/settings",
   protect,
@@ -180,20 +241,33 @@ router.get(
   getSettings
 );
 
+
+// ================= COMPANIES =================
+
+// GET COMPANIES
 router.get(
   "/companies",
   protect,
-  authorizeRoles("SUPER_ADMIN"),
+  authorizeRoles(
+    "SUPER_ADMIN"
+  ),
   getAllCompanies
 );
 
+// SUSPEND COMPANY
 router.put(
   "/companies/suspend/:id",
   protect,
-  authorizeRoles("SUPER_ADMIN"),
+  authorizeRoles(
+    "SUPER_ADMIN"
+  ),
   suspendCompany
 );
 
+
+// ================= DASHBOARD =================
+
+// ADMIN DASHBOARD
 router.get(
   "/dashboard",
   protect,

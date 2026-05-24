@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
+
 import API from "../../services/api";
+
+import io from "socket.io-client";
+
+import WidgetGrid from "../../components/admin/WidgetGrid";
 
 import {
   ResponsiveContainer,
@@ -15,7 +20,13 @@ import {
   Line,
 } from "recharts";
 
+// ================= SOCKET =================
+const socket =
+  io("http://localhost:5000");
+
 export default function AdminDashboard() {
+
+  // ================= STATES =================
 
   const [stats, setStats] =
     useState({});
@@ -29,9 +40,48 @@ export default function AdminDashboard() {
   const [tenants, setTenants] =
     useState([]);
 
+  // LIVE REALTIME DATA
+  const [liveData,
+    setLiveData] =
+    useState([]);
+
+  // ================= LOAD DASHBOARD =================
+
   useEffect(() => {
+
     fetchDashboard();
+
   }, []);
+
+  // ================= SOCKET REALTIME =================
+
+  useEffect(() => {
+
+    socket.on(
+      "analytics_update",
+      (data) => {
+
+        console.log(
+          "Realtime Analytics:",
+          data
+        );
+
+        setLiveData(data);
+
+      }
+    );
+
+    return () => {
+
+      socket.off(
+        "analytics_update"
+      );
+
+    };
+
+  }, []);
+
+  // ================= FETCH DATA =================
 
   const fetchDashboard =
     async () => {
@@ -74,34 +124,57 @@ export default function AdminDashboard() {
           tenantRes.data || []
         );
 
+        // DEFAULT LIVE DATA
+        setLiveData(
+          financeRes.data || []
+        );
+
       } catch (err) {
+
         console.log(err);
+
       }
 
     };
+
+  // ================= UI =================
 
   return (
 
     <div className="p-6 bg-gray-100 min-h-screen">
 
-      {/* HEADER */}
+      {/* ================= HEADER ================= */}
+
       <div className="flex justify-between items-center mb-8">
 
         <h1 className="text-3xl font-bold">
-          Admin Dashboard
+
+          👑 Admin Dashboard
+
         </h1>
 
         <button
           onClick={fetchDashboard}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
         >
           Refresh
         </button>
 
       </div>
 
-      {/* KPI */}
+      {/* ================= DRAG DROP GRID ================= */}
+
+      <div className="mb-8">
+
+        <WidgetGrid />
+
+      </div>
+
+      {/* ================= KPI CARDS ================= */}
+
       <div className="grid md:grid-cols-4 gap-5 mb-8">
+
+        {/* USERS */}
 
         <div className="bg-white p-5 rounded shadow">
 
@@ -115,6 +188,8 @@ export default function AdminDashboard() {
 
         </div>
 
+        {/* TENANTS */}
+
         <div className="bg-white p-5 rounded shadow">
 
           <p className="text-gray-500">
@@ -127,6 +202,8 @@ export default function AdminDashboard() {
 
         </div>
 
+        {/* REVENUE */}
+
         <div className="bg-white p-5 rounded shadow">
 
           <p className="text-gray-500">
@@ -138,6 +215,8 @@ export default function AdminDashboard() {
           </h2>
 
         </div>
+
+        {/* PROJECTS */}
 
         <div className="bg-white p-5 rounded shadow">
 
@@ -153,14 +232,18 @@ export default function AdminDashboard() {
 
       </div>
 
-      {/* CHARTS */}
+      {/* ================= CHARTS ================= */}
+
       <div className="grid md:grid-cols-2 gap-6">
 
-        {/* REVENUE */}
+        {/* ================= REVENUE ANALYTICS ================= */}
+
         <div className="bg-white p-5 rounded shadow">
 
           <h2 className="text-xl font-bold mb-4">
+
             Revenue Analytics
+
           </h2>
 
           <ResponsiveContainer
@@ -179,6 +262,7 @@ export default function AdminDashboard() {
               <Tooltip />
 
               <Line
+                type="monotone"
                 dataKey="revenue"
               />
 
@@ -188,11 +272,14 @@ export default function AdminDashboard() {
 
         </div>
 
-        {/* USERS */}
+        {/* ================= USER ROLES ================= */}
+
         <div className="bg-white p-5 rounded shadow">
 
           <h2 className="text-xl font-bold mb-4">
+
             User Roles
+
           </h2>
 
           <ResponsiveContainer
@@ -212,9 +299,11 @@ export default function AdminDashboard() {
 
                 {users.map(
                   (u, index) => (
+
                     <Cell
                       key={index}
                     />
+
                   )
                 )}
 
@@ -230,11 +319,52 @@ export default function AdminDashboard() {
 
       </div>
 
-      {/* TENANTS */}
+      {/* ================= REALTIME LIVE CHART ================= */}
+
       <div className="bg-white p-5 rounded shadow mt-8">
 
         <h2 className="text-2xl font-bold mb-5">
+
+          📡 Live Revenue Analytics
+
+        </h2>
+
+        <ResponsiveContainer
+          width="100%"
+          height={350}
+        >
+
+          <LineChart
+            data={liveData}
+          >
+
+            <XAxis
+              dataKey="month"
+            />
+
+            <YAxis />
+
+            <Tooltip />
+
+            <Line
+              type="monotone"
+              dataKey="revenue"
+            />
+
+          </LineChart>
+
+        </ResponsiveContainer>
+
+      </div>
+
+      {/* ================= TENANT ANALYTICS ================= */}
+
+      <div className="bg-white p-5 rounded shadow mt-8">
+
+        <h2 className="text-2xl font-bold mb-5">
+
           Tenant Analytics
+
         </h2>
 
         <ResponsiveContainer
@@ -262,27 +392,38 @@ export default function AdminDashboard() {
 
       </div>
 
-      {/* QUICK ACTIONS */}
+      {/* ================= QUICK ACTIONS ================= */}
+
       <div className="grid md:grid-cols-4 gap-4 mt-8">
 
-        <button className="bg-blue-600 text-white p-4 rounded shadow">
+        <button className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded shadow">
+
           Create Tenant
+
         </button>
 
-        <button className="bg-green-600 text-white p-4 rounded shadow">
+        <button className="bg-green-600 hover:bg-green-700 text-white p-4 rounded shadow">
+
           Generate Report
+
         </button>
 
-        <button className="bg-purple-600 text-white p-4 rounded shadow">
+        <button className="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded shadow">
+
           Backup Database
+
         </button>
 
-        <button className="bg-red-600 text-white p-4 rounded shadow">
+        <button className="bg-red-600 hover:bg-red-700 text-white p-4 rounded shadow">
+
           Manage Users
+
         </button>
 
       </div>
 
     </div>
+
   );
+
 }

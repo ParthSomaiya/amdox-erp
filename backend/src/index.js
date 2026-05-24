@@ -74,6 +74,8 @@ import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 // AI
 import aiRoutes from "./ai/aiRoutes.js";
 
+import "./cron/backupCron.js";
+
 // ================= APP =================
 const app = express();
 
