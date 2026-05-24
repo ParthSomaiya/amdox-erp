@@ -1,29 +1,57 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import API from "../../services/api";
 
-export default function ProductDetail({ id }) {
-  const [product, setProduct] = useState(null);
+export default function ProductDetails() {
+
+  const [product,
+    setProduct] =
+    useState(null);
 
   useEffect(() => {
-    API.get(`/inventory/product/${id}`).then((res) =>
-      setProduct(res.data)
-    );
-  }, [id]);
 
-  if (!product) return <p>Loading...</p>;
+    loadProduct();
+
+  }, []);
+
+  const loadProduct =
+    async () => {
+
+      const res =
+        await API.get(
+          "/products/1"
+        );
+
+      setProduct(
+        res.data
+      );
+
+    };
+
+  if (!product)
+    return null;
 
   return (
-    <div className="p-6 bg-white shadow rounded">
-      <h1 className="text-2xl font-bold">
+
+    <div className="p-6">
+
+      <h1 className="text-3xl font-bold mb-5">
+
         {product.name}
+
       </h1>
 
-      <p>SKU: {product.sku}</p>
-      <p>Price: ₹{product.price}</p>
+      <img
+        src={product.qrCode}
+        alt="QR"
+        className="w-52"
+      />
 
-      <p className="text-green-600 font-bold">
-        Stock: {product.stock}
-      </p>
     </div>
+
   );
+
 }

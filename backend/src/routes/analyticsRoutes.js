@@ -11,6 +11,7 @@ import {
   getDashboardAnalytics,
   aiAnalytics,
   predictiveAnalytics,
+  advancedAnalytics,
 } from "../controllers/analyticsController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -63,6 +64,12 @@ router.get(
 router.get(
   "/predict",
   predictiveAnalytics
+);
+
+router.get(
+  "/advanced",
+  protect,
+  advancedAnalytics
 );
 
 export default router;

@@ -14,6 +14,19 @@ import {
   setCache,
 } from "../services/cacheService.js";
 
+import {
+  predictRevenue,
+} from "../services/predictiveAnalytics.js";
+
+import {
+  generateInsights,
+} from "../services/aiInsights.js";
+
+import {
+  cacheAnalytics,
+  getCachedAnalytics,
+} from "../services/cacheAnalytics.js";
+
 // ================= FINANCE ANALYTICS =================
 
 export const financeAnalytics =
@@ -442,6 +455,86 @@ export const predictiveAnalytics =
 
       res.status(500).json({
         message: err.message,
+      });
+
+    }
+
+  };
+
+
+export const advancedAnalytics =
+  async (req, res) => {
+
+    try {
+
+      const cached =
+        await getCachedAnalytics(
+          "advanced_analytics"
+        );
+
+      if (cached) {
+
+        return res.json(cached);
+
+      }
+
+      const analytics = {
+
+        revenue: 900000,
+
+        expense: 500000,
+
+        newUsers: 150,
+
+        inventoryLow: 12,
+
+      };
+
+      const predictions =
+        predictRevenue([
+
+          { revenue: 100000 },
+
+          { revenue: 150000 },
+
+          { revenue: 180000 },
+
+          { revenue: 210000 },
+
+        ]);
+
+      const insights =
+        generateInsights(
+          analytics
+        );
+
+      const finalData = {
+
+        analytics,
+
+        predictions,
+
+        insights,
+
+      };
+
+      await cacheAnalytics(
+
+        "advanced_analytics",
+
+        finalData
+
+      );
+
+      res.json(finalData);
+
+    } catch (err) {
+
+      res.status(500).json({
+
+        message:
+          err.message,
+
       });
 
     }

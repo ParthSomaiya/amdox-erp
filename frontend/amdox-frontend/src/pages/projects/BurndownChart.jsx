@@ -1,73 +1,119 @@
 import {
+  useEffect,
+  useState,
+} from "react";
 
+import axios from "axios";
+
+import io from "socket.io-client";
+
+import {
+  ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer,
-
 } from "recharts";
+
+const socket =
+  io("http://localhost:5000");
 
 export default function BurndownChart() {
 
-  const data = [
+  const [data,
+    setData] =
+    useState([]);
 
-    {
-      day: "Day 1",
-      remaining: 100,
-    },
+  useEffect(() => {
 
-    {
-      day: "Day 2",
-      remaining: 80,
-    },
+    fetchData();
 
-    {
-      day: "Day 3",
-      remaining: 60,
-    },
+    socket.on(
 
-    {
-      day: "Day 4",
-      remaining: 35,
-    },
+      "burndown_update",
 
-    {
-      day: "Day 5",
-      remaining: 10,
-    },
+      (newData) => {
 
-  ];
+        setData(newData);
+
+      }
+
+    );
+
+    return () => {
+
+      socket.off(
+        "burndown_update"
+      );
+
+    };
+
+  }, []);
+
+  const fetchData =
+    async () => {
+
+      try {
+
+        const res =
+          await axios.get(
+
+            "http://localhost:5000/api/projects/burndown"
+
+          );
+
+        setData(
+          res.data
+        );
+
+      } catch (err) {
+
+        console.log(err);
+
+      }
+
+    };
 
   return (
 
-    <div className="p-6 bg-white rounded shadow">
+    <div className="p-6 bg-gray-100 min-h-screen">
 
-      <h2 className="text-2xl font-bold mb-4">
-        Sprint Burndown
-      </h2>
+      <div className="bg-white rounded-xl shadow p-6">
 
-      <ResponsiveContainer
-        width="100%"
-        height={350}
-      >
+        <h1 className="text-3xl font-bold mb-6">
 
-        <LineChart data={data}>
+          🔥 Sprint Burndown
 
-          <XAxis dataKey="day" />
+        </h1>
 
-          <YAxis />
+        <ResponsiveContainer
+          width="100%"
+          height={400}
+        >
 
-          <Tooltip />
+          <LineChart data={data}>
 
-          <Line
-            dataKey="remaining"
-          />
+            <XAxis
+              dataKey="day"
+            />
 
-        </LineChart>
+            <YAxis />
 
-      </ResponsiveContainer>
+            <Tooltip />
+
+            <Line
+              type="monotone"
+              dataKey="remaining"
+              stroke="#2563EB"
+              strokeWidth={3}
+            />
+
+          </LineChart>
+
+        </ResponsiveContainer>
+
+      </div>
 
     </div>
 

@@ -2,6 +2,10 @@ import Product from "../models/Product.js";
 import bwipjs from "bwip-js";
 import QRCode from "qrcode";
 
+import {
+  predictReorder,
+} from "../services/reorderAI.js";
+
 export const createProduct =
   async (req, res) => {
 
@@ -231,3 +235,42 @@ export const generateQRCode =
     }
 
 };
+
+
+export const reorderPrediction =
+  async (req, res) => {
+
+    try {
+
+      const products =
+        await Product.find({
+
+          companyId:
+            req.user.companyId,
+
+        });
+
+      const result =
+        products.map((p) => ({
+
+          product:
+            p.name,
+
+          ...predictReorder(p),
+
+        }));
+
+      res.json(result);
+
+    } catch (err) {
+
+      res.status(500).json({
+
+        message:
+          err.message,
+
+      });
+
+    }
+
+  };

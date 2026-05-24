@@ -1,5 +1,10 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import axios from "axios";
+import io from "socket.io-client";
 
 import {
   Bar,
@@ -41,6 +46,11 @@ ChartJS.register(
   Legend
 );
 
+// ================= SOCKET =================
+
+const socket =
+  io("http://localhost:5000");
+
 export default function AnalyticsDashboard() {
 
   // ===================================
@@ -71,6 +81,8 @@ export default function AnalyticsDashboard() {
   const [selectedChart, setSelectedChart] =
     useState("revenue");
 
+  const [liveAnalytics, setLiveAnalytics] =
+    useState(null);
 
   // ===================================
   // FETCH ALL DATA
@@ -135,6 +147,20 @@ export default function AnalyticsDashboard() {
           financeRes.data.revenue || []
         );
 
+        // =========================
+        // ADVANCED AI ANALYTICS
+        // =========================
+
+        const advancedRes =
+          await axios.get(
+            "http://localhost:5000/api/analytics/advanced",
+            { headers }
+          );
+
+        setLiveAnalytics(
+          advancedRes.data
+        );
+
       } catch (err) {
 
         console.log(err);
@@ -147,7 +173,6 @@ export default function AnalyticsDashboard() {
 
     };
 
-
   // ===================================
   // INITIAL LOAD
   // ===================================
@@ -158,6 +183,37 @@ export default function AnalyticsDashboard() {
 
   }, []);
 
+  // ===================================
+  // SOCKET LIVE UPDATE
+  // ===================================
+
+  useEffect(() => {
+
+    socket.on(
+      "analytics_update",
+      (newData) => {
+
+        console.log(
+          "📊 Live Analytics:",
+          newData
+        );
+
+        setLiveAnalytics(
+          newData
+        );
+
+      }
+    );
+
+    return () => {
+
+      socket.off(
+        "analytics_update"
+      );
+
+    };
+
+  }, []);
 
   // ===================================
   // AUTO REFRESH
@@ -178,7 +234,6 @@ export default function AnalyticsDashboard() {
       clearInterval(interval);
 
   }, [autoRefresh]);
-
 
   // ===================================
   // APPLY FILTER
@@ -218,9 +273,8 @@ export default function AnalyticsDashboard() {
 
     };
 
-
   // ===================================
-  // LOADING UI
+  // LOADING
   // ===================================
 
   if (loading) {
@@ -237,12 +291,9 @@ export default function AnalyticsDashboard() {
 
   }
 
-
   // ===================================
   // CHART DATA
   // ===================================
-
-  // EMPLOYEE BAR
 
   const employeeChart = {
 
@@ -269,9 +320,6 @@ export default function AnalyticsDashboard() {
 
   };
 
-
-  // LEAVE PIE
-
   const leaveChart = {
 
     labels:
@@ -297,9 +345,6 @@ export default function AnalyticsDashboard() {
     ],
 
   };
-
-
-  // FINANCE LINE
 
   const financeChart = {
 
@@ -331,7 +376,6 @@ export default function AnalyticsDashboard() {
 
   };
 
-
   // ===================================
   // UI
   // ===================================
@@ -340,9 +384,7 @@ export default function AnalyticsDashboard() {
 
     <div className="min-h-screen bg-gray-100 p-6">
 
-      {/* =================================== */}
       {/* HEADER */}
-      {/* =================================== */}
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
 
@@ -357,7 +399,6 @@ export default function AnalyticsDashboard() {
           </p>
 
         </div>
-
 
         {/* FILTERS */}
 
@@ -411,10 +452,7 @@ export default function AnalyticsDashboard() {
 
       </div>
 
-
-      {/* =================================== */}
-      {/* KPI CARDS */}
-      {/* =================================== */}
+      {/* KPI */}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
 
@@ -430,7 +468,6 @@ export default function AnalyticsDashboard() {
 
         </div>
 
-
         <div className="bg-white rounded-xl shadow p-6 border-l-4 border-red-500">
 
           <p className="text-gray-500">
@@ -443,7 +480,6 @@ export default function AnalyticsDashboard() {
 
         </div>
 
-
         <div className="bg-white rounded-xl shadow p-6 border-l-4 border-green-600">
 
           <p className="text-gray-500">
@@ -455,7 +491,6 @@ export default function AnalyticsDashboard() {
           </h2>
 
         </div>
-
 
         <div className="bg-white rounded-xl shadow p-6 border-l-4 border-yellow-500">
 
@@ -471,131 +506,85 @@ export default function AnalyticsDashboard() {
 
       </div>
 
+      {/* AI INSIGHTS */}
 
-      {/* =================================== */}
-      {/* SECONDARY CARDS */}
-      {/* =================================== */}
+      {liveAnalytics?.insights && (
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+        <div className="grid md:grid-cols-2 gap-4 mb-10">
 
-        <div className="bg-white rounded-xl shadow p-5">
+          {liveAnalytics.insights.map(
+            (i, index) => (
 
-          <p className="text-gray-500">
-            Total Employees
-          </p>
+              <div
+                key={index}
+                className="bg-white p-5 rounded shadow"
+              >
 
-          <h2 className="text-3xl font-bold mt-2">
-            {data.totalEmployees}
-          </h2>
+                <h3 className="font-bold text-lg mb-2">
 
-        </div>
+                  🤖 AI Insight
 
+                </h3>
 
-        <div className="bg-white rounded-xl shadow p-5">
+                <p>{i}</p>
 
-          <p className="text-gray-500">
-            Projects
-          </p>
+              </div>
 
-          <h2 className="text-3xl font-bold mt-2">
-            {data.totalProjects}
-          </h2>
-
-        </div>
-
-
-        <div className="bg-white rounded-xl shadow p-5">
-
-          <p className="text-gray-500">
-            Jobs
-          </p>
-
-          <h2 className="text-3xl font-bold mt-2">
-            {data.totalJobs}
-          </h2>
-
-        </div>
-
-
-        <div className="bg-white rounded-xl shadow p-5">
-
-          <p className="text-gray-500">
-            Total Revenue
-          </p>
-
-          <h2 className="text-3xl font-bold mt-2">
-            ₹{data.totalRevenue}
-          </h2>
-
-        </div>
-
-      </div>
-
-
-      {/* =================================== */}
-      {/* CHART SELECTOR */}
-      {/* =================================== */}
-
-      <div className="bg-white rounded-xl shadow p-5 mb-8 flex gap-4 flex-wrap">
-
-        <button
-          onClick={() =>
-            setSelectedChart(
-              "revenue"
             )
-          }
-          className={`px-4 py-2 rounded ${
-            selectedChart ===
-            "revenue"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200"
-          }`}
-        >
-          Revenue
-        </button>
+          )}
 
-        <button
-          onClick={() =>
-            setSelectedChart(
-              "employees"
-            )
-          }
-          className={`px-4 py-2 rounded ${
-            selectedChart ===
-            "employees"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200"
-          }`}
-        >
-          Employees
-        </button>
+        </div>
 
-        <button
-          onClick={() =>
-            setSelectedChart(
-              "leave"
-            )
-          }
-          className={`px-4 py-2 rounded ${
-            selectedChart ===
-            "leave"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200"
-          }`}
-        >
-          Leave
-        </button>
+      )}
 
-      </div>
+      {/* PREDICTION CHART */}
 
+      {liveAnalytics?.predictions && (
 
-      {/* =================================== */}
+        <div className="bg-white p-5 rounded shadow mb-10">
+
+          <h2 className="text-2xl font-bold mb-5">
+
+            Revenue Prediction
+
+          </h2>
+
+          <ResponsiveContainer
+            width="100%"
+            height={400}
+          >
+
+            <LineChart
+              data={
+                liveAnalytics.predictions
+              }
+            >
+
+              <XAxis
+                dataKey="month"
+              />
+
+              <YAxis />
+
+              <ReTooltip />
+
+              <ReLine
+                dataKey="predictedRevenue"
+                stroke="#2563EB"
+                strokeWidth={3}
+              />
+
+            </LineChart>
+
+          </ResponsiveContainer>
+
+        </div>
+
+      )}
+
       {/* CHARTS */}
-      {/* =================================== */}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-
-        {/* EMPLOYEE */}
 
         <div className="bg-white rounded-xl shadow p-5">
 
@@ -606,9 +595,6 @@ export default function AnalyticsDashboard() {
           <Bar data={employeeChart} />
 
         </div>
-
-
-        {/* LEAVE */}
 
         <div className="bg-white rounded-xl shadow p-5">
 
@@ -622,10 +608,7 @@ export default function AnalyticsDashboard() {
 
       </div>
 
-
-      {/* =================================== */}
       {/* MONTHLY REVENUE */}
-      {/* =================================== */}
 
       <div className="bg-white rounded-xl shadow p-5 mb-10">
 
@@ -637,14 +620,9 @@ export default function AnalyticsDashboard() {
 
       </div>
 
-
-      {/* =================================== */}
       {/* RECHARTS */}
-      {/* =================================== */}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* BAR */}
 
         <div className="bg-white rounded-xl shadow p-5">
 
@@ -677,9 +655,6 @@ export default function AnalyticsDashboard() {
           </ResponsiveContainer>
 
         </div>
-
-
-        {/* LINE */}
 
         <div className="bg-white rounded-xl shadow p-5">
 

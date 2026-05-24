@@ -1,5 +1,8 @@
 import Project from "../models/Project.js";
 import Task from "../models/Task.js";
+import {
+  buildGanttData,
+} from "../services/ganttService.js";
 
 
 // =========================
@@ -31,7 +34,7 @@ export const createProject =
 
     }
 
-};
+  };
 
 
 // =========================
@@ -47,7 +50,7 @@ export const getProjects =
 
     res.json(projects);
 
-};
+  };
 
 
 // =========================
@@ -62,7 +65,7 @@ export const createTask =
 
     res.json(task);
 
-};
+  };
 
 
 // =========================
@@ -82,7 +85,7 @@ export const getTasks =
 
     res.json(tasks);
 
-};
+  };
 
 
 // =========================
@@ -108,7 +111,7 @@ export const updateTaskStatus =
 
     res.json(task);
 
-};
+  };
 
 
 // =========================
@@ -146,7 +149,7 @@ export const projectAnalytics =
 
     });
 
-};
+  };
 
 
 // 📊 Project stats (tasks + progress)
@@ -168,3 +171,29 @@ export const getProjectDetails = async (req, res) => {
       : 0,
   });
 };
+
+
+export const getGanttTasks =
+  async (req, res) => {
+
+    try {
+
+      const data =
+        await buildGanttData(
+          req.query.projectId
+        );
+
+      res.json(data);
+
+    } catch (err) {
+
+      res.status(500).json({
+
+        message:
+          err.message,
+
+      });
+
+    }
+
+  };

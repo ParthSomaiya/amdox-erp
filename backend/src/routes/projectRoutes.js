@@ -10,6 +10,7 @@ import {
   updateTaskStatus,
 
   projectAnalytics,
+  getGanttTasks,
 
 } from "../controllers/projectController.js";
 
@@ -53,5 +54,12 @@ router.get(
   protect,
   projectAnalytics
 );
+
+
+router.get(
+  "/gantt",
+  getGanttTasks
+);
+
 
 export default router;

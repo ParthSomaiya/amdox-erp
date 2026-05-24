@@ -8,6 +8,7 @@ import {
   generateBarcode,
   generateQRCode,
   autoReorder,
+  reorderPrediction,
 } from "../controllers/inventoryController.js";
 
 import {
@@ -56,5 +57,10 @@ router.get(
   autoReorder
 );
 
+router.get(
+  "/reorder-ai",
+  protect,
+  reorderPrediction
+);
 
 export default router;
