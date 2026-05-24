@@ -71,10 +71,11 @@ import jobRoutes from "./routes/jobRoutes.js";
 // SUBSCRIPTION
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 
-// AI
-import aiRoutes from "./ai/aiRoutes.js";
-
 import "./cron/backupCron.js";
+
+import smsRoutes from "./routes/smsRoutes.js";
+
+import aiRoutes from "./routes/aiRoutes.js";
 
 // ================= APP =================
 const app = express();
@@ -174,6 +175,12 @@ app.use("/api/subscription", subscriptionRoutes);
 
 // AI
 app.use("/api/ai", aiRoutes);
+
+// SMS
+app.use("/api/sms",smsRoutes);
+
+// API 
+app.use("/api/ai",aiRoutes);
 
 // ================= ROOT =================
 

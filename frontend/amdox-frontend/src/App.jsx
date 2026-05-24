@@ -113,319 +113,334 @@ import TeamChat from "./pages/TeamChat";
 
 import Notifications from "./pages/notifications/Notifications";
 
+import PushSetup from "./components/PushSetup";
+
+import AIAssistant from "./pages/ai/AIAssistant";
+
 // ================= APP =================
 
 function App() {
 
   return (
 
-    <Routes>
-
-      {/* ================= HOME ================= */}
-
-      <Route
-        path="/"
-        element={<Home />}
-      />
-
-      <Route
-        path="/login"
-        element={<Login />}
-      />
-
-      <Route
-        path="/dashboard"
-        element={<Dashboard />}
-      />
-
-      {/* ================= AUTH ================= */}
-
-      <Route
-        path="/register"
-        element={<RegisterChoice />}
-      />
-
-      <Route
-        path="/invite/:token"
-        element={<InviteRegister />}
-      />
-
-      <Route
-        path="/forgot-password"
-        element={<ForgotPassword />}
-      />
-
-      <Route
-        path="/reset-password/:token"
-        element={<ResetPassword />}
-      />
-
-      <Route
-        path="/login-success"
-        element={<LoginSuccess />}
-      />
-
-      {/* ================= EMPLOYEE ================= */}
-
-      <Route
-        path="/employees"
-        element={<Employees />}
-      />
-
-      <Route
-        path="/add-employee"
-        element={<AddEmployee />}
-      />
-
-      <Route
-        path="/register/employee"
-        element={<EmployeeRegister />}
-      />
-
-      <Route
-        path="/register/employee/:token"
-        element={<EmployeeRegister />}
-      />
-
-      {/* ================= HR ================= */}
-
-      <Route
-        path="/apply-leave"
-        element={<ApplyLeave />}
-      />
-
-      <Route
-        path="/manage-leave"
-        element={<LeaveManagement />}
-      />
-
-      <Route
-        path="/attendance"
-        element={<Attendance />}
-      />
-
-      <Route
-        path="/attendance-report"
-        element={<AttendanceReport />}
-      />
-
-      {/* ================= PAYROLL ================= */}
-
-      <Route
-        path="/generate-payroll"
-        element={<GeneratePayroll />}
-      />
-
-      <Route
-        path="/payroll"
-        element={<PayrollList />}
-      />
-
-      <Route
-        path="/my-payslip"
-        element={<MyPayslip />}
-      />
-
-      <Route
-        path="/payroll-dashboard"
-        element={<Payroll />}
-      />
-
-      {/* ================= ANALYTICS ================= */}
-
-      <Route
-        path="/analytics"
-        element={<Analytics />}
-      />
-
-      <Route
-        path="/analytics/dashboard"
-        element={<AnalyticsDashboard />}
-      />
-
-      <Route
-        path="/analytics/finance"
-        element={<FinanceAnalytics />}
-      />
-
-      <Route
-        path="/analytics/projects"
-        element={<ProjectAnalytics />}
-      />
-
-      {/* ================= FINANCE ================= */}
-
-      <Route
-        path="/gl"
-        element={<GL />}
-      />
-
-      <Route
-        path="/bills"
-        element={<Bills />}
-      />
-
-      <Route
-        path="/receivables"
-        element={<Receivables />}
-      />
-
-      <Route
-        path="/reconciliation"
-        element={<Reconciliation />}
-      />
-
-      <Route
-        path="/trial-balance"
-        element={<TrialBalance />}
-      />
-
-      <Route
-        path="/balance-sheet"
-        element={<BalanceSheet />}
-      />
-
-      <Route
-        path="/create-invoice"
-        element={<CreateInvoice />}
-      />
-
-      {/* ================= INVENTORY ================= */}
-
-      <Route
-        path="/inventory"
-        element={<InventoryDashboard />}
-      />
-
-      <Route
-        path="/products"
-        element={<Products />}
-      />
-
-      <Route
-        path="/purchase-orders"
-        element={<PurchaseOrders />}
-      />
-
-      <Route
-        path="/stock-history"
-        element={<StockHistory />}
-      />
-
-      {/* ================= PROJECTS ================= */}
-
-      <Route
-        path="/projects"
-        element={<ProjectDashboard />}
-      />
-
-      <Route
-        path="/projects/dashboard"
-        element={<ProjectsDashboard />}
-      />
-
-      <Route
-        path="/projects/board"
-        element={<KanbanBoard />}
-      />
-
-      <Route
-        path="/projects/create"
-        element={<CreateProject />}
-      />
-
-      <Route
-        path="/projects/gantt"
-        element={<GanttBoard />}
-      />
-
-      <Route
-        path="/projects/burndown"
-        element={<BurndownChart />}
-      />
-
-      <Route
-        path="/tasks-board"
-        element={<TaskBoard />}
-      />
-
-      <Route
-        path="/timeline"
-        element={<Timeline />}
-      />
-
-      {/* ================= JOBS ================= */}
-
-      <Route
-        path="/jobs"
-        element={<Jobs />}
-      />
-
-      <Route
-        path="/register/job"
-        element={<JobRegister />}
-      />
-
-      <Route
-        path="/careers/:companyId"
-        element={<CareerPage />}
-      />
-
-      <Route
-        path="/careers"
-        element={<CareerPortal />}
-      />
-
-      <Route
-        path="/jobs/apply/:id"
-        element={<ApplyJob />}
-      />
-
-      <Route
-        path="/admin/applicants"
-        element={<Applicants />}
-      />
-
-      {/* ================= ADMIN ================= */}
-
-      <Route
-        path="/admin/settings"
-        element={<AdminSettings />}
-      />
-
-      <Route
-        path="/admin/security"
-        element={<SecuritySettings />}
-      />
-
-      <Route
-        path="/admin/tenants"
-        element={<TenantManagement />}
-      />
-
-      <Route
-        path="/admin/audit"
-        element={<AuditLogs />}
-      />
-
-      {/* ================= OTHER ================= */}
-
-      <Route
-        path="/calendar"
-        element={<CalendarPage />}
-      />
-
-      <Route
-        path="/team-chat"
-        element={<TeamChat />}
-      />
-
-      <Route
-        path="/notifications"
-        element={<Notifications />}
-      />
-
-    </Routes>
+    <>
+
+      <PushSetup />
+
+      <Routes>
+
+        {/* ================= HOME ================= */}
+
+        <Route
+          path="/"
+          element={<Home />}
+        />
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/dashboard"
+          element={<Dashboard />}
+        />
+
+        {/* ================= AUTH ================= */}
+
+        <Route
+          path="/register"
+          element={<RegisterChoice />}
+        />
+
+        <Route
+          path="/invite/:token"
+          element={<InviteRegister />}
+        />
+
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+
+        <Route
+          path="/reset-password/:token"
+          element={<ResetPassword />}
+        />
+
+        <Route
+          path="/login-success"
+          element={<LoginSuccess />}
+        />
+
+        {/* ================= EMPLOYEE ================= */}
+
+        <Route
+          path="/employees"
+          element={<Employees />}
+        />
+
+        <Route
+          path="/add-employee"
+          element={<AddEmployee />}
+        />
+
+        <Route
+          path="/register/employee"
+          element={<EmployeeRegister />}
+        />
+
+        <Route
+          path="/register/employee/:token"
+          element={<EmployeeRegister />}
+        />
+
+        {/* ================= HR ================= */}
+
+        <Route
+          path="/apply-leave"
+          element={<ApplyLeave />}
+        />
+
+        <Route
+          path="/manage-leave"
+          element={<LeaveManagement />}
+        />
+
+        <Route
+          path="/attendance"
+          element={<Attendance />}
+        />
+
+        <Route
+          path="/attendance-report"
+          element={<AttendanceReport />}
+        />
+
+        {/* ================= PAYROLL ================= */}
+
+        <Route
+          path="/generate-payroll"
+          element={<GeneratePayroll />}
+        />
+
+        <Route
+          path="/payroll"
+          element={<PayrollList />}
+        />
+
+        <Route
+          path="/my-payslip"
+          element={<MyPayslip />}
+        />
+
+        <Route
+          path="/payroll-dashboard"
+          element={<Payroll />}
+        />
+
+        {/* ================= ANALYTICS ================= */}
+
+        <Route
+          path="/analytics"
+          element={<Analytics />}
+        />
+
+        <Route
+          path="/analytics/dashboard"
+          element={<AnalyticsDashboard />}
+        />
+
+        <Route
+          path="/analytics/finance"
+          element={<FinanceAnalytics />}
+        />
+
+        <Route
+          path="/analytics/projects"
+          element={<ProjectAnalytics />}
+        />
+
+        {/* ================= FINANCE ================= */}
+
+        <Route
+          path="/gl"
+          element={<GL />}
+        />
+
+        <Route
+          path="/bills"
+          element={<Bills />}
+        />
+
+        <Route
+          path="/receivables"
+          element={<Receivables />}
+        />
+
+        <Route
+          path="/reconciliation"
+          element={<Reconciliation />}
+        />
+
+        <Route
+          path="/trial-balance"
+          element={<TrialBalance />}
+        />
+
+        <Route
+          path="/balance-sheet"
+          element={<BalanceSheet />}
+        />
+
+        <Route
+          path="/create-invoice"
+          element={<CreateInvoice />}
+        />
+
+        {/* ================= INVENTORY ================= */}
+
+        <Route
+          path="/inventory"
+          element={<InventoryDashboard />}
+        />
+
+        <Route
+          path="/products"
+          element={<Products />}
+        />
+
+        <Route
+          path="/purchase-orders"
+          element={<PurchaseOrders />}
+        />
+
+        <Route
+          path="/stock-history"
+          element={<StockHistory />}
+        />
+
+        {/* ================= PROJECTS ================= */}
+
+        <Route
+          path="/projects"
+          element={<ProjectDashboard />}
+        />
+
+        <Route
+          path="/projects/dashboard"
+          element={<ProjectsDashboard />}
+        />
+
+        <Route
+          path="/projects/board"
+          element={<KanbanBoard />}
+        />
+
+        <Route
+          path="/projects/create"
+          element={<CreateProject />}
+        />
+
+        <Route
+          path="/projects/gantt"
+          element={<GanttBoard />}
+        />
+
+        <Route
+          path="/projects/burndown"
+          element={<BurndownChart />}
+        />
+
+        <Route
+          path="/tasks-board"
+          element={<TaskBoard />}
+        />
+
+        <Route
+          path="/timeline"
+          element={<Timeline />}
+        />
+
+        {/* ================= JOBS ================= */}
+
+        <Route
+          path="/jobs"
+          element={<Jobs />}
+        />
+
+        <Route
+          path="/register/job"
+          element={<JobRegister />}
+        />
+
+        <Route
+          path="/careers/:companyId"
+          element={<CareerPage />}
+        />
+
+        <Route
+          path="/careers"
+          element={<CareerPortal />}
+        />
+
+        <Route
+          path="/jobs/apply/:id"
+          element={<ApplyJob />}
+        />
+
+        <Route
+          path="/admin/applicants"
+          element={<Applicants />}
+        />
+
+        {/* ================= ADMIN ================= */}
+
+        <Route
+          path="/admin/settings"
+          element={<AdminSettings />}
+        />
+
+        <Route
+          path="/admin/security"
+          element={<SecuritySettings />}
+        />
+
+        <Route
+          path="/admin/tenants"
+          element={<TenantManagement />}
+        />
+
+        <Route
+          path="/admin/audit"
+          element={<AuditLogs />}
+        />
+
+        {/* ================= OTHER ================= */}
+
+        <Route
+          path="/calendar"
+          element={<CalendarPage />}
+        />
+
+        <Route
+          path="/team-chat"
+          element={<TeamChat />}
+        />
+
+        <Route
+          path="/notifications"
+          element={<Notifications />}
+        />
+
+        <Route
+          path="/ai"
+          element={<AIAssistant />}
+        />
+
+      </Routes>
+
+    </>
 
   );
 
