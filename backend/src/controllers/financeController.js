@@ -1,11 +1,30 @@
+import mongoose from "mongoose";
+
 import Invoice from "../models/Invoice.js";
 import Expense from "../models/Expense.js";
-import { calculateGST } from "../utils/gstCalculator.js";
-import { sendNotification } from "../utils/notify.js";
 import JournalEntry from "../models/JournalEntry.js";
 import Ledger from "../models/Ledger.js";
+
 import plaid from "../config/plaid.js";
 
+import { sendNotification } from "../utils/notify.js";
+
+import {
+  createDoubleEntry,
+} from "../services/journalService.js";
+
+import {
+  calculateGST,
+} from "../services/gstService.js";
+
+import {
+  generateAuditReport,
+} from "../utils/auditReportGenerator.js";
+
+
+// ======================================
+// CREATE JOURNAL ENTRY
+// ======================================
 
 export const createJournalEntry =
   async (req, res) => {
@@ -26,9 +45,10 @@ export const createJournalEntry =
           description,
 
           entries,
+
         });
 
-      // 🔥 AUTO LEDGER POSTING
+      // AUTO LEDGER POSTING
 
       for (const item of entries) {
 
@@ -40,13 +60,13 @@ export const createJournalEntry =
 
             account:
               item.account,
+
           });
 
         if (existing) {
 
           if (
-            item.type ===
-            "DEBIT"
+            item.type === "DEBIT"
           ) {
 
             existing.debit +=
@@ -62,6 +82,7 @@ export const createJournalEntry =
 
             existing.balance -=
               item.amount;
+
           }
 
           await existing.save();
@@ -74,16 +95,23 @@ export const createJournalEntry =
               req.user.companyId,
 
             account:
-              "Sales",
+              item.account,
+
+            debit:
+              item.type === "DEBIT"
+                ? item.amount
+                : 0,
 
             credit:
-              result.total,
+              item.type === "CREDIT"
+                ? item.amount
+                : 0,
 
             balance:
-              -result.total,
+              item.type === "DEBIT"
+                ? item.amount
+                : -item.amount,
 
-            reference:
-              invoice._id,
           });
 
         }
@@ -95,244 +123,503 @@ export const createJournalEntry =
     } catch (err) {
 
       res.status(500).json({
+
         message:
           err.message,
+
       });
 
     }
 
   };
 
-// 📄 Create Invoice
-export const createInvoice = async (req, res) => {
 
-  const count =
-    await Invoice.countDocuments();
+// ======================================
+// CREATE INVOICE
+// ======================================
 
-  const invoiceNumber =
-    `INV-2026-${String(count + 1).padStart(3, "0")}`;
+export const createInvoice =
+  async (req, res) => {
 
-  const invoice =
-    await Invoice.create({
+    try {
 
-      invoiceNumber,
+      const count =
+        await Invoice.countDocuments();
 
-      customerName:
-        req.body.customerName,
+      const invoiceNumber =
+        `INV-2026-${String(count + 1).padStart(3, "0")}`;
 
-      amount:
-        req.body.amount,
+      const invoice =
+        await Invoice.create({
 
-      gst:
-        req.body.gst,
+          invoiceNumber,
 
-      companyId:
-        req.user.companyId,
+          customerName:
+            req.body.customerName,
 
-    });
+          amount:
+            req.body.amount,
 
-  res.json(invoice);
+          gst:
+            req.body.gst,
 
-};
+          companyId:
+            req.user.companyId,
 
+        });
 
-// 💰 Mark Invoice Paid
-export const markInvoicePaid = async (req, res) => {
-  const { invoiceId } = req.body;
+      res.json(invoice);
 
-  const invoice = await Invoice.findByIdAndUpdate(
-    invoiceId,
-    { status: "PAID" },
-    { new: true }
-  );
+    } catch (err) {
 
-  res.json(invoice);
-};
+      res.status(500).json({
 
+        message:
+          err.message,
 
-// 📄 Get Invoices
-export const getInvoices = async (req, res) => {
-  const data = await Invoice.find({
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-    },
-  });
+      });
 
-  res.json(data);
-};
+    }
+
+  };
 
 
-// 💸 Add Expense
-export const addExpense = async (req, res) => {
-  const { title, amount, category } = req.body;
+// ======================================
+// MARK INVOICE PAID
+// ======================================
 
-  const expense = await Expense.create({
-    title,
-    amount,
-    category,
-    companyId: req.user.companyId,
-  });
+export const markInvoicePaid =
+  async (req, res) => {
 
-  res.json(expense);
-};
+    try {
+
+      const { invoiceId } =
+        req.body;
+
+      const invoice =
+        await Invoice.findByIdAndUpdate(
+
+          invoiceId,
+
+          {
+            status: "PAID",
+          },
+
+          {
+            new: true,
+          }
+
+        );
+
+      res.json(invoice);
+
+    } catch (err) {
+
+      res.status(500).json({
+
+        message:
+          err.message,
+
+      });
+
+    }
+
+  };
 
 
-// 📊 Get Expenses
-export const getExpenses = async (req, res) => {
-  const data = await Expense.find({
-    companyId: req.user.companyId,
-  });
+// ======================================
+// GET INVOICES
+// ======================================
 
-  res.json(data);
-};
+export const getInvoices =
+  async (req, res) => {
 
-// 📊 Monthly Finance Analytics
-export const getProfitAnalytics = async (req, res) => {
-  try {
-    const companyId = req.user.companyId;
+    try {
 
-    // 💰 Monthly Revenue
-    const revenue = await Invoice.aggregate([
-      {
-        $match: {
-          companyId,
-          status: "PAID",
-        },
-      },
-      {
-        $group: {
-          _id: { $month: "$createdAt" },
-          total: { $sum: "$amount" },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
+      const data =
+        await Invoice.find({
 
-    // 💸 Monthly Expense
-    const expense = await Expense.aggregate([
-      {
-        $match: { companyId },
-      },
-      {
-        $group: {
-          _id: { $month: "$createdAt" },
-          total: { $sum: "$amount" },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
+          companyId:
+            req.user.companyId,
 
-    // 🔥 Merge both
-    const months = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    ];
+        });
 
-    const result = months.map((m, index) => {
-      const r = revenue.find(r => r._id === index + 1);
-      const e = expense.find(e => e._id === index + 1);
+      res.json(data);
 
-      const rev = r ? r.total : 0;
-      const exp = e ? e.total : 0;
+    } catch (err) {
 
-      return {
-        month: m,
-        revenue: rev,
-        expense: exp,
-        profit: rev - exp,
-      };
-    });
+      res.status(500).json({
 
-    res.json(result);
+        message:
+          err.message,
 
-  } catch (err) {
-    res.status(500).json({ message: "Monthly analytics error" });
-  }
-};
+      });
+
+    }
+
+  };
+
+
+// ======================================
+// ADD EXPENSE
+// ======================================
+
+export const addExpense =
+  async (req, res) => {
+
+    try {
+
+      const {
+        title,
+        amount,
+        category,
+      } = req.body;
+
+      const expense =
+        await Expense.create({
+
+          title,
+
+          amount,
+
+          category,
+
+          companyId:
+            req.user.companyId,
+
+        });
+
+      res.json(expense);
+
+    } catch (err) {
+
+      res.status(500).json({
+
+        message:
+          err.message,
+
+      });
+
+    }
+
+  };
+
+
+// ======================================
+// GET EXPENSES
+// ======================================
+
+export const getExpenses =
+  async (req, res) => {
+
+    try {
+
+      const data =
+        await Expense.find({
+
+          companyId:
+            req.user.companyId,
+
+        });
+
+      res.json(data);
+
+    } catch (err) {
+
+      res.status(500).json({
+
+        message:
+          err.message,
+
+      });
+
+    }
+
+  };
+
+
+// ======================================
+// PROFIT ANALYTICS
+// ======================================
+
+export const getProfitAnalytics =
+  async (req, res) => {
+
+    try {
+
+      const companyId =
+        req.user.companyId;
+
+      const revenue =
+        await Invoice.aggregate([
+
+          {
+            $match: {
+              companyId,
+              status: "PAID",
+            },
+          },
+
+          {
+            $group: {
+
+              _id: {
+                $month:
+                  "$createdAt",
+              },
+
+              total: {
+                $sum:
+                  "$amount",
+              },
+
+            },
+          },
+
+        ]);
+
+      const expense =
+        await Expense.aggregate([
+
+          {
+            $match: {
+              companyId,
+            },
+          },
+
+          {
+            $group: {
+
+              _id: {
+                $month:
+                  "$createdAt",
+              },
+
+              total: {
+                $sum:
+                  "$amount",
+              },
+
+            },
+          },
+
+        ]);
+
+      res.json({
+
+        revenue,
+        expense,
+
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+
+        message:
+          "Analytics Error",
+
+      });
+
+    }
+
+  };
+
+
+// ======================================
+// PROFIT LOSS
+// ======================================
 
 export const getProfitLoss =
   async (req, res) => {
 
-    const invoices =
-      await Invoice.find({
-        companyId:
-          req.user.companyId,
+    try {
+
+      const invoices =
+        await Invoice.find({
+
+          companyId:
+            req.user.companyId,
+
+        });
+
+      const expenses =
+        await Expense.find({
+
+          companyId:
+            req.user.companyId,
+
+        });
+
+      const revenue =
+        invoices.reduce(
+
+          (a, b) =>
+            a + b.amount,
+
+          0
+
+        );
+
+      const expenseTotal =
+        expenses.reduce(
+
+          (a, b) =>
+            a + b.amount,
+
+          0
+
+        );
+
+      res.json({
+
+        revenue,
+
+        expenses:
+          expenseTotal,
+
+        profit:
+          revenue -
+          expenseTotal,
+
       });
 
-    const expenses =
-      await Expense.find({
-        companyId:
-          req.user.companyId,
+    } catch (err) {
+
+      res.status(500).json({
+
+        message:
+          err.message,
+
       });
 
-    const revenue =
-      invoices.reduce(
-        (a, b) =>
-          a + b.totalAmount,
-        0
-      );
-
-    const expenseTotal =
-      expenses.reduce(
-        (a, b) =>
-          a + b.amount,
-        0
-      );
-
-    res.json({
-
-      revenue,
-
-      expenses:
-        expenseTotal,
-
-      profit:
-        revenue - expenseTotal,
-
-    });
+    }
 
   };
+
+
+// ======================================
+// BANK BALANCE
+// ======================================
 
 export const bankBalance =
   async (req, res) => {
 
-    const response =
-      await plaid.accountsBalanceGet({
+    try {
 
-        access_token:
-          req.body.accessToken,
+      const response =
+        await plaid.accountsBalanceGet({
+
+          access_token:
+            req.body.accessToken,
+
+        });
+
+      res.json(
+        response.data
+      );
+
+    } catch (err) {
+
+      res.status(500).json({
+
+        message:
+          err.message,
+
       });
 
-    res.json(
-      response.data
-    );
+    }
 
   };
+
+
+// ======================================
+// DOUBLE ENTRY
+// ======================================
+
+export const createJournal =
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await createDoubleEntry(
+          req.body
+        );
+
+      res.json(result);
+
+    } catch (err) {
+
+      res.status(500).json({
+
+        message:
+          err.message,
+
+      });
+
+    }
+
+  };
+
+
+// ======================================
+// GST
+// ======================================
+
+export const gstCalculation =
+  async (req, res) => {
+
+    try {
+
+      const result =
+        calculateGST(req.body);
+
+      res.json(result);
+
+    } catch (err) {
+
+      res.status(500).json({
+
+        message:
+          err.message,
+
+      });
+
+    }
+
+  };
+
+
+// ======================================
+// AUDIT REPORT
+// ======================================
 
 export const auditReport =
   async (req, res) => {
 
-    const ledgers =
-      await Ledger.find({
-        companyId:
-          req.user.companyId,
+    try {
+
+      const path =
+        await generateAuditReport(
+          req.body.data
+        );
+
+      res.json({
+
+        file: path,
+
       });
 
-    const journals =
-      await JournalEntry.find({
-        companyId:
-          req.user.companyId,
+    } catch (err) {
+
+      res.status(500).json({
+
+        message:
+          err.message,
+
       });
 
-    res.json({
-
-      ledgers,
-
-      journals,
-
-      generatedAt:
-        new Date(),
-    });
+    }
 
   };

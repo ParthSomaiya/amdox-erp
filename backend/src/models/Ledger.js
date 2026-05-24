@@ -1,36 +1,33 @@
 import mongoose from "mongoose";
 
-// ledger 
-
 const ledgerSchema =
   new mongoose.Schema(
     {
-      companyId: {
-        type:
-          mongoose.Schema.Types.ObjectId,
-        ref: "Company",
-      },
 
       account: String,
 
-      debit: {
-        type: Number,
-        default: 0,
+      type: {
+        type: String,
+
+        enum: [
+          "DEBIT",
+          "CREDIT",
+        ],
       },
 
-      credit: {
-        type: Number,
-        default: 0,
-      },
+      amount: Number,
 
-      balance: {
-        type: Number,
-        default: 0,
-      },
+      description: String,
 
       reference: String,
+
+      date: Date,
+
     },
-    { timestamps: true }
+
+    {
+      timestamps: true,
+    }
   );
 
 export default mongoose.model(

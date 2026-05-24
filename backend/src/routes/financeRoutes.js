@@ -5,6 +5,9 @@ import {
   getInvoices,
   addExpense,
   getExpenses,
+  createJournal,
+  gstCalculation,
+  auditReport,
 } from "../controllers/financeController.js";
 
 import {
@@ -86,5 +89,21 @@ router.post(
 );
 
 router.get("/expense", authMiddleware, getExpenses);
+
+router.post(
+  "/journal",
+  createJournal
+);
+
+router.post(
+  "/gst",
+  gstCalculation
+);
+
+router.post(
+  "/audit-report",
+  auditReport
+);
+
 
 export default router;
