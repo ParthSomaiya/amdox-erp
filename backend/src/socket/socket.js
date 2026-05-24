@@ -1,181 +1,94 @@
-export default function socketHandler(io) {
+import { Server } from "socket.io";
 
-  const onlineUsers = {};
+let io;
+
+export const initSocket = (server) => {
+
+  io = new Server(server, {
+
+    cors: {
+      origin: "http://localhost:5173",
+      credentials: true,
+    },
+
+  });
 
   io.on("connection", (socket) => {
 
     console.log(
-      "User Connected",
+      "✅ Socket Connected:",
       socket.id
     );
 
-    // =====================
-    // USER ONLINE
-    // =====================
+    // USER ROOM
+    socket.on("join", (userId) => {
 
-    socket.on(
-      "join",
-      (userId) => {
+      socket.join(userId);
 
-        onlineUsers[userId] =
-          socket.id;
+    });
 
-        io.emit(
-          "onlineUsers",
-          Object.keys(
-            onlineUsers
-          )
-        );
+    // CHAT ROOM
+    socket.on("joinRoom", (roomId) => {
 
-      }
-    );
+      socket.join(roomId);
 
+    });
 
-    // =====================
-    // JOIN ROOM
-    // =====================
-
-    socket.on(
-      "joinRoom",
-      (chatId) => {
-
-        socket.join(chatId);
-
-      }
-    );
-
-
-    // =====================
     // SEND MESSAGE
-    // =====================
+    socket.on("sendMessage", (data) => {
 
-    socket.on(
-      "sendMessage",
-      (data) => {
+      io.to(data.chatId).emit(
+        "receiveMessage",
+        data
+      );
 
-        io.to(data.chatId)
-          .emit(
-            "receiveMessage",
-            data
-          );
+    });
 
-      }
-    );
-
-
-    // =====================
     // TYPING
-    // =====================
+    socket.on("typing", (data) => {
 
-    socket.on(
-      "typing",
-      (data) => {
+      socket.to(data.chatId).emit(
+        "typing",
+        data
+      );
 
-        socket.to(data.chatId)
-          .emit(
-            "typing",
-            data
-          );
+    });
 
-      }
-    );
+    // NOTIFICATION
+    socket.on("sendNotification", (data) => {
 
+      io.to(data.userId).emit(
+        "new_notification",
+        data
+      );
 
-    // =====================
-    // DISCONNECT
-    // =====================
+    });
 
-    socket.on(
-      "disconnect",
-      () => {
+    socket.on("disconnect", () => {
 
-        for (let key in onlineUsers) {
+      console.log(
+        "❌ Socket Disconnected:",
+        socket.id
+      );
 
-          if (
-            onlineUsers[key] ===
-            socket.id
-          ) {
-
-            delete onlineUsers[key];
-
-          }
-
-        }
-
-        io.emit(
-          "onlineUsers",
-          Object.keys(
-            onlineUsers
-          )
-        );
-
-      }
-    );
-
-    // ========================
-    // JOIN CALL ROOM
-    // ========================
-
-    socket.on(
-      "join-call",
-      (roomId) => {
-
-        socket.join(roomId);
-
-      }
-    );
-
-
-    // ========================
-    // WEBRTC OFFER
-    // ========================
-
-    socket.on(
-      "offer",
-      ({ roomId, offer }) => {
-
-        socket.to(roomId).emit(
-          "offer",
-          offer
-        );
-
-      }
-    );
-
-
-    // ========================
-    // ANSWER
-    // ========================
-
-    socket.on(
-      "answer",
-      ({ roomId, answer }) => {
-
-        socket.to(roomId).emit(
-          "answer",
-          answer
-        );
-
-      }
-    );
-
-
-    // ========================
-    // ICE CANDIDATE
-    // ========================
-
-    socket.on(
-      "ice-candidate",
-      ({ roomId, candidate }) => {
-
-        socket.to(roomId).emit(
-          "ice-candidate",
-          candidate
-        );
-
-      }
-    );
+    });
 
   });
 
-}
+  return io;
+
+};
+
+export const getIO = () => {
+
+  if (!io) {
+
+    throw new Error(
+      "Socket.io not initialized"
+    );
+
+  }
+
+  return io;
+
+};

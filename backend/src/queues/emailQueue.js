@@ -1,14 +1,25 @@
 import { Queue } from "bullmq";
+import IORedis from "ioredis";
 
-import connection from "../config/redis.js";
+// ================= REDIS CONNECTION =================
 
-export const emailQueue =
-  new Queue(
+const connection = new IORedis({
 
-    "emailQueue",
+  host: process.env.REDIS_HOST || "127.0.0.1",
 
-    {
-      connection,
-    }
+  port: process.env.REDIS_PORT || 6379,
 
-  );
+  maxRetriesPerRequest: null,
+
+});
+
+// ================= EMAIL QUEUE =================
+
+export const emailQueue = new Queue(
+  "emailQueue",
+  {
+    connection,
+  }
+);
+
+export default emailQueue;
