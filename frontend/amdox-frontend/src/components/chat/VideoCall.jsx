@@ -1,4 +1,11 @@
-import { useEffect, useRef } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import Peer from "simple-peer";
+
 import io from "socket.io-client";
 
 const socket =
@@ -6,45 +13,234 @@ const socket =
 
 export default function VideoCall() {
 
-  const localVideo = useRef();
+  const [stream,
+    setStream] =
+    useState(null);
+
+  const myVideo =
+    useRef();
+
+  const userVideo =
+    useRef();
+
+  const peerRef =
+    useRef();
+
+  // =========================
+  // START CAMERA
+  // =========================
 
   useEffect(() => {
 
-    startVideo();
+    navigator.mediaDevices
+
+      .getUserMedia({
+
+        video: true,
+        audio: true,
+
+      })
+
+      .then((currentStream) => {
+
+        setStream(
+          currentStream
+        );
+
+        myVideo.current.srcObject =
+          currentStream;
+
+      });
 
   }, []);
 
+  // =========================
+  // CREATE CALL
+  // =========================
 
-  const startVideo =
-    async () => {
+  const callUser =
+    () => {
 
-      const stream =
-        await navigator.mediaDevices.getUserMedia({
+      const peer =
+        new Peer({
 
-          video: true,
-          audio: true,
+          initiator: true,
+
+          trickle: false,
+
+          stream,
 
         });
 
-      localVideo.current.srcObject =
-        stream;
+      peer.on(
+
+        "signal",
+
+        (data) => {
+
+          socket.emit(
+
+            "signal",
+
+            {
+              roomId:
+                "global-room",
+
+              data,
+            }
+
+          );
+
+        }
+
+      );
+
+      peer.on(
+
+        "stream",
+
+        (remoteStream) => {
+
+          userVideo.current.srcObject =
+            remoteStream;
+
+        }
+
+      );
+
+      peerRef.current =
+        peer;
 
     };
 
+  // =========================
+  // RECEIVE SIGNAL
+  // =========================
+
+  useEffect(() => {
+
+    socket.on(
+
+      "signal",
+
+      ({ data }) => {
+
+        if (
+          !peerRef.current
+        ) {
+
+          const peer =
+            new Peer({
+
+              initiator: false,
+
+              trickle: false,
+
+              stream,
+
+            });
+
+          peer.on(
+
+            "signal",
+
+            (signalData) => {
+
+              socket.emit(
+
+                "signal",
+
+                {
+                  roomId:
+                    "global-room",
+
+                  data:
+                    signalData,
+                }
+
+              );
+
+            }
+
+          );
+
+          peer.on(
+
+            "stream",
+
+            (remoteStream) => {
+
+              userVideo.current.srcObject =
+                remoteStream;
+
+            }
+
+          );
+
+          peer.signal(data);
+
+          peerRef.current =
+            peer;
+
+        } else {
+
+          peerRef.current.signal(
+            data
+          );
+
+        }
+
+      }
+
+    );
+
+  }, [stream]);
+
   return (
 
-    <div className="p-6">
+    <div className="p-6 bg-gray-100 min-h-screen">
 
-      <h2 className="text-2xl font-bold mb-5">
-        Video Call
-      </h2>
+      <div className="flex gap-6 mb-6">
 
-      <video
-        ref={localVideo}
-        autoPlay
-        muted
-        className="w-full rounded shadow"
-      />
+        <video
+
+          ref={myVideo}
+
+          autoPlay
+
+          playsInline
+
+          muted
+
+          className="w-1/2 rounded shadow"
+
+        />
+
+        <video
+
+          ref={userVideo}
+
+          autoPlay
+
+          playsInline
+
+          className="w-1/2 rounded shadow"
+
+        />
+
+      </div>
+
+      <button
+
+        onClick={callUser}
+
+        className="bg-blue-600 text-white px-6 py-3 rounded"
+
+      >
+
+        Start Video Call
+
+      </button>
 
     </div>
 
