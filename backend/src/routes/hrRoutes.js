@@ -20,6 +20,7 @@ import {
   generatePayroll,
   biometricSync,
   leavePrediction,
+  getTimeline,
 } from "../controllers/hrController.js";
 
 import {
@@ -405,5 +406,9 @@ router.get(
   leavePrediction
 );
 
+router.get(
+  "/timeline",
+  getTimeline
+);
 
 export default router;

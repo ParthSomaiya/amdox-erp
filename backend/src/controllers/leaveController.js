@@ -1,6 +1,11 @@
 import Leave from "../models/Leave.js";
 import { sendNotification } from "../utils/notify.js";
 
+import {
+  predictLeaveRisk,
+} from "../services/aiLeavePrediction.js";
+
+
 // 🧑 Apply Leave
 export const applyLeave = async (req, res) => {
   try {
@@ -77,3 +82,25 @@ export const updateLeaveStatus = async (req, res) => {
     res.status(500).json({ message: "Error updating leave" });
   }
 };
+
+export const getLeavePrediction =
+  async (req, res) => {
+
+    try {
+
+      const data =
+        await predictLeaveRisk(
+          req.params.id
+        );
+
+      res.json(data);
+
+    } catch (err) {
+
+      res.status(500).json({
+        message: err.message,
+      });
+
+    }
+
+  };

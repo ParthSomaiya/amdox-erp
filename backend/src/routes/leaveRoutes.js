@@ -4,6 +4,7 @@ import {
   getAllLeaves,
   updateLeaveStatus,
   getMyLeaves,
+  getLeavePrediction,
 } from "../controllers/leaveController.js";
 
 // ✅ CORRECT IMPORTS
@@ -46,6 +47,11 @@ router.get(
   authMiddleware,
   allowRoles("HR", "ADMIN"),
   getAllLeaves
+);
+
+router.get(
+  "/prediction/:id",
+  getLeavePrediction
 );
 
 export default router;

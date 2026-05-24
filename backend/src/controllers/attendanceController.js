@@ -1,5 +1,9 @@
 import Attendance from "../models/Attendance.js";
 
+import {
+  syncBiometricAttendance,
+} from "../services/biometricService.js";
+
 // 🟢 Check In
 export const checkIn = async (req, res) => {
   try {
@@ -73,3 +77,32 @@ export const getMyAttendance = async (req, res) => {
 
   res.json(data);
 };
+
+export const biometricSync =
+  async (req, res) => {
+
+    try {
+
+      const employees =
+        req.body.employees;
+
+      const result =
+        await syncBiometricAttendance(
+          employees
+        );
+
+      res.json({
+        success: result.success,
+        message:
+          "Biometric synced",
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        message: err.message,
+      });
+
+    }
+
+  };

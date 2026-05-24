@@ -3,6 +3,35 @@ import Leave from "../models/Leave.js";
 import LeaveBalance from "../models/LeaveBalance.js";
 import User from "../models/User.js";
 import Payroll from "../models/Payroll.js";
+import Timeline from "../models/Timeline.js";
+
+
+export const getTimeline =
+  async (req, res) => {
+
+    try {
+
+      const data =
+        await Timeline.find()
+          .populate(
+            "employee",
+            "name"
+          )
+          .sort({
+            createdAt: -1,
+          });
+
+      res.json(data);
+
+    } catch (err) {
+
+      res.status(500).json({
+        message: err.message,
+      });
+
+    }
+
+  };
 
 
 export const addEmployee = async (req, res) => {
@@ -302,7 +331,7 @@ export const generatePayroll =
 
     }
 
-};
+  };
 
 // ==============================
 // BIOMETRIC SYNC
@@ -352,7 +381,7 @@ export const biometricSync =
 
     }
 
-};
+  };
 
 // ==============================
 // AI LEAVE PREDICTION
@@ -402,4 +431,4 @@ export const leavePrediction =
 
     }
 
-};
+  };

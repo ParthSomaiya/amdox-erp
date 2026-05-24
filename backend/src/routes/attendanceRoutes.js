@@ -4,6 +4,7 @@ import {
   checkOut,
   getAllAttendance,
   getMyAttendance,
+  biometricSync,
 } from "../controllers/attendanceController.js";
 
 // ✅ CORRECT IMPORTS
@@ -42,6 +43,11 @@ router.get(
   authMiddleware,
   allowRoles("HR", "ADMIN"),
   getAllAttendance
+);
+
+router.post(
+  "/biometric-sync",
+  biometricSync
 );
 
 export default router;
