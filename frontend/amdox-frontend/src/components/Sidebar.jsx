@@ -1,15 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import { hasPermission } from "../utils/permissions";
 
 export default function Sidebar() {
   const token = localStorage.getItem("token");
-  if (!token) return null;
 
-  // ✅ Permissions
-  const permissions = JSON.parse(
-    localStorage.getItem("permissions") || "[]"
-  );
+  const location = useLocation();
+
+  if (!token) return null;
 
   let role = null;
 
@@ -17,309 +14,177 @@ export default function Sidebar() {
     const decoded = jwtDecode(token);
     role = decoded.role;
   } catch (err) {
-    console.log("Invalid token");
+    console.log(err);
   }
 
-  const canViewAnalytics = ["ADMIN", "HR", "FINANCE"].includes(role);
+  const menus = [
+    {
+      label: "Dashboard",
+      icon: "📊",
+      path: "/dashboard",
+      roles: ["ADMIN", "HR", "FINANCE", "EMPLOYEE"],
+    },
 
-  const linkStyle =
-    "block p-2 rounded hover:bg-gray-800 transition duration-200";
+    {
+      label: "Employees",
+      icon: "👥",
+      path: "/employees",
+      roles: ["ADMIN", "HR"],
+    },
+
+    {
+      label: "Finance",
+      icon: "💰",
+      path: "/finance-analytics",
+      roles: ["ADMIN", "FINANCE"],
+    },
+
+    {
+      label: "Inventory",
+      icon: "📦",
+      path: "/inventory",
+      roles: ["ADMIN", "FINANCE"],
+    },
+
+    {
+      label: "Projects",
+      icon: "🧩",
+      path: "/projects",
+      roles: ["ADMIN", "HR"],
+    },
+
+    {
+      label: "Reports",
+      icon: "📄",
+      path: "/reports",
+      roles: ["ADMIN"],
+    },
+
+    {
+      label: "Analytics",
+      icon: "📈",
+      path: "/analytics",
+      roles: ["ADMIN", "HR", "FINANCE"],
+    },
+
+    {
+      label: "Calendar",
+      icon: "📅",
+      path: "/calendar",
+      roles: ["ADMIN", "HR"],
+    },
+
+    {
+      label: "Payroll",
+      icon: "🧾",
+      path: "/payroll",
+      roles: ["ADMIN", "HR"],
+    },
+
+    {
+      label: "Audit Logs",
+      icon: "📜",
+      path: "/admin/auditlogs",
+      roles: ["ADMIN"],
+    },
+
+    {
+      label: "Tenants",
+      icon: "🏢",
+      path: "/admin/tenantmanagement",
+      roles: ["ADMIN"],
+    },
+
+    {
+      label: "Security",
+      icon: "🔐",
+      path: "/admin/securitysettings",
+      roles: ["ADMIN"],
+    },
+
+    {
+      label: "Notifications",
+      icon: "🔔",
+      path: "/notifications",
+      roles: ["ADMIN", "HR", "FINANCE"],
+    },
+
+    {
+      label: "Settings",
+      icon: "⚙️",
+      path: "/admin/adminsettings",
+      roles: ["ADMIN"],
+    },
+  ];
 
   return (
-    <div className="sidebar w-64 bg-gray-900 text-white flex flex-col min-h-screen">
+    <aside
+      className="
+        w-72
+        min-h-screen
+        bg-[#0B1120]
+        border-r
+        border-white/5
+        flex
+        flex-col
+      "
+    >
+      {/* LOGO */}
+      <div className="h-24 flex items-center px-8 border-b border-white/5">
+        <div>
+          <h1 className="text-2xl font-bold text-white">
+            AMDOX ERP
+          </h1>
 
-      {/* Logo */}
-      <h2 className="sidebar-logo text-2xl font-bold p-5 border-b border-gray-700">
-        Amdox ERP
-      </h2>
-
-      <div className="sidebar-menu">
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 text-sm overflow-y-auto">
-
-          {/* Dashboard */}
-          <Link to="/dashboard" className="sidebar-menu">
-            📊 Dashboard
-          </Link>
-
-          {/* 🔥 ADMIN */}
-          {role === "ADMIN" && (
-            <>
-              <div className="border-t border-gray-700 my-2"></div>
-
-              <Link to="/users" className="sidebar-menu">
-                👑 Users
-              </Link>
-
-              <Link to="/reports" className="sidebar-menu">
-                📄 Reports
-              </Link>
-
-              {/* ✅ ADMIN SETTINGS */}
-              <Link
-                to="/admin/adminsettings"
-                className="sidebar-menu"
-              >
-                ⚙️ Admin Settings
-              </Link>
-
-              <Link
-                to="/admin/securitysettings"
-                className="sidebar-menu"
-              >
-                🔐 Security
-              </Link>
-
-              <Link
-                to="/admin/tenantmanagement"
-                className="sidebar-menu"
-              >
-                🏢 Tenants
-              </Link>
-
-              <Link
-                to="/admin/auditlogs"
-                className="sidebar-menu"
-              >
-                📜 Audit Logs
-              </Link>
-            </>
-          )}
-
-          {/* HR */}
-          {(role === "HR" || role === "ADMIN") && (
-            <>
-              <div className="border-t border-gray-700 my-2"></div>
-
-              <Link to="/employees" className="sidebar-menu">
-                👥 Employees
-              </Link>
-
-              <Link to="/leave" className="sidebar-menu">
-                📝 Leave
-              </Link>
-
-              <Link to="/manage-leave" className="sidebar-menu">
-                ✅ Manage Leaves
-              </Link>
-
-              <Link
-                to="/attendance-report"
-                className="sidebar-menu"
-              >
-                📅 Attendance Report
-              </Link>
-
-              <Link
-                to="/generate-payroll"
-                className="sidebar-menu"
-              >
-                💵 Generate Payroll
-              </Link>
-
-              <Link to="/payroll" className="sidebar-menu">
-                📊 Payroll List
-              </Link>
-            </>
-          )}
-
-          {/* FINANCE */}
-          {(role === "FINANCE" || role === "ADMIN") && (
-            <>
-              <div className="border-t border-gray-700 my-2"></div>
-
-              <Link to="/invoices" className="sidebar-menu">
-                🧾 Invoices
-              </Link>
-
-              <Link to="/payments" className="sidebar-menu">
-                💳 Payments
-              </Link>
-
-              <Link
-                to="/finance-analytics"
-                className="sidebar-menu"
-              >
-                📈 Finance Analytics
-              </Link>
-
-              {/* Core Finance */}
-              <div className="border-t border-gray-700 my-2"></div>
-
-              <Link to="/gl" className="sidebar-menu">
-                📘 General Ledger
-              </Link>
-
-              <Link to="/bills" className="sidebar-menu">
-                🧾 Bills (AP)
-              </Link>
-
-              <Link to="/receivables" className="sidebar-menu">
-                💰 Receivables (AR)
-              </Link>
-
-              <Link
-                to="/reconciliation"
-                className="sidebar-menu"
-              >
-                🏦 Bank Reconciliation
-              </Link>
-
-              {/* Advanced Finance */}
-              <div className="border-t border-gray-700 my-2"></div>
-
-              <Link
-                to="/trial-balance"
-                className="sidebar-menu"
-              >
-                📊 Trial Balance
-              </Link>
-
-              <Link
-                to="/balance-sheet"
-                className="sidebar-menu"
-              >
-                📑 Balance Sheet
-              </Link>
-
-              {
-                hasPermission(
-                  permissions,
-                  "CREATE_INVOICE"
-                ) && (
-                  <Link
-                    to="/create-invoice"
-                    className="sidebar-menu"
-                  >
-                    🧾 Create Invoice
-                  </Link>
-                )}
-            </>
-          )}
-
-          {/* 📦 SUPPLY CHAIN */}
-          {(role === "ADMIN" || role === "FINANCE") && (
-            <>
-              <div className="border-t border-gray-700 my-2"></div>
-
-              <Link to="/inventory" className="sidebar-menu">
-                📦 Inventory
-              </Link>
-
-              <Link to="/products" className="sidebar-menu">
-                🏷 Products
-              </Link>
-
-              <Link
-                to="/purchase-orders"
-                className="sidebar-menu"
-              >
-                🧾 Purchase Orders
-              </Link>
-
-              <Link
-                to="/stock-history"
-                className="sidebar-menu"
-              >
-                📊 Stock Movement
-              </Link>
-            </>
-          )}
-
-          {/* 📊 PROJECT MANAGEMENT */}
-          {(role === "ADMIN" || role === "HR") && (
-            <>
-              <div className="border-t border-gray-700 my-2"></div>
-
-              <Link to="/projects" className="sidebar-menu">
-                📊 Projects
-              </Link>
-
-              <Link
-                to="/tasks-board"
-                className="sidebar-menu"
-              >
-                🧩 Task Board
-              </Link>
-
-              <Link
-                to="/timeline"
-                className="sidebar-menu"
-              >
-                📅 Timeline
-              </Link>
-
-              <Link
-                to="/calendar"
-                className="sidebar-menu"
-              >
-                📆 Calendar
-              </Link>
-
-              {/* ✅ NEW TEAM CHAT */}
-              <Link
-                to="/team-chat"
-                className="sidebar-menu"
-              >
-                💬 Team Chat
-              </Link>
-            </>
-          )}
-
-          {/* 💼 JOB PORTAL */}
-          {(role === "HR" || role === "ADMIN") && (
-            <>
-              <div className="border-t border-gray-700 my-2"></div>
-
-              <Link to="/jobs" className="sidebar-menu">
-                💼 Jobs
-              </Link>
-
-              <Link to="/applicants" className="sidebar-menu">
-                🧑‍💻 Applicants
-              </Link>
-            </>
-          )}
-
-          {/* EMPLOYEE */}
-          {role === "EMPLOYEE" && (
-            <>
-              <div className="border-t border-gray-700 my-2"></div>
-
-              <Link to="/profile" className="sidebar-menu">
-                👤 My Profile
-              </Link>
-
-              <Link to="/attendance" className="sidebar-menu">
-                ⏱ Attendance
-              </Link>
-
-              <Link to="/apply-leave" className="sidebar-menu">
-                📩 Apply Leave
-              </Link>
-
-              <Link to="/my-payslip" className="sidebar-menu">
-                📄 My Payslip
-              </Link>
-            </>
-          )}
-
-          {/* COMMON ANALYTICS */}
-          {canViewAnalytics && (
-            <>
-              <div className="border-t border-gray-700 my-2"></div>
-
-              <Link
-                to="/analytics"
-                className="block p-2 rounded bg-blue-600 hover:bg-blue-500 transition"
-              >
-                📊 Analytics
-              </Link>
-            </>
-          )}
-        </nav>
+          <p className="text-sm text-slate-400 mt-1">
+            Enterprise Intelligence
+          </p>
+        </div>
       </div>
-    </div>
 
+      {/* MENU */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+
+        {menus
+          .filter((item) =>
+            item.roles.includes(role)
+          )
+          .map((item) => {
+
+            const active =
+              location.pathname === item.path;
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`
+                  flex
+                  items-center
+                  gap-4
+                  px-5
+                  py-4
+                  rounded-2xl
+                  transition-all
+                  duration-300
+                  ${
+                    active
+                      ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
+                      : "text-slate-300 hover:bg-white/5 hover:text-white"
+                  }
+                `}
+              >
+                <span className="text-lg">
+                  {item.icon}
+                </span>
+
+                <span className="font-medium text-sm">
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+      </div>
+    </aside>
   );
 }

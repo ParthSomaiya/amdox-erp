@@ -1,41 +1,103 @@
-import { Link } from "react-router-dom";
-
 export default function Navbar() {
   return (
-    <nav className="w-full bg-white shadow-md fixed top-0 left-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <nav
+      className="
+        h-20
+        px-8
+        flex
+        items-center
+        justify-between
+        border-b
+        border-white/5
+        bg-[#020617]/80
+        backdrop-blur-xl
+        sticky
+        top-0
+        z-40
+      "
+    >
+      {/* SEARCH */}
+      <div
+        className="
+          flex
+          items-center
+          gap-3
+          bg-[#0F172A]
+          border
+          border-white/5
+          h-12
+          w-[360px]
+          rounded-2xl
+          px-4
+        "
+      >
+        <span className="text-slate-400 text-lg">
+          🔍
+        </span>
 
-        {/* LOGO */}
-        <div className="text-2xl font-bold text-blue-600">
-          AMDOX ERP
-        </div>
+        <input
+          type="text"
+          placeholder="Search anything..."
+          className="
+            bg-transparent
+            outline-none
+            text-sm
+            w-full
+            text-white
+          "
+        />
+      </div>
 
-        {/* MENU */}
-        <div className="hidden md:flex items-center gap-8 font-medium">
+      {/* RIGHT */}
+      <div className="flex items-center gap-4">
 
-          <Link
-            to="/"
-            className="hover:text-blue-600 transition"
-          >
-            Home
-          </Link>
+        <button
+          className="
+            h-12
+            px-5
+            rounded-2xl
+            bg-gradient-to-r
+            from-blue-500
+            to-indigo-500
+            flex
+            items-center
+            gap-2
+            text-white
+            font-medium
+            shadow-lg
+            shadow-blue-500/20
+          "
+        >
+          ✨ AI Assistant
+        </button>
 
-          <Link
-            to="/login"
-            className="hover:text-blue-600 transition"
-          >
-            Login
-          </Link>
+        <button
+          className="
+            h-12
+            w-12
+            rounded-2xl
+            bg-[#0F172A]
+            border
+            border-white/5
+            flex
+            items-center
+            justify-center
+            text-white
+          "
+        >
+          🔔
+        </button>
 
-          <Link
-            to="/register"
-            className="hover:text-blue-600 transition"
-          >
-            Register
-          </Link>
-
-        </div>
-
+        <div
+          className="
+            h-12
+            w-12
+            rounded-2xl
+            bg-gradient-to-r
+            from-cyan-500
+            to-blue-500
+          "
+        />
       </div>
     </nav>
   );
