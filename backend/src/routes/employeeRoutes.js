@@ -4,6 +4,7 @@ import {
   updateEmployee,
   deactivateEmployee,
   changeRole,
+  inviteEmployee,
 } from "../controllers/employeeController.js";
 
 import { authMiddleware } from "../middleware/authMiddleware.js";

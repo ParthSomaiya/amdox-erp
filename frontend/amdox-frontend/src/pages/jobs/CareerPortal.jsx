@@ -110,11 +110,12 @@ export default function CareerPortal() {
 
               </span>
 
-              <button className="bg-blue-600 text-white px-4 py-2 rounded">
-
+              <a
+                href={`/apply-job/${job._id}`}
+                className="bg-blue-600 text-white px-4 py-2 rounded"
+              >
                 Apply
-
-              </button>
+              </a>
 
             </div>
 

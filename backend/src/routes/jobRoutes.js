@@ -18,10 +18,8 @@ import {
 import upload
 from "../config/multer.js";
 
-import {
-  protect,
-} from "../middleware/authMiddleware.js";
-
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 // =========================
 // JOBS
@@ -29,7 +27,7 @@ import {
 
 router.post(
   "/",
-  protect,
+  authMiddleware,
   createJob
 );
 
@@ -60,14 +58,27 @@ router.post(
 
 router.get(
   "/applicants",
-  protect,
+  authMiddleware,
   getApplicants
 );
 
 router.put(
   "/applicant/:id",
-  protect,
+  authMiddleware,
   updateApplicantStatus
+);
+
+router.post(
+  "/interview",
+  authMiddleware,
+  async (req, res) => {
+
+    res.json({
+      message: "Interview Scheduled",
+      data: req.body,
+    });
+
+  }
 );
 
 export default router;

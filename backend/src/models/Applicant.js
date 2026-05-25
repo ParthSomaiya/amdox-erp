@@ -2,11 +2,8 @@ import mongoose from "mongoose";
 
 const applicantSchema =
   new mongoose.Schema(
+
     {
-      jobId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Job",
-      },
 
       name: String,
 
@@ -18,41 +15,29 @@ const applicantSchema =
 
       status: {
         type: String,
-
-        enum: [
-          "APPLIED",
-          "SHORTLISTED",
-          "INTERVIEW",
-          "REJECTED",
-          "HIRED",
-        ],
-
         default: "APPLIED",
       },
 
-      parsedData: {
+      parsedData: Object,
 
-        skills: [String],
+      jobId: {
 
-        experience: String,
+        type:
+          mongoose.Schema.Types.ObjectId,
 
-        education: String,
-
-        rawText: String,
+        ref: "Job",
 
       },
 
-
-      interviewDate: Date,
-
-      notes: String,
     },
-    { timestamps: true }
+
+    {
+      timestamps: true,
+    }
+
   );
 
-export default
-  mongoose.models.Applicant ||
-  mongoose.model(
-    "Applicant",
-    applicantSchema
-  );
+export default mongoose.model(
+  "Applicant",
+  applicantSchema
+);

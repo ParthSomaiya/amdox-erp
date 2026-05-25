@@ -1,90 +1,100 @@
 import { useState } from "react";
-import API from "../services/api";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import MainLayout from "../layouts/MainLayout";
+
+import API from "../services/api";
 
 export default function Login() {
 
-    const [email, setEmail] =
-        useState("");
+    const [form, setForm] = useState({
+        email: "",
+        password: "",
+    });
 
-    const [password, setPassword] =
-        useState("");
+    const navigate = useNavigate();
 
-    const navigate =
-        useNavigate();
+    // =========================
+    // LOGIN
+    // =========================
 
-    const handleLogin = async () => {
+    const submit = async (e) => {
+
+        e.preventDefault();
 
         try {
 
-            console.log("Sending login...");
+            const res = await API.post(
+                "/auth/login",
+                form
+            );
 
-            const res =
-                await fetch(
+            const user = res.data.user;
 
-                    "http://localhost:5000/api/auth/login",
-
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json",
-                        },
-
-                        body: JSON.stringify({
-
-                            email,
-                            password,
-
-                        }),
-
-                    }
-
-                );
-
-            const data =
-                await res.json();
-
-            console.log(data);
-
-            if (!res.ok) {
-
-                alert(
-                    data.message ||
-                    "Login failed"
-                );
-
-                return;
-
-            }
+            // =========================
+            // SAVE TOKENS
+            // =========================
 
             localStorage.setItem(
                 "token",
-                data.accessToken
+                res.data.accessToken
             );
 
             localStorage.setItem(
                 "refreshToken",
-                data.refreshToken
+                res.data.refreshToken
             );
 
             localStorage.setItem(
                 "user",
-                JSON.stringify(data.user)
+                JSON.stringify(user)
             );
 
-            window.location.href =
-                "/dashboard";
+            // =========================
+            // ROLE WISE REDIRECT
+            // =========================
+
+            if (user.role === "ADMIN") {
+
+                navigate("/dashboard");
+
+            }
+
+            else if (user.role === "HR") {
+
+                navigate("/employees");
+
+            }
+
+            else if (user.role === "FINANCE") {
+
+                navigate("/finance");
+
+            }
+
+            else if (user.role === "EMPLOYEE") {
+
+                navigate("/employee-dashboard");
+
+            }
+
+            else if (user.role === "JOB_SEEKER") {
+
+                navigate("/careers");
+
+            }
+
+            else {
+
+                navigate("/");
+
+            }
 
         } catch (err) {
 
             console.log(err);
 
             alert(
-                "Server connection failed"
+                err.response?.data?.message ||
+                "Login Failed"
             );
 
         }
@@ -95,31 +105,43 @@ export default function Login() {
 
         <div className="flex items-center justify-center h-screen bg-gray-100">
 
-            <div className="bg-white p-8 rounded shadow w-80">
+            <form
+                onSubmit={submit}
+                className="bg-white p-8 rounded shadow w-80"
+            >
 
                 <h2 className="text-2xl font-bold mb-4 text-center">
                     Login
                 </h2>
 
                 <input
+                    type="email"
                     placeholder="Email"
-                    className="w-full border p-2 mb-3"
+                    className="w-full border p-2 mb-3 rounded"
+                    value={form.email}
                     onChange={(e) =>
-                        setEmail(e.target.value)
+                        setForm({
+                            ...form,
+                            email: e.target.value,
+                        })
                     }
                 />
 
                 <input
-                    placeholder="Password"
                     type="password"
-                    className="w-full border p-2 mb-4"
+                    placeholder="Password"
+                    className="w-full border p-2 mb-4 rounded"
+                    value={form.password}
                     onChange={(e) =>
-                        setPassword(e.target.value)
+                        setForm({
+                            ...form,
+                            password: e.target.value,
+                        })
                     }
                 />
 
                 <button
-                    onClick={handleLogin}
+                    type="submit"
                     className="w-full bg-blue-600 text-white p-2 rounded"
                 >
                     Login
@@ -132,7 +154,7 @@ export default function Login() {
                     Login with Google
                 </a>
 
-            </div>
+            </form>
 
         </div>
 

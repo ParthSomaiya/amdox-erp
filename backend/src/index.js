@@ -179,8 +179,6 @@ app.use("/api/ai", aiRoutes);
 // SMS
 app.use("/api/sms",smsRoutes);
 
-// API 
-app.use("/api/ai",aiRoutes);
 
 // ================= ROOT =================
 

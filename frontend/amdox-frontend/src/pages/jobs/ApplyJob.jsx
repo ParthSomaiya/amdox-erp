@@ -3,7 +3,7 @@ import { useState } from "react";
 import API from "../../services/api";
 
 import { useParams }
-from "react-router-dom";
+  from "react-router-dom";
 
 export default function ApplyJob() {
 
@@ -22,44 +22,48 @@ export default function ApplyJob() {
   const [resume, setResume] =
     useState(null);
 
-  const submit =
-    async (e) => {
+  const submit = async (e) => {
 
-      e.preventDefault();
+    e.preventDefault();
 
-      const data =
-        new FormData();
+    try {
 
-      data.append(
-        "name",
-        form.name
-      );
+      const data = new FormData();
 
-      data.append(
-        "email",
-        form.email
-      );
+      data.append("name", form.name);
 
-      data.append(
-        "phone",
-        form.phone
-      );
+      data.append("email", form.email);
 
-      data.append(
-        "resume",
-        resume
-      );
+      data.append("phone", form.phone);
+
+      data.append("resume", resume);
 
       await API.post(
+
         `/jobs/apply/${id}`,
-        data
+
+        data,
+
+        {
+          headers: {
+            "Content-Type":
+              "multipart/form-data",
+          },
+        }
+
       );
 
-      alert(
-        "Application Submitted"
-      );
+      alert("Application Submitted");
 
-    };
+    } catch (err) {
+
+      console.log(err);
+
+      alert("Application Failed");
+
+    }
+
+  };
 
   return (
 

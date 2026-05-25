@@ -1,9 +1,10 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-// ================= AUTH MIDDLEWARE =================
+// ================= AUTH / PROTECT =================
 
-export const authMiddleware = async (req, res, next) => {
+export const protect = async (req, res, next) => {
+
   try {
 
     const authHeader = req.headers.authorization;
@@ -21,13 +22,11 @@ export const authMiddleware = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    // VERIFY TOKEN
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET
     );
 
-    // FIND USER
     const user = await User.findById(decoded.id);
 
     if (!user) {
@@ -38,7 +37,6 @@ export const authMiddleware = async (req, res, next) => {
 
     }
 
-    // ATTACH USER
     req.user = {
       id: user._id,
       role: user.role,
@@ -58,12 +56,13 @@ export const authMiddleware = async (req, res, next) => {
     });
 
   }
+
 };
 
-// SAME AS PROTECT
-export const protect = authMiddleware;
+// SAME EXPORT
+export const authMiddleware = protect;
 
-// ================= ROLE AUTHORIZATION =================
+// ================= ROLE AUTH =================
 
 export const authorize = (...roles) => {
 

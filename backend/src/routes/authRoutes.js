@@ -24,6 +24,8 @@ import {
 
   registerEmployeeWithInvite,
 
+  registerJobUser,
+
 } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -66,7 +68,7 @@ router.post(
 // ================= REGISTER INVITE =================
 
 router.post(
-  "/register-invite",
+  "/register-invite/:token",
   registerEmployeeWithInvite
 );
 
@@ -145,6 +147,11 @@ router.get(
 
   }
 
+);
+
+router.post(
+  "/register-job",
+  registerJobUser
 );
 
 export default router;

@@ -13,7 +13,6 @@ import Dashboard from "./pages/Dashboard";
 
 import Employees from "./pages/Employees";
 import AddEmployee from "./pages/AddEmployee";
-import EmployeeRegister from "./pages/EmployeeRegister";
 
 // ================= AUTH =================
 
@@ -117,6 +116,10 @@ import PushSetup from "./components/PushSetup";
 
 import AIAssistant from "./pages/ai/AIAssistant";
 
+import EmployeeRegister from "./pages/employee/Register";
+
+import EmployeeDashboard from "./pages/EmployeeDashboard";
+
 // ================= APP =================
 
 function App() {
@@ -193,6 +196,11 @@ function App() {
         <Route
           path="/register/employee/:token"
           element={<EmployeeRegister />}
+        />
+
+        <Route
+          path="/employee-dashboard"
+          element={<EmployeeDashboard />}
         />
 
         {/* ================= HR ================= */}
@@ -385,7 +393,7 @@ function App() {
         />
 
         <Route
-          path="/jobs/apply/:id"
+          path="/apply-job/:id"
           element={<ApplyJob />}
         />
 

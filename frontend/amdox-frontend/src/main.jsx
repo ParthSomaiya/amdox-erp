@@ -18,7 +18,6 @@ ReactDOM.createRoot(
 
     <BrowserRouter>
 
-      <ToastContainer />
 
       <App />
 
