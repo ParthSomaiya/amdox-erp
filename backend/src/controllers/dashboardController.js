@@ -1,47 +1,102 @@
 export const getDashboard = async (req, res) => {
-  const role = req.user.role;
 
-  let data = {};
+  try {
 
-  if (role === "ADMIN") {
-    data = {
-      message: "Admin Dashboard",
-      stats: {
-        totalEmployees: 50,
-        revenue: 1000000,
-      },
+    const role = req.user.role;
+
+    let data = {
+      stats: {},
+      monthly: [],
     };
-  }
 
-  if (role === "HR") {
-    data = {
-      message: "HR Dashboard",
-      stats: {
+    // DEMO MONTHLY DATA
+    const monthly = [
+      {
+        month: "Jan",
         employees: 20,
-        pendingLeaves: 5,
+        revenue: 40000,
       },
-    };
+      {
+        month: "Feb",
+        employees: 25,
+        revenue: 50000,
+      },
+      {
+        month: "Mar",
+        employees: 30,
+        revenue: 70000,
+      },
+      {
+        month: "Apr",
+        employees: 40,
+        revenue: 90000,
+      },
+    ];
+
+    if (role === "ADMIN") {
+
+      data = {
+        stats: {
+          employees: 50,
+          payroll: 25,
+          leaves: 10,
+        },
+
+        monthly,
+      };
+
+    }
+
+    if (role === "HR") {
+
+      data = {
+        stats: {
+          employees: 20,
+          payroll: 10,
+          leaves: 5,
+        },
+
+        monthly,
+      };
+
+    }
+
+    if (role === "FINANCE") {
+
+      data = {
+        stats: {
+          employees: 10,
+          payroll: 15,
+          leaves: 2,
+        },
+
+        monthly,
+      };
+
+    }
+
+    if (role === "EMPLOYEE") {
+
+      data = {
+        stats: {
+          employees: 1,
+          payroll: 1,
+          leaves: 2,
+        },
+
+        monthly,
+      };
+
+    }
+
+    res.json(data);
+
+  } catch (err) {
+
+    res.status(500).json({
+      message: err.message,
+    });
+
   }
 
-  if (role === "FINANCE") {
-    data = {
-      message: "Finance Dashboard",
-      stats: {
-        invoices: 10,
-        payments: 5,
-      },
-    };
-  }
-
-  if (role === "EMPLOYEE") {
-    data = {
-      message: "Employee Dashboard",
-      stats: {
-        leaves: 2,
-        attendance: "Present",
-      },
-    };
-  }
-
-  res.json(data);
 };

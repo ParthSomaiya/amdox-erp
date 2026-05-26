@@ -21,6 +21,7 @@ import {
   biometricSync,
   leavePrediction,
   getTimeline,
+  searchEmployees,
 } from "../controllers/hrController.js";
 
 import {
@@ -263,6 +264,12 @@ router.get(
   getEmployees
 );
 
+router.get(
+  "/search",
+  protect,
+  authorizeRoles("ADMIN", "HR"),
+  searchEmployees
+);
 
 // ==============================
 // 📅 LEAVE

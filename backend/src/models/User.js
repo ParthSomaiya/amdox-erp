@@ -39,6 +39,14 @@ const userSchema = new mongoose.Schema(
 
     resetTokenExpiry: Date,
 
+    // ✅ EMAIL VERIFICATION
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    verificationToken: String,
+
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",

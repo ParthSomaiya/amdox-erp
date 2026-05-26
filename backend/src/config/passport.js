@@ -30,7 +30,7 @@ passport.use(
             name: profile.displayName,
             email: profile.emails[0].value,
             password: "google-oauth",
-            role: "EMPLOYEE",
+            role: "JOB_SEEKER",
           });
 
         }

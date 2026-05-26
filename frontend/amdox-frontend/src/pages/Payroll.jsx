@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
-import MainLayout from "../layouts/MainLayout";
 
 export default function Payroll() {
   const [payrolls, setPayrolls] = useState([]);
@@ -30,7 +29,7 @@ export default function Payroll() {
             {/* RIGHT SIDE */}
             <div>
               <a
-                href={`http://localhost:5000/api/payroll/payslip/${id}`}
+                href={`http://localhost:5000/api/payroll/payslip/${payroll._id}`}
                 target="_blank"
               >
                 Download Payslip

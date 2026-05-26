@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 
 import API from "../services/api";
 
-import MainLayout from "../layouts/MainLayout";
 
 import CardSkeleton from "../components/CardSkeleton";
 

@@ -104,7 +104,10 @@ export const registerAdmin = async (req, res) => {
       password,
     } = req.body;
 
-    // CHECK USER
+    // =========================
+    // CHECK EXISTING USER
+    // =========================
+
     const exists = await User.findOne({
       email,
     });
@@ -117,17 +120,35 @@ export const registerAdmin = async (req, res) => {
 
     }
 
+    // =========================
     // CREATE COMPANY
+    // =========================
+
     const company = await Company.create({
+
       name: companyName,
       email,
+
     });
 
+    // =========================
     // HASH PASSWORD
+    // =========================
+
     const hashedPassword =
       await bcrypt.hash(password, 10);
 
-    // CREATE ADMIN
+    // =========================
+    // EMAIL VERIFY TOKEN
+    // =========================
+
+    const verifyToken =
+      crypto.randomBytes(32).toString("hex");
+
+    // =========================
+    // CREATE ADMIN USER
+    // =========================
+
     const user = await User.create({
 
       name,
@@ -142,7 +163,51 @@ export const registerAdmin = async (req, res) => {
       companyId:
         company._id,
 
+      verificationToken:
+        verifyToken,
+
+      isVerified:
+        false,
+
     });
+
+    // =========================
+    // VERIFY EMAIL URL
+    // =========================
+
+    const verifyUrl =
+
+      `http://localhost:5173/verify-email/${verifyToken}`;
+
+    // =========================
+    // SEND EMAIL
+    // =========================
+
+    await sendEmail({
+
+      to: email,
+
+      subject: "Verify Your Admin Account",
+
+      html: `
+
+        <h2>Welcome to AMDOX ERP</h2>
+
+        <p>
+          Click below to verify your account
+        </p>
+
+        <a href="${verifyUrl}">
+          Verify Account
+        </a>
+
+      `,
+
+    });
+
+    // =========================
+    // JWT TOKEN
+    // =========================
 
     const token = jwt.sign(
 
@@ -159,7 +224,14 @@ export const registerAdmin = async (req, res) => {
 
     );
 
+    // =========================
+    // RESPONSE
+    // =========================
+
     res.status(201).json({
+
+      message:
+        "Admin registered. Verification email sent.",
 
       token,
 
@@ -208,6 +280,9 @@ export const registerUser = async (req, res) => {
     const hashedPassword =
       await bcrypt.hash(password, 10);
 
+    const verifyToken =
+      crypto.randomBytes(32).toString("hex");
+
     // CREATE USER
     const user = await User.create({
 
@@ -220,10 +295,17 @@ export const registerUser = async (req, res) => {
       role:
         "EMPLOYEE",
 
+      verificationToken:
+        verifyToken,
+
+      isVerified:
+        false,
+
     });
 
     // TOKEN
     const token = jwt.sign(
+
 
       {
         id: user._id,
@@ -272,12 +354,12 @@ export const loginUser = async (req, res) => {
     // USER
     const user = await User.findOne({
       email,
-    });
+    }).select("+password");
 
-    if (!user) {
+    if (!user.isActive) {
 
-      return res.status(404).json({
-        message: "User not found",
+      return res.status(403).json({
+        message: "Account disabled",
       });
 
     }
@@ -524,6 +606,27 @@ export const forgotPassword = async (req, res) => {
 
     }
 
+    // =========================
+    // EMAIL VERIFY CHECK
+    // =========================
+
+    if (
+      user.isVerified === false
+    ) {
+
+      return res.status(401).json({
+        message: "Please verify your email",
+      });
+
+    }
+
+    // PASSWORD CHECK
+    const isMatch =
+      await bcrypt.compare(
+        password,
+        user.password
+      );
+
     const resetToken =
       crypto.randomBytes(32).toString("hex");
 
@@ -693,6 +796,46 @@ export const registerJobUser = async (req, res) => {
   } catch (err) {
 
     console.log(err);
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+  }
+
+};
+
+// ================= VERIFY EMAIL =================
+
+export const verifyEmail = async (req, res) => {
+
+  try {
+
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      verificationToken: token,
+    });
+
+    if (!user) {
+
+      return res.status(400).json({
+        message: "Invalid verification token",
+      });
+
+    }
+
+    user.isVerified = true;
+
+    user.verificationToken = undefined;
+
+    await user.save();
+
+    res.json({
+      message: "Email verified successfully",
+    });
+
+  } catch (err) {
 
     res.status(500).json({
       message: err.message,

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
-import MainLayout from "../layouts/MainLayout";
 
 export default function Products() {
   const [products, setProducts] = useState([]);

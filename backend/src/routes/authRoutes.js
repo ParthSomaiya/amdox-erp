@@ -25,6 +25,7 @@ import {
   registerEmployeeWithInvite,
 
   registerJobUser,
+  verifyEmail,
 
 } from "../controllers/authController.js";
 
@@ -42,6 +43,11 @@ router.post(
 router.post(
   "/verify-otp",
   verifyOTP
+);
+
+router.get(
+  "/verify-email/:token",
+  verifyEmail
 );
 
 // ================= REGISTER ADMIN =================

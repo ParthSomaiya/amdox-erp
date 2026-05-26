@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../services/api";
 
 export default function ProjectDashboard() {
   const [projects, setProjects] = useState([]);
@@ -10,7 +10,7 @@ export default function ProjectDashboard() {
 
   const fetchProjects = async () => {
     try {
-      const res = await axios.get("/api/projects");
+      const res = await API.get("/projects");
       setProjects(res.data);
     } catch (err) {
       console.error(err);

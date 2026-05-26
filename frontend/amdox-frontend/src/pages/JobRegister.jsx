@@ -1,7 +1,5 @@
 import { useState } from "react";
-
 import API from "../services/api";
-
 import { useNavigate } from "react-router-dom";
 
 export default function JobRegister() {
@@ -9,11 +7,9 @@ export default function JobRegister() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-
     name: "",
     email: "",
     password: "",
-
   });
 
   const submit = async (e) => {
@@ -22,18 +18,14 @@ export default function JobRegister() {
 
     try {
 
-      await API.post(
-        "/auth/register-user",
-        {
-
-          ...form,
-
-          role: "JOB_SEEKER",
-
-        }
+      const res = await API.post(
+        "/auth/register-job",
+        form
       );
 
-      alert("Job Seeker Registered");
+      alert(
+        "Registration successful. Please login."
+      );
 
       navigate("/login");
 
@@ -41,7 +33,10 @@ export default function JobRegister() {
 
       console.log(err);
 
-      alert("Registration Failed");
+      alert(
+        err.response?.data?.message ||
+        "Registration Failed"
+      );
 
     }
 
@@ -49,14 +44,14 @@ export default function JobRegister() {
 
   return (
 
-    < div className="min-h-screen flex items-center justify-center bg-gray-100" >
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
 
       <form
         onSubmit={submit}
         className="bg-white shadow p-8 rounded w-96 space-y-4"
       >
 
-        <h2 className="text-2xl font-bold">
+        <h2 className="text-2xl font-bold text-center">
           Job Seeker Register
         </h2>
 
@@ -64,6 +59,7 @@ export default function JobRegister() {
           type="text"
           placeholder="Name"
           className="border p-3 w-full rounded"
+          value={form.name}
           onChange={(e) =>
             setForm({
               ...form,
@@ -76,6 +72,7 @@ export default function JobRegister() {
           type="email"
           placeholder="Email"
           className="border p-3 w-full rounded"
+          value={form.email}
           onChange={(e) =>
             setForm({
               ...form,
@@ -88,6 +85,7 @@ export default function JobRegister() {
           type="password"
           placeholder="Password"
           className="border p-3 w-full rounded"
+          value={form.password}
           onChange={(e) =>
             setForm({
               ...form,
@@ -102,7 +100,7 @@ export default function JobRegister() {
 
       </form>
 
-    </div >
+    </div>
 
   );
 

@@ -4,7 +4,7 @@ import LeaveBalance from "../models/LeaveBalance.js";
 import User from "../models/User.js";
 import Payroll from "../models/Payroll.js";
 import Timeline from "../models/Timeline.js";
-
+import Attendance from "../models/Attendance.js";
 
 export const getTimeline =
   async (req, res) => {
@@ -52,7 +52,7 @@ export const addEmployee = async (req, res) => {
 export const getEmployees = async (req, res) => {
   const employees = await Employee.find({
     companyId: req.user.companyId,
-  }).populate("userId");
+  }).populate("userId", "name email");
 
   res.json(employees);
 };

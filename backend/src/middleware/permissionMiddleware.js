@@ -1,21 +1,51 @@
-import { ROLE_PERMISSIONS } from "../config/rolePermissions.js";
+import { ROLE_PERMISSIONS }
+from "../config/rolePermissions.js";
 
-export const checkPermission = (...requiredPermissions) => {
-  return (req, res, next) => {
-    const userRole = req.user.role;
+export const checkPermission =
+  (...requiredPermissions) => {
 
-    const userPermissions = ROLE_PERMISSIONS[userRole] || [];
+    return (
+      req,
+      res,
+      next
+    ) => {
 
-    const hasPermission = requiredPermissions.every((perm) =>
-      userPermissions.includes(perm)
-    );
+      try {
 
-    if (!hasPermission) {
-      return res.status(403).json({
-        message: "Permission denied",
-      });
-    }
+        const role =
+          req.user.role;
 
-    next();
+        const permissions =
+          ROLE_PERMISSIONS[role] || [];
+
+        const allowed =
+          requiredPermissions.every(
+            (perm) =>
+              permissions.includes(perm)
+          );
+
+        if (!allowed) {
+
+          return res.status(403).json({
+            message:
+              "Permission denied",
+          });
+
+        }
+
+        next();
+
+      } catch (err) {
+
+        console.log(err);
+
+        res.status(500).json({
+          message:
+            "Permission error",
+        });
+
+      }
+
+    };
+
   };
-};

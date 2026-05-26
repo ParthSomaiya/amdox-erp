@@ -49,7 +49,7 @@ export default function Login() {
             );
 
             // =========================
-            // ROLE WISE REDIRECT
+            // ROLE REDIRECT
             // =========================
 
             if (user.role === "ADMIN") {
@@ -66,7 +66,7 @@ export default function Login() {
 
             else if (user.role === "FINANCE") {
 
-                navigate("/finance");
+                navigate("/payroll-dashboard");
 
             }
 

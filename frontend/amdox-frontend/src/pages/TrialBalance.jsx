@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
-import MainLayout from "../layouts/MainLayout";
 
 export default function TrialBalance() {
   const [data, setData] = useState({});
