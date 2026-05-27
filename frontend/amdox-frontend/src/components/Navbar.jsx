@@ -4,6 +4,10 @@ import {
   Sparkles,
 } from "lucide-react";
 
+const user = JSON.parse(
+  localStorage.getItem("user") || "{}"
+);
+
 export default function Navbar() {
   return (
     <nav
@@ -156,11 +160,11 @@ export default function Navbar() {
 
           <div>
             <h3 className="text-white font-semibold">
-              Admin
+              {user?.name || "User"}
             </h3>
 
             <p className="text-slate-400 text-sm">
-              Super Administrator
+              {user?.role || "Employee"}
             </p>
           </div>
         </div>

@@ -16,15 +16,62 @@ import {
   sendEmail,
 } from "../services/emailService.js";
 
-// ================= SEND OTP =================
+// =========================================
+// GENERATE TOKENS
+// =========================================
+
+const generateAccessToken = (user) => {
+
+  return jwt.sign(
+
+    {
+      id: user._id,
+      role: user.role,
+    },
+
+    process.env.JWT_SECRET,
+
+    {
+      expiresIn: "7d",
+    }
+
+  );
+
+};
+
+const generateRefreshToken = (user) => {
+
+  return jwt.sign(
+
+    {
+      id: user._id,
+    },
+
+    process.env.JWT_REFRESH_SECRET,
+
+    {
+      expiresIn: "30d",
+    }
+
+  );
+
+};
+
+// =========================================
+// SEND OTP
+// =========================================
 
 export const sendOTP = async (req, res) => {
 
   try {
 
-    const { email, phone } = req.body;
+    const {
+      email,
+      phone,
+    } = req.body;
 
-    const otp = generateOTP();
+    const otp =
+      generateOTP();
 
     await saveOTP(
       email,
@@ -32,15 +79,22 @@ export const sendOTP = async (req, res) => {
       otp
     );
 
-    console.log("OTP:", otp);
+    console.log(
+      "OTP:",
+      otp
+    );
 
     res.json({
-      message: "OTP sent",
+      success: true,
+      message: "OTP sent successfully",
     });
 
   } catch (err) {
 
+    console.log(err);
+
     res.status(500).json({
+      success: false,
       message: err.message,
     });
 
@@ -48,42 +102,57 @@ export const sendOTP = async (req, res) => {
 
 };
 
-// ================= VERIFY OTP =================
+// =========================================
+// VERIFY OTP
+// =========================================
 
 export const verifyOTP = async (req, res) => {
 
   try {
 
-    const { email, otp } = req.body;
-
-    const record = await OTP.findOne({
+    const {
       email,
       otp,
-    });
+    } = req.body;
+
+    const record =
+      await OTP.findOne({
+        email,
+        otp,
+      });
 
     if (!record) {
 
       return res.status(400).json({
+        success: false,
         message: "Invalid OTP",
       });
 
     }
 
-    if (record.expiresAt < new Date()) {
+    if (
+      record.expiresAt <
+      new Date()
+    ) {
 
       return res.status(400).json({
+        success: false,
         message: "OTP expired",
       });
 
     }
 
     res.json({
+      success: true,
       message: "OTP verified",
     });
 
   } catch (err) {
 
+    console.log(err);
+
     res.status(500).json({
+      success: false,
       message: err.message,
     });
 
@@ -91,7 +160,9 @@ export const verifyOTP = async (req, res) => {
 
 };
 
-// ================= REGISTER ADMIN =================
+// =========================================
+// REGISTER ADMIN
+// =========================================
 
 export const registerAdmin = async (req, res) => {
 
@@ -104,309 +175,76 @@ export const registerAdmin = async (req, res) => {
       password,
     } = req.body;
 
-    // =========================
-    // CHECK EXISTING USER
-    // =========================
-
-    const exists = await User.findOne({
-      email,
-    });
+    const exists =
+      await User.findOne({
+        email,
+      });
 
     if (exists) {
 
       return res.status(400).json({
+        success: false,
         message: "User already exists",
       });
 
     }
 
-    // =========================
-    // CREATE COMPANY
-    // =========================
+    const company =
+      await Company.create({
 
-    const company = await Company.create({
+        name: companyName,
+        email,
 
-      name: companyName,
-      email,
-
-    });
-
-    // =========================
-    // HASH PASSWORD
-    // =========================
+      });
 
     const hashedPassword =
-      await bcrypt.hash(password, 10);
-
-    // =========================
-    // EMAIL VERIFY TOKEN
-    // =========================
-
-    const verifyToken =
-      crypto.randomBytes(32).toString("hex");
-
-    // =========================
-    // CREATE ADMIN USER
-    // =========================
-
-    const user = await User.create({
-
-      name,
-      email,
-
-      password:
-        hashedPassword,
-
-      role:
-        "ADMIN",
-
-      companyId:
-        company._id,
-
-      verificationToken:
-        verifyToken,
-
-      isVerified:
-        false,
-
-    });
-
-    // =========================
-    // VERIFY EMAIL URL
-    // =========================
-
-    const verifyUrl =
-
-      `http://localhost:5173/verify-email/${verifyToken}`;
-
-    // =========================
-    // SEND EMAIL
-    // =========================
-
-    await sendEmail({
-
-      to: email,
-
-      subject: "Verify Your Admin Account",
-
-      html: `
-
-        <h2>Welcome to AMDOX ERP</h2>
-
-        <p>
-          Click below to verify your account
-        </p>
-
-        <a href="${verifyUrl}">
-          Verify Account
-        </a>
-
-      `,
-
-    });
-
-    // =========================
-    // JWT TOKEN
-    // =========================
-
-    const token = jwt.sign(
-
-      {
-        id: user._id,
-        role: user.role,
-      },
-
-      process.env.JWT_SECRET,
-
-      {
-        expiresIn: "7d",
-      }
-
-    );
-
-    // =========================
-    // RESPONSE
-    // =========================
-
-    res.status(201).json({
-
-      message:
-        "Admin registered. Verification email sent.",
-
-      token,
-
-      user,
-
-    });
-
-  } catch (err) {
-
-    console.log(err);
-
-    res.status(500).json({
-      message: err.message,
-    });
-
-  }
-
-};
-
-// ================= REGISTER USER =================
-
-export const registerUser = async (req, res) => {
-
-  try {
-
-    const {
-      name,
-      email,
-      password,
-    } = req.body;
-
-    // CHECK USER
-    const exists = await User.findOne({
-      email,
-    });
-
-    if (exists) {
-
-      return res.status(400).json({
-        message: "User already exists",
-      });
-
-    }
-
-    // HASH PASSWORD
-    const hashedPassword =
-      await bcrypt.hash(password, 10);
+      await bcrypt.hash(
+        password,
+        10
+      );
 
     const verifyToken =
-      crypto.randomBytes(32).toString("hex");
+      crypto
+        .randomBytes(32)
+        .toString("hex");
 
-    // CREATE USER
-    const user = await User.create({
+    const user =
+      await User.create({
 
-      name,
-      email,
+        name,
+        email,
 
-      password:
-        hashedPassword,
+        password:
+          hashedPassword,
 
-      role:
-        "EMPLOYEE",
+        role:
+          "ADMIN",
 
-      verificationToken:
-        verifyToken,
+        companyId:
+          company._id,
 
-      isVerified:
-        false,
+        verificationToken:
+          verifyToken,
 
-    });
+        isVerified:
+          true,
 
-    // TOKEN
-    const token = jwt.sign(
-
-
-      {
-        id: user._id,
-        role: user.role,
-      },
-
-      process.env.JWT_SECRET,
-
-      {
-        expiresIn: "7d",
-      }
-
-    );
-
-    res.status(201).json({
-
-      token,
-
-      user,
-
-    });
-
-  } catch (err) {
-
-    console.log(err);
-
-    res.status(500).json({
-      message: err.message,
-    });
-
-  }
-
-};
-
-// ================= LOGIN =================
-
-export const loginUser = async (req, res) => {
-
-  try {
-
-    const { email, password } = req.body;
-
-    const user = await User.findOne({
-      email,
-    }).select("+password");
-
-    if (!user) {
-
-      return res.status(404).json({
-        message: "User not found",
       });
 
-    }
+    const accessToken =
+      generateAccessToken(user);
 
-    if (!user.isActive) {
+    const refreshToken =
+      generateRefreshToken(user);
 
-      return res.status(403).json({
-        message: "Account disabled",
-      });
-
-    }
-
-    const isMatch = await bcrypt.compare(
-      password,
-      user.password
-    );
-
-    if (!isMatch) {
-
-      return res.status(400).json({
-        message: "Invalid credentials",
-      });
-
-    }
-
-    const accessToken = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
-
-    const refreshToken = jwt.sign(
-      {
-        id: user._id,
-      },
-      process.env.JWT_REFRESH_SECRET,
-      {
-        expiresIn: "30d",
-      }
-    );
-
-    user.refreshToken = refreshToken;
+    user.refreshToken =
+      refreshToken;
 
     await user.save();
 
-    res.json({
+    res.status(201).json({
+
+      success: true,
 
       accessToken,
       refreshToken,
@@ -428,6 +266,7 @@ export const loginUser = async (req, res) => {
     console.log(err);
 
     res.status(500).json({
+      success: false,
       message: err.message,
     });
 
@@ -435,67 +274,83 @@ export const loginUser = async (req, res) => {
 
 };
 
-// ================= REGISTER EMPLOYEE WITH INVITE =================
+// =========================================
+// REGISTER USER
+// =========================================
 
-export const registerEmployeeWithInvite = async (req, res) => {
+export const registerUser = async (req, res) => {
 
   try {
 
-    const { name } = req.body;
-    const { password } = req.body;
+    const {
+      name,
+      email,
+      password,
+    } = req.body;
 
-    const { token } = req.params;
-
-    const invite = await Invite.findOne({
-      token,
-    });
-
-    if (!invite) {
-
-      return res.status(400).json({
-        message: "Invalid invite",
+    const exists =
+      await User.findOne({
+        email,
       });
 
-    }
-
-    if (invite.status === "ACCEPTED") {
+    if (exists) {
 
       return res.status(400).json({
-        message: "Invite already used",
+        success: false,
+        message: "User already exists",
       });
 
     }
 
     const hashedPassword =
-      await bcrypt.hash(password, 10);
+      await bcrypt.hash(
+        password,
+        10
+      );
 
-    const user = await User.create({
+    const user =
+      await User.create({
 
-      name,
+        name,
+        email,
 
-      email:
-        invite.email,
+        password:
+          hashedPassword,
 
-      password:
-        hashedPassword,
+        role:
+          "EMPLOYEE",
 
-      role:
-        invite.role,
+        isVerified:
+          true,
 
-      companyId:
-        invite.companyId,
+      });
 
-    });
+    const accessToken =
+      generateAccessToken(user);
 
-    invite.status = "ACCEPTED";
+    const refreshToken =
+      generateRefreshToken(user);
 
-    await invite.save();
+    user.refreshToken =
+      refreshToken;
 
-    res.json({
+    await user.save();
 
-      message: "Account created",
+    res.status(201).json({
 
-      user,
+      success: true,
+
+      accessToken,
+      refreshToken,
+
+      user: {
+
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+
+      },
 
     });
 
@@ -504,6 +359,7 @@ export const registerEmployeeWithInvite = async (req, res) => {
     console.log(err);
 
     res.status(500).json({
+      success: false,
       message: err.message,
     });
 
@@ -511,32 +367,239 @@ export const registerEmployeeWithInvite = async (req, res) => {
 
 };
 
-// ================= REFRESH TOKEN =================
+// =========================================
+// LOGIN
+// =========================================
+
+export const loginUser = async (req, res) => {
+
+  try {
+
+    const {
+      email,
+      password,
+    } = req.body;
+
+    if (
+      !email ||
+      !password
+    ) {
+
+      return res.status(400).json({
+        success: false,
+        message: "Email and password required",
+      });
+
+    }
+
+    const user =
+      await User.findOne({
+        email,
+      });
+
+    if (!user) {
+
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+
+    }
+
+    if (!user.isVerified) {
+
+      return res.status(401).json({
+        message: "Please verify email",
+      });
+
+    }
+
+
+    if (!isMatch) {
+
+      return res.status(400).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+
+    }
+
+    const accessToken =
+      generateAccessToken(user);
+
+    const refreshToken =
+      generateRefreshToken(user);
+
+    user.refreshToken =
+      refreshToken;
+
+    user.lastActive =
+      new Date();
+
+    await user.save();
+
+    res.json({
+
+      success: true,
+
+      accessToken,
+      refreshToken,
+
+      user: {
+
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        companyId: user.companyId,
+
+      },
+
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+
+};
+
+// =========================================
+// REGISTER INVITE USER
+// =========================================
+
+export const registerEmployeeWithInvite = async (req, res) => {
+
+  try {
+
+    const {
+      name,
+      password,
+    } = req.body;
+
+    const {
+      token,
+    } = req.params;
+
+    const invite =
+      await Invite.findOne({
+        token,
+      });
+
+    if (!invite) {
+
+      return res.status(400).json({
+        success: false,
+        message: "Invalid invite",
+      });
+
+    }
+
+    const exists =
+      await User.findOne({
+        email: invite.email,
+      });
+
+    if (exists) {
+
+      return res.status(400).json({
+        success: false,
+        message: "User already exists",
+      });
+
+    }
+
+    const hashedPassword =
+      await bcrypt.hash(
+        password,
+        10
+      );
+
+    const user =
+      await User.create({
+
+        name,
+
+        email:
+          invite.email,
+
+        password:
+          hashedPassword,
+
+        role:
+          invite.role,
+
+        companyId:
+          invite.companyId,
+
+        isVerified:
+          true,
+
+      });
+
+    invite.status =
+      "ACCEPTED";
+
+    await invite.save();
+
+    res.json({
+      success: true,
+      message: "Account created",
+      user,
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+
+};
+
+// =========================================
+// REFRESH TOKEN
+// =========================================
 
 export const refreshToken = async (req, res) => {
 
   try {
 
-    const { refreshToken } = req.body;
+    const {
+      refreshToken,
+    } = req.body;
 
     if (!refreshToken) {
 
       return res.status(401).json({
+        success: false,
         message: "No refresh token",
       });
 
     }
 
-    const decoded = jwt.verify(
+    const decoded =
+      jwt.verify(
 
-      refreshToken,
-      process.env.JWT_REFRESH_SECRET
+        refreshToken,
+        process.env.JWT_REFRESH_SECRET
 
-    );
+      );
 
-    const user = await User.findById(
-      decoded.id
-    );
+    const user =
+      await User.findById(
+        decoded.id
+      );
 
     if (
       !user ||
@@ -544,33 +607,26 @@ export const refreshToken = async (req, res) => {
     ) {
 
       return res.status(403).json({
+        success: false,
         message: "Invalid refresh token",
       });
 
     }
 
-    const accessToken = jwt.sign(
-
-      {
-        id: user._id,
-        role: user.role,
-      },
-
-      process.env.JWT_SECRET,
-
-      {
-        expiresIn: "15m",
-      }
-
-    );
+    const accessToken =
+      generateAccessToken(user);
 
     res.json({
+      success: true,
       accessToken,
     });
 
   } catch (err) {
 
+    console.log(err);
+
     res.status(403).json({
+      success: false,
       message: "Token expired",
     });
 
@@ -578,54 +634,43 @@ export const refreshToken = async (req, res) => {
 
 };
 
-// ================= FORGOT PASSWORD =================
+// =========================================
+// FORGOT PASSWORD
+// =========================================
 
 export const forgotPassword = async (req, res) => {
 
   try {
 
-    const { email } = req.body;
-
-    const user = await User.findOne({
+    const {
       email,
-    });
+    } = req.body;
+
+    const user =
+      await User.findOne({
+        email,
+      });
 
     if (!user) {
 
       return res.status(404).json({
+        success: false,
         message: "User not found",
       });
 
     }
 
-    // =========================
-    // EMAIL VERIFY CHECK
-    // =========================
-
-    if (
-      user.isVerified === false
-    ) {
-
-      return res.status(401).json({
-        message: "Please verify your email",
-      });
-
-    }
-
-    // PASSWORD CHECK
-    const isMatch =
-      await bcrypt.compare(
-        password,
-        user.password
-      );
-
     const resetToken =
-      crypto.randomBytes(32).toString("hex");
+      crypto
+        .randomBytes(32)
+        .toString("hex");
 
-    user.resetToken = resetToken;
+    user.resetToken =
+      resetToken;
 
     user.resetTokenExpiry =
-      Date.now() + 3600000;
+      Date.now() +
+      1000 * 60 * 60;
 
     await user.save();
 
@@ -637,7 +682,7 @@ export const forgotPassword = async (req, res) => {
 
       to: user.email,
 
-      subject: "Password Reset",
+      subject: "Reset Password",
 
       html: `
 
@@ -652,12 +697,16 @@ export const forgotPassword = async (req, res) => {
     });
 
     res.json({
-      message: "Reset email sent",
+      success: true,
+      message: "Reset link sent",
     });
 
   } catch (err) {
 
+    console.log(err);
+
     res.status(500).json({
+      success: false,
       message: err.message,
     });
 
@@ -665,59 +714,76 @@ export const forgotPassword = async (req, res) => {
 
 };
 
-// ================= RESET PASSWORD =================
+// =========================================
+// RESET PASSWORD
+// =========================================
 
 export const resetPassword = async (req, res) => {
 
   try {
 
-    const {
-      token,
-      password,
-    } = req.body;
+    const { password } = req.body;
 
-    const user = await User.findOne({
+    const { token } = req.params;
 
-      resetToken: token,
+    const user =
+      await User.findOne({
 
-      resetTokenExpiry: {
-        $gt: Date.now(),
-      },
+        resetToken: token,
 
-    });
+        resetTokenExpiry: {
+          $gt: Date.now(),
+        },
+
+      });
 
     if (!user) {
 
       return res.status(400).json({
+        success: false,
         message: "Invalid or expired token",
       });
 
     }
 
     const hashedPassword =
-      await bcrypt.hash(password, 10);
+      await bcrypt.hash(
+        password,
+        10
+      );
 
-    user.password = hashedPassword;
+    user.password =
+      hashedPassword;
 
-    user.resetToken = undefined;
+    user.resetToken =
+      undefined;
 
-    user.resetTokenExpiry = undefined;
+    user.resetTokenExpiry =
+      undefined;
 
     await user.save();
 
     res.json({
+      success: true,
       message: "Password reset successful",
     });
 
   } catch (err) {
 
+    console.log(err);
+
     res.status(500).json({
+      success: false,
       message: err.message,
     });
 
   }
 
 };
+
+// =========================================
+// REGISTER JOB USER
+// =========================================
 
 export const registerJobUser = async (req, res) => {
 
@@ -729,59 +795,69 @@ export const registerJobUser = async (req, res) => {
       password,
     } = req.body;
 
-    // CHECK EXISTING USER
-    const exists = await User.findOne({
-      email,
-    });
+    const exists =
+      await User.findOne({
+        email,
+      });
 
     if (exists) {
 
       return res.status(400).json({
+        success: false,
         message: "User already exists",
       });
 
     }
 
-    // HASH PASSWORD
     const hashedPassword =
-      await bcrypt.hash(password, 10);
+      await bcrypt.hash(
+        password,
+        10
+      );
 
-    // CREATE USER
-    const user = await User.create({
+    const user =
+      await User.create({
 
-      name,
+        name,
+        email,
 
-      email,
+        password:
+          hashedPassword,
 
-      password: hashedPassword,
+        role:
+          "JOB_SEEKER",
 
-      role: "JOB_SEEKER",
+        isVerified:
+          true,
 
-    });
+      });
 
-    // TOKEN
-    const token = jwt.sign(
+    const accessToken =
+      generateAccessToken(user);
 
-      {
-        id: user._id,
-        role: user.role,
-      },
+    const refreshToken =
+      generateRefreshToken(user);
 
-      process.env.JWT_SECRET,
+    user.refreshToken =
+      refreshToken;
 
-      {
-        expiresIn: "7d",
-      }
-
-    );
+    await user.save();
 
     res.status(201).json({
 
-      message: "Job seeker registered",
+      success: true,
 
-      token,
+      accessToken,
+      refreshToken,
 
-      user,
+      user: {
+
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+
+      },
 
     });
 
@@ -790,6 +866,7 @@ export const registerJobUser = async (req, res) => {
     console.log(err);
 
     res.status(500).json({
+      success: false,
       message: err.message,
     });
 
@@ -797,39 +874,51 @@ export const registerJobUser = async (req, res) => {
 
 };
 
-// ================= VERIFY EMAIL =================
+// =========================================
+// VERIFY EMAIL
+// =========================================
 
 export const verifyEmail = async (req, res) => {
 
   try {
 
-    const { token } = req.params;
+    const {
+      token,
+    } = req.params;
 
-    const user = await User.findOne({
-      verificationToken: token,
-    });
+    const user =
+      await User.findOne({
+        verificationToken: token,
+      });
 
     if (!user) {
 
       return res.status(400).json({
-        message: "Invalid verification token",
+        success: false,
+        message: "Invalid token",
       });
 
     }
 
-    user.isVerified = true;
+    user.isVerified =
+      true;
 
-    user.verificationToken = undefined;
+    user.verificationToken =
+      undefined;
 
     await user.save();
 
     res.json({
+      success: true,
       message: "Email verified successfully",
     });
 
   } catch (err) {
 
+    console.log(err);
+
     res.status(500).json({
+      success: false,
       message: err.message,
     });
 

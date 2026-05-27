@@ -1,5 +1,9 @@
 import express from "express";
 
+import {
+  authorize,
+} from "../middleware/authMiddleware.js";
+
 const router = express.Router();
 
 import {
@@ -27,7 +31,7 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 
 router.post(
   "/",
-  authMiddleware,
+  authorize,
   createJob
 );
 

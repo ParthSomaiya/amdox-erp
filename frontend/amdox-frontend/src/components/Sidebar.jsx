@@ -1,75 +1,37 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+import {
+  Link,
+  useLocation,
+} from "react-router-dom";
 
 export default function Sidebar() {
 
-  const location = useLocation();
-  const navigate = useNavigate();
+  const location =
+    useLocation();
 
-  // =========================
-  // GET USER DATA
-  // =========================
+  const user = JSON.parse(
+    localStorage.getItem("user") || "{}"
+  );
 
-  const token = localStorage.getItem("token");
-
-  const user =
-    JSON.parse(localStorage.getItem("user") || "{}");
-
-  if (!token || !user) return null;
-
-  let role = user?.role || null;
-
-  // =========================
-  // TOKEN CHECK
-  // =========================
-
-  try {
-
-    const decoded = jwtDecode(token);
-
-    role = decoded?.role || role;
-
-  } catch (err) {
-
-    console.log("Invalid token");
-
-    localStorage.clear();
-
-    navigate("/login");
-
-  }
-
-  // =========================
-  // MENU ACTIVE STYLE
-  // =========================
-
-  const isActive = (path) => {
-
-    return location.pathname === path ||
-      location.pathname.startsWith(path + "/");
-
-  };
+  const role =
+    user?.role;
 
   const menuClass = (path) => `
-  
+
     flex
     items-center
     gap-3
     px-4
     py-3
-    rounded-xl
+    rounded-2xl
     transition-all
     duration-300
     mb-2
-    font-medium
 
     ${
-      isActive(path)
+      location.pathname === path
 
         ? `
-          bg-gradient-to-r
-          from-cyan-500
-          to-blue-600
+          bg-blue-600
           text-white
           shadow-lg
         `
@@ -82,10 +44,6 @@ export default function Sidebar() {
     }
   `;
 
-  // =========================
-  // SECTION TITLE
-  // =========================
-
   const Section = ({ title }) => (
 
     <div
@@ -94,28 +52,15 @@ export default function Sidebar() {
         uppercase
         tracking-widest
         text-slate-500
-        mt-7
+        mt-8
         mb-3
-        px-2
-        font-bold
+        px-3
       "
     >
       {title}
     </div>
 
   );
-
-  // =========================
-  // LOGOUT
-  // =========================
-
-  const logout = () => {
-
-    localStorage.clear();
-
-    navigate("/login");
-
-  };
 
   return (
 
@@ -126,366 +71,228 @@ export default function Sidebar() {
         bg-[#020617]
         border-r
         border-slate-800
-        flex
-        flex-col
+        overflow-y-auto
       "
     >
 
-      {/* ================= LOGO ================= */}
+      {/* LOGO */}
 
       <div
         className="
-          h-20
-          border-b
-          border-slate-800
+          h-24
           flex
           items-center
           px-6
+          border-b
+          border-slate-800
         "
       >
 
         <div
           className="
-            h-12
-            w-12
-            rounded-xl
+            h-14
+            w-14
+            rounded-2xl
             bg-gradient-to-r
             from-cyan-500
             to-blue-600
             flex
             items-center
             justify-center
-            text-xl
+            text-2xl
           "
         >
           ⚡
         </div>
 
-        <div className="ml-3">
+        <div className="ml-4">
 
-          <h1 className="text-white font-black text-xl">
-            AMDOX ERP
+          <h1 className="text-2xl font-black text-white">
+            AMDOX
           </h1>
 
           <p className="text-slate-500 text-xs">
-            Enterprise System
+            Enterprise ERP
           </p>
 
         </div>
 
       </div>
 
-      {/* ================= MENU ================= */}
+      {/* MENU */}
 
-      <div
-        className="
-          flex-1
-          overflow-y-auto
-          px-4
-          py-5
-        "
-      >
+      <div className="p-5">
 
-        {/* ================= COMMON ================= */}
-
-        <Section title="Main" />
+        <Section title="Overview" />
 
         <Link
           to="/dashboard"
           className={menuClass("/dashboard")}
         >
-          <span>📊</span>
-          <span>Dashboard</span>
+          📊 Dashboard
         </Link>
 
-        <Link
-          to="/notifications"
-          className={menuClass("/notifications")}
-        >
-          <span>🔔</span>
-          <span>Notifications</span>
-        </Link>
-
-        <Link
-          to="/calendar"
-          className={menuClass("/calendar")}
-        >
-          <span>📅</span>
-          <span>Calendar</span>
-        </Link>
-
-        {/* ================= ADMIN ================= */}
-
-        {role === "ADMIN" && (
-
+        {(role === "ADMIN" ||
+          role === "HR") && (
           <>
 
-            <Section title="Administration" />
+            <Section title="HR" />
 
             <Link
               to="/employees"
               className={menuClass("/employees")}
             >
-              <span>👥</span>
-              <span>Employees</span>
-            </Link>
-
-            <Link
-              to="/analytics"
-              className={menuClass("/analytics")}
-            >
-              <span>📈</span>
-              <span>Analytics</span>
-            </Link>
-
-            <Link
-              to="/inventory"
-              className={menuClass("/inventory")}
-            >
-              <span>📦</span>
-              <span>Inventory</span>
-            </Link>
-
-            <Link
-              to="/projects"
-              className={menuClass("/projects")}
-            >
-              <span>🧩</span>
-              <span>Projects</span>
-            </Link>
-
-            <Link
-              to="/payroll-dashboard"
-              className={menuClass("/payroll-dashboard")}
-            >
-              <span>💵</span>
-              <span>Payroll</span>
-            </Link>
-
-            <Link
-              to="/gl"
-              className={menuClass("/gl")}
-            >
-              <span>📘</span>
-              <span>Finance</span>
-            </Link>
-
-            <Link
-              to="/admin/settings"
-              className={menuClass("/admin/settings")}
-            >
-              <span>⚙️</span>
-              <span>Admin Settings</span>
-            </Link>
-
-            <Link
-              to="/admin/security"
-              className={menuClass("/admin/security")}
-            >
-              <span>🔐</span>
-              <span>Security</span>
-            </Link>
-
-            <Link
-              to="/admin/tenants"
-              className={menuClass("/admin/tenants")}
-            >
-              <span>🏢</span>
-              <span>Tenants</span>
-            </Link>
-
-            <Link
-              to="/admin/audit"
-              className={menuClass("/admin/audit")}
-            >
-              <span>📜</span>
-              <span>Audit Logs</span>
-            </Link>
-
-          </>
-
-        )}
-
-        {/* ================= HR ================= */}
-
-        {(role === "HR" || role === "ADMIN") && (
-
-          <>
-
-            <Section title="Human Resources" />
-
-            <Link
-              to="/employees"
-              className={menuClass("/employees")}
-            >
-              <span>👨‍💼</span>
-              <span>Employees</span>
-            </Link>
-
-            <Link
-              to="/apply-leave"
-              className={menuClass("/apply-leave")}
-            >
-              <span>📝</span>
-              <span>Apply Leave</span>
-            </Link>
-
-            <Link
-              to="/manage-leave"
-              className={menuClass("/manage-leave")}
-            >
-              <span>✅</span>
-              <span>Manage Leave</span>
-            </Link>
-
-            <Link
-              to="/attendance-report"
-              className={menuClass("/attendance-report")}
-            >
-              <span>📋</span>
-              <span>Attendance Report</span>
-            </Link>
-
-          </>
-
-        )}
-
-        {/* ================= FINANCE ================= */}
-
-        {(role === "FINANCE" || role === "ADMIN") && (
-
-          <>
-
-            <Section title="Finance" />
-
-            <Link
-              to="/create-invoice"
-              className={menuClass("/create-invoice")}
-            >
-              <span>🧾</span>
-              <span>Create Invoice</span>
-            </Link>
-
-            <Link
-              to="/bills"
-              className={menuClass("/bills")}
-            >
-              <span>💳</span>
-              <span>Bills</span>
-            </Link>
-
-            <Link
-              to="/receivables"
-              className={menuClass("/receivables")}
-            >
-              <span>💰</span>
-              <span>Receivables</span>
-            </Link>
-
-            <Link
-              to="/balance-sheet"
-              className={menuClass("/balance-sheet")}
-            >
-              <span>📊</span>
-              <span>Balance Sheet</span>
-            </Link>
-
-          </>
-
-        )}
-
-        {/* ================= EMPLOYEE ================= */}
-
-        {role === "EMPLOYEE" && (
-
-          <>
-
-            <Section title="Employee" />
-
-            <Link
-              to="/dashboard"
-              className={menuClass("/dashboard")}
-            >
-              <span>🏠</span>
-              <span>My Dashboard</span>
+              👥 Employees
             </Link>
 
             <Link
               to="/attendance"
               className={menuClass("/attendance")}
             >
-              <span>⏱️</span>
-              <span>Attendance</span>
+              📅 Attendance
+            </Link>
+
+            <Link
+              to="/manage-leave"
+              className={menuClass("/manage-leave")}
+            >
+              ✅ Leave Management
+            </Link>
+
+            <Link
+              to="/generate-payroll"
+              className={menuClass("/generate-payroll")}
+            >
+              💵 Payroll
+            </Link>
+
+          </>
+        )}
+
+        {(role === "ADMIN" ||
+          role === "FINANCE") && (
+          <>
+
+            <Section title="Finance" />
+
+            <Link
+              to="/gl"
+              className={menuClass("/gl")}
+            >
+              📘 General Ledger
+            </Link>
+
+            <Link
+              to="/bills"
+              className={menuClass("/bills")}
+            >
+              🧾 Bills
+            </Link>
+
+            <Link
+              to="/receivables"
+              className={menuClass("/receivables")}
+            >
+              💳 Receivables
+            </Link>
+
+          </>
+        )}
+
+        {(role === "ADMIN" ||
+          role === "HR") && (
+          <>
+
+            <Section title="Projects" />
+
+            <Link
+              to="/projects"
+              className={menuClass("/projects")}
+            >
+              🚀 Projects
+            </Link>
+
+            <Link
+              to="/tasks-board"
+              className={menuClass("/tasks-board")}
+            >
+              🧩 Task Board
+            </Link>
+
+          </>
+        )}
+
+        {role === "ADMIN" && (
+          <>
+
+            <Section title="Administration" />
+
+            <Link
+              to="/admin/settings"
+              className={menuClass("/admin/settings")}
+            >
+              ⚙️ Settings
+            </Link>
+
+            <Link
+              to="/admin/security"
+              className={menuClass("/admin/security")}
+            >
+              🔐 Security
+            </Link>
+
+            <Link
+              to="/admin/tenants"
+              className={menuClass("/admin/tenants")}
+            >
+              🏢 Tenants
+            </Link>
+
+            <Link
+              to="/admin/audit"
+              className={menuClass("/admin/audit")}
+            >
+              📜 Audit Logs
+            </Link>
+
+          </>
+        )}
+
+        {role === "EMPLOYEE" && (
+          <>
+
+            <Section title="Employee Portal" />
+
+            <Link
+              to="/employee-dashboard"
+              className={menuClass("/employee-dashboard")}
+            >
+              👤 My Dashboard
+            </Link>
+
+            <Link
+              to="/attendance"
+              className={menuClass("/attendance")}
+            >
+              📅 Attendance
             </Link>
 
             <Link
               to="/apply-leave"
               className={menuClass("/apply-leave")}
             >
-              <span>📩</span>
-              <span>Apply Leave</span>
+              📩 Apply Leave
             </Link>
 
             <Link
               to="/my-payslip"
               className={menuClass("/my-payslip")}
             >
-              <span>💵</span>
-              <span>My Payslip</span>
+              💵 Payslip
             </Link>
 
           </>
-
         )}
-
-        {/* ================= JOB SEEKER ================= */}
-
-        {role === "JOB_SEEKER" && (
-
-          <>
-
-            <Section title="Career Portal" />
-
-            <Link
-              to="/careers"
-              className={menuClass("/careers")}
-            >
-              <span>💼</span>
-              <span>Career Portal</span>
-            </Link>
-
-          </>
-
-        )}
-
-      </div>
-
-      {/* ================= FOOTER ================= */}
-
-      <div
-        className="
-          border-t
-          border-slate-800
-          p-4
-        "
-      >
-
-        <button
-          onClick={logout}
-          className="
-            w-full
-            bg-red-500
-            hover:bg-red-600
-            text-white
-            py-3
-            rounded-xl
-            transition-all
-            duration-300
-            font-semibold
-          "
-        >
-          Logout
-        </button>
 
       </div>
 

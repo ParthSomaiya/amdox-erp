@@ -41,16 +41,13 @@ export default function Login() {
 
       setLoading(true);
 
-      const res =
-        await API.post(
-          "/auth/login",
-          {
-            email:
-              form.email.trim(),
-            password:
-              form.password,
-          }
-        );
+      const res = await API.post(
+        "/auth/login",
+        {
+          email: form.email.trim(),
+          password: form.password,
+        }
+      );
 
       localStorage.setItem(
         "token",
@@ -64,28 +61,38 @@ export default function Login() {
 
       localStorage.setItem(
         "user",
-        JSON.stringify(
-          res.data.user
-        )
+        JSON.stringify(res.data.user)
       );
 
-      navigate(
-        "/dashboard",
-        {
-          replace: true,
-        }
-      );
+      const role = res.data.user.role;
+
+      if (role === "EMPLOYEE") {
+
+        navigate(
+          "/employee-dashboard",
+          {
+            replace: true,
+          }
+        );
+
+      } else {
+
+        navigate(
+          "/dashboard",
+          {
+            replace: true,
+          }
+        );
+
+      }
 
     } catch (err) {
 
       console.log(err);
 
       alert(
-
-        err.response?.data
-          ?.message ||
+        err.response?.data?.message ||
         "Login Failed"
-
       );
 
     } finally {

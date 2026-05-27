@@ -1,4 +1,10 @@
-import React from "react";
+import {
+  Users,
+  IndianRupee,
+  Briefcase,
+  Calendar,
+} from "lucide-react";
+
 
 export default function Dashboard() {
 
@@ -6,14 +12,11 @@ export default function Dashboard() {
     localStorage.getItem("user") || "{}"
   );
 
-  const role =
-    user?.role || "USER";
-
   return (
 
     <div className="space-y-6">
 
-      {/* ================= HEADER ================= */}
+      {/* HERO */}
 
       <div
         className="
@@ -29,19 +32,19 @@ export default function Dashboard() {
 
         <h1 className="text-4xl font-black">
 
-          Welcome {user?.name || "User"} 👋
+          Welcome {user?.name}
 
         </h1>
 
-        <p className="mt-3 text-lg text-cyan-100">
+        <p className="mt-2 text-cyan-100">
 
-          Role : {role}
+          Role : {user?.role}
 
         </p>
 
       </div>
 
-      {/* ================= STATS ================= */}
+      {/* STATS */}
 
       <div
         className="
@@ -53,19 +56,19 @@ export default function Dashboard() {
         "
       >
 
-        <div className="bg-white rounded-2xl p-6 shadow">
+        <div className="bg-white rounded-2xl shadow p-6">
 
           <p className="text-gray-500">
             Employees
           </p>
 
           <h2 className="text-4xl font-black mt-3">
-            124
+            120
           </h2>
 
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow">
+        <div className="bg-white rounded-2xl shadow p-6">
 
           <p className="text-gray-500">
             Projects
@@ -77,98 +80,27 @@ export default function Dashboard() {
 
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow">
-
-          <p className="text-gray-500">
-            Revenue
-          </p>
-
-          <h2 className="text-4xl font-black mt-3">
-            ₹8.2L
-          </h2>
-
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow">
+        <div className="bg-white rounded-2xl shadow p-6">
 
           <p className="text-gray-500">
             Attendance
           </p>
 
           <h2 className="text-4xl font-black mt-3">
-            92%
+            95%
           </h2>
 
         </div>
 
-      </div>
+        <div className="bg-white rounded-2xl shadow p-6">
 
-      {/* ================= PROFILE ================= */}
+          <p className="text-gray-500">
+            Revenue
+          </p>
 
-      <div
-        className="
-          bg-white
-          rounded-3xl
-          shadow
-          p-8
-        "
-      >
-
-        <h2 className="text-2xl font-bold mb-6">
-
-          User Information
-
-        </h2>
-
-        <div className="grid md:grid-cols-2 gap-5">
-
-          <div>
-
-            <p className="text-gray-500 text-sm">
-              Full Name
-            </p>
-
-            <h3 className="text-xl font-semibold mt-1">
-              {user?.name || "N/A"}
-            </h3>
-
-          </div>
-
-          <div>
-
-            <p className="text-gray-500 text-sm">
-              Email Address
-            </p>
-
-            <h3 className="text-xl font-semibold mt-1">
-              {user?.email || "N/A"}
-            </h3>
-
-          </div>
-
-          <div>
-
-            <p className="text-gray-500 text-sm">
-              User Role
-            </p>
-
-            <h3 className="text-xl font-semibold mt-1">
-              {role}
-            </h3>
-
-          </div>
-
-          <div>
-
-            <p className="text-gray-500 text-sm">
-              Company
-            </p>
-
-            <h3 className="text-xl font-semibold mt-1">
-              AMDOX ERP
-            </h3>
-
-          </div>
+          <h2 className="text-4xl font-black mt-3">
+            ₹8.4L
+          </h2>
 
         </div>
 

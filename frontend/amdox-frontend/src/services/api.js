@@ -1,7 +1,12 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+
+  baseURL:
+    "http://localhost:5000/api",
+
+  withCredentials: true,
+
 });
 
 API.interceptors.request.use(
@@ -32,11 +37,14 @@ API.interceptors.response.use(
 
   async (error) => {
 
-    if (error.response?.status === 401) {
+    if (
+      error.response?.status === 401
+    ) {
 
       localStorage.clear();
 
-      window.location.href = "/login";
+      window.location.href =
+        "/login";
 
     }
 
