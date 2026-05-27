@@ -1,23 +1,23 @@
 import { Navigate } from "react-router-dom";
 
-export default function ProtectedRoute({
-
+const ProtectedRoute = ({
   children,
   allowedRoles = [],
-
-}) {
-
-  const user =
-    JSON.parse(
-      localStorage.getItem("user")
-    );
+}) => {
 
   const token =
     localStorage.getItem("token");
 
-  // ================= NO LOGIN =================
+  const userData =
+    localStorage.getItem("user");
 
-  if (!user || !token) {
+  const user =
+    userData
+      ? JSON.parse(userData)
+      : null;
+
+  // NO TOKEN
+  if (!token) {
 
     return (
       <Navigate
@@ -28,46 +28,17 @@ export default function ProtectedRoute({
 
   }
 
-  // ================= ROLE CHECK =================
-
+  // ROLE CHECK
   if (
-
     allowedRoles.length > 0 &&
-
     !allowedRoles.includes(
-      user.role
+      user?.role
     )
-
   ) {
 
-    // JOB SEEKER
-    if (user.role === "JOB_SEEKER") {
-
-      return (
-        <Navigate
-          to="/careers"
-          replace
-        />
-      );
-
-    }
-
-    // EMPLOYEE
-    if (user.role === "EMPLOYEE") {
-
-      return (
-        <Navigate
-          to="/employee-dashboard"
-          replace
-        />
-      );
-
-    }
-
-    // ADMIN
     return (
       <Navigate
-        to="/dashboard"
+        to="/"
         replace
       />
     );
@@ -76,4 +47,6 @@ export default function ProtectedRoute({
 
   return children;
 
-}
+};
+
+export default ProtectedRoute;

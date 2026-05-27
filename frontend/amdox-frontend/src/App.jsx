@@ -3,6 +3,8 @@ import {
   Route,
 } from "react-router-dom";
 
+import React, { Suspense } from "react";
+
 import MainLayout from "./layouts/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -105,120 +107,122 @@ function App() {
     <>
       <PushSetup />
 
-      <Routes>
+      <Suspense fallback={<div>Loading...</div>}>
+        <Routes>
 
-        {/* PUBLIC ROUTES */}
+          {/* PUBLIC ROUTES */}
 
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<RegisterChoice />} />
-        <Route path="/invite/:token" element={<InviteRegister />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/login-success" element={<LoginSuccess />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<RegisterChoice />} />
+          <Route path="/invite/:token" element={<InviteRegister />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/login-success" element={<LoginSuccess />} />
 
-        {/* PROTECTED ROUTES */}
+          {/* PROTECTED ROUTES */}
 
-        <Route
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                "ADMIN",
-                "HR",
-                "FINANCE",
-                "EMPLOYEE",
-                "JOB_SEEKER",
-              ]}
-            >
-              <MainLayout />
-            </ProtectedRoute>
-          }
-        >
+          <Route
+            element={
+              <ProtectedRoute
+                allowedRoles={[
+                  "ADMIN",
+                  "HR",
+                  "FINANCE",
+                  "EMPLOYEE",
+                  "JOB_SEEKER",
+                ]}
+              >
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
 
-          {/* DASHBOARD */}
+            {/* DASHBOARD */}
 
-          <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
 
-          {/* EMPLOYEE */}
+            {/* EMPLOYEE */}
 
-          <Route path="/employees" element={<Employees />} />
-          <Route path="/add-employee" element={<AddEmployee />} />
+            <Route path="/employees" element={<Employees />} />
+            <Route path="/add-employee" element={<AddEmployee />} />
 
-          {/* HR */}
+            {/* HR */}
 
-          <Route path="/apply-leave" element={<ApplyLeave />} />
-          <Route path="/manage-leave" element={<LeaveManagement />} />
-          <Route path="/attendance" element={<Attendance />} />
-          <Route path="/attendance-report" element={<AttendanceReport />} />
+            <Route path="/apply-leave" element={<ApplyLeave />} />
+            <Route path="/manage-leave" element={<LeaveManagement />} />
+            <Route path="/attendance" element={<Attendance />} />
+            <Route path="/attendance-report" element={<AttendanceReport />} />
 
-          {/* PAYROLL */}
+            {/* PAYROLL */}
 
-          <Route path="/generate-payroll" element={<GeneratePayroll />} />
-          <Route path="/payroll" element={<PayrollList />} />
-          <Route path="/my-payslip" element={<MyPayslip />} />
-          <Route path="/payroll-dashboard" element={<Payroll />} />
+            <Route path="/generate-payroll" element={<GeneratePayroll />} />
+            <Route path="/payroll" element={<PayrollList />} />
+            <Route path="/my-payslip" element={<MyPayslip />} />
+            <Route path="/payroll-dashboard" element={<Payroll />} />
 
-          {/* ANALYTICS */}
+            {/* ANALYTICS */}
 
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/analytics/dashboard" element={<AnalyticsDashboard />} />
-          <Route path="/analytics/finance" element={<FinanceAnalytics />} />
-          <Route path="/analytics/projects" element={<ProjectAnalytics />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/analytics/dashboard" element={<AnalyticsDashboard />} />
+            <Route path="/analytics/finance" element={<FinanceAnalytics />} />
+            <Route path="/analytics/projects" element={<ProjectAnalytics />} />
 
-          {/* FINANCE */}
+            {/* FINANCE */}
 
-          <Route path="/gl" element={<GL />} />
-          <Route path="/bills" element={<Bills />} />
-          <Route path="/receivables" element={<Receivables />} />
-          <Route path="/reconciliation" element={<Reconciliation />} />
-          <Route path="/trial-balance" element={<TrialBalance />} />
-          <Route path="/balance-sheet" element={<BalanceSheet />} />
-          <Route path="/create-invoice" element={<CreateInvoice />} />
+            <Route path="/gl" element={<GL />} />
+            <Route path="/bills" element={<Bills />} />
+            <Route path="/receivables" element={<Receivables />} />
+            <Route path="/reconciliation" element={<Reconciliation />} />
+            <Route path="/trial-balance" element={<TrialBalance />} />
+            <Route path="/balance-sheet" element={<BalanceSheet />} />
+            <Route path="/create-invoice" element={<CreateInvoice />} />
 
-          {/* INVENTORY */}
+            {/* INVENTORY */}
 
-          <Route path="/inventory" element={<InventoryDashboard />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/purchase-orders" element={<PurchaseOrders />} />
-          <Route path="/stock-history" element={<StockHistory />} />
+            <Route path="/inventory" element={<InventoryDashboard />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/purchase-orders" element={<PurchaseOrders />} />
+            <Route path="/stock-history" element={<StockHistory />} />
 
-          {/* PROJECTS */}
+            {/* PROJECTS */}
 
-          <Route path="/projects" element={<ProjectDashboard />} />
-          <Route path="/projects/dashboard" element={<ProjectsDashboard />} />
-          <Route path="/projects/board" element={<KanbanBoard />} />
-          <Route path="/projects/create" element={<CreateProject />} />
-          <Route path="/projects/gantt" element={<GanttBoard />} />
-          <Route path="/projects/burndown" element={<BurndownChart />} />
-          <Route path="/tasks-board" element={<TaskBoard />} />
-          <Route path="/timeline" element={<Timeline />} />
+            <Route path="/projects" element={<ProjectDashboard />} />
+            <Route path="/projects/dashboard" element={<ProjectsDashboard />} />
+            <Route path="/projects/board" element={<KanbanBoard />} />
+            <Route path="/projects/create" element={<CreateProject />} />
+            <Route path="/projects/gantt" element={<GanttBoard />} />
+            <Route path="/projects/burndown" element={<BurndownChart />} />
+            <Route path="/tasks-board" element={<TaskBoard />} />
+            <Route path="/timeline" element={<Timeline />} />
 
-          {/* JOBS */}
+            {/* JOBS */}
 
-          <Route path="/jobs" element={<Jobs />} />
-          <Route path="/register/job" element={<JobRegister />} />
-          <Route path="/careers/:companyId" element={<CareerPage />} />
-          <Route path="/careers" element={<CareerPortal />} />
-          <Route path="/apply-job/:id" element={<ApplyJob />} />
-          <Route path="/admin/applicants" element={<Applicants />} />
+            <Route path="/jobs" element={<Jobs />} />
+            <Route path="/register/job" element={<JobRegister />} />
+            <Route path="/careers/:companyId" element={<CareerPage />} />
+            <Route path="/careers" element={<CareerPortal />} />
+            <Route path="/apply-job/:id" element={<ApplyJob />} />
+            <Route path="/admin/applicants" element={<Applicants />} />
 
-          {/* ADMIN */}
+            {/* ADMIN */}
 
-          <Route path="/admin/settings" element={<AdminSettings />} />
-          <Route path="/admin/security" element={<SecuritySettings />} />
-          <Route path="/admin/tenants" element={<TenantManagement />} />
-          <Route path="/admin/audit" element={<AuditLogs />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/security" element={<SecuritySettings />} />
+            <Route path="/admin/tenants" element={<TenantManagement />} />
+            <Route path="/admin/audit" element={<AuditLogs />} />
 
-          {/* OTHER */}
+            {/* OTHER */}
 
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/team-chat" element={<TeamChat />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/ai" element={<AIAssistant />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/team-chat" element={<TeamChat />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/ai" element={<AIAssistant />} />
 
-        </Route>
+          </Route>
 
-      </Routes>
+        </Routes>
+      </Suspense>
     </>
   );
 }

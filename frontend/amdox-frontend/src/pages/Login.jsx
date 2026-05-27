@@ -6,7 +6,8 @@ import API from "../services/api";
 
 export default function Login() {
 
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   const [loading, setLoading] =
     useState(false);
@@ -15,10 +16,22 @@ export default function Login() {
     useState({
 
       email: "",
-
       password: "",
 
     });
+
+  const handleChange = (e) => {
+
+    setForm({
+
+      ...form,
+
+      [e.target.name]:
+        e.target.value,
+
+    });
+
+  };
 
   const submit = async (e) => {
 
@@ -28,10 +41,16 @@ export default function Login() {
 
       setLoading(true);
 
-      const res = await API.post(
-        "/auth/login",
-        form
-      );
+      const res =
+        await API.post(
+          "/auth/login",
+          {
+            email:
+              form.email.trim(),
+            password:
+              form.password,
+          }
+        );
 
       localStorage.setItem(
         "token",
@@ -50,13 +69,23 @@ export default function Login() {
         )
       );
 
-      navigate("/dashboard");
+      navigate(
+        "/dashboard",
+        {
+          replace: true,
+        }
+      );
 
     } catch (err) {
 
+      console.log(err);
+
       alert(
-        err.response?.data?.message ||
+
+        err.response?.data
+          ?.message ||
         "Login Failed"
+
       );
 
     } finally {
@@ -151,30 +180,22 @@ export default function Login() {
 
           <input
             type="email"
+            name="email"
             placeholder="Enter Email"
             className="premium-input"
             value={form.email}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                email:
-                  e.target.value,
-              })
-            }
+            onChange={handleChange}
+            required
           />
 
           <input
             type="password"
+            name="password"
             placeholder="Enter Password"
             className="premium-input"
             value={form.password}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                password:
-                  e.target.value,
-              })
-            }
+            onChange={handleChange}
+            required
           />
 
           <button

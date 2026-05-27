@@ -10,19 +10,25 @@ import "./index.css";
 
 import ToastContainer from "./components/notifications/ToastContainer";
 
+import ErrorBoundary from "./components/ErrorBoundary";
+
 ReactDOM.createRoot(
   document.getElementById("root")
 ).render(
 
   <React.StrictMode>
 
-    <BrowserRouter>
+    <ErrorBoundary>
 
-      <App />
+      <BrowserRouter>
 
-      <ToastContainer />
+        <App />
 
-    </BrowserRouter>
+        <ToastContainer />
+
+      </BrowserRouter>
+
+    </ErrorBoundary>
 
   </React.StrictMode>
 
