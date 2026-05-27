@@ -1,163 +1,230 @@
 import { useState } from "react";
+
 import { useNavigate } from "react-router-dom";
 
 import API from "../services/api";
 
 export default function Login() {
 
-    const [form, setForm] = useState({
-        email: "",
-        password: "",
+  const navigate = useNavigate();
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [form, setForm] =
+    useState({
+
+      email: "",
+      password: "",
+
     });
 
-    const navigate = useNavigate();
+  // ================= LOGIN =================
 
-    // =========================
-    // LOGIN
-    // =========================
+  const submit = async (e) => {
 
-    const submit = async (e) => {
+    e.preventDefault();
 
-        e.preventDefault();
+    try {
 
-        try {
+      setLoading(true);
 
-            const res = await API.post(
-                "/auth/login",
-                form
-            );
+      const res = await API.post(
 
-            const user = res.data.user;
+        "/auth/login",
 
-            // =========================
-            // SAVE TOKENS
-            // =========================
+        form
 
-            localStorage.setItem(
-                "token",
-                res.data.accessToken
-            );
+      );
 
-            localStorage.setItem(
-                "refreshToken",
-                res.data.refreshToken
-            );
+      // ================= SAVE =================
 
-            localStorage.setItem(
-                "user",
-                JSON.stringify(user)
-            );
+      localStorage.setItem(
 
-            // =========================
-            // ROLE REDIRECT
-            // =========================
+        "token",
 
-            if (user.role === "ADMIN") {
+        res.data.accessToken
 
-                navigate("/dashboard");
+      );
 
-            }
+      localStorage.setItem(
 
-            else if (user.role === "HR") {
+        "refreshToken",
 
-                navigate("/employees");
+        res.data.refreshToken
 
-            }
+      );
 
-            else if (user.role === "FINANCE") {
+      localStorage.setItem(
 
-                navigate("/payroll-dashboard");
+        "user",
 
-            }
+        JSON.stringify(
+          res.data.user
+        )
 
-            else if (user.role === "EMPLOYEE") {
+      );
 
-                navigate("/employee-dashboard");
+      // ================= ROLE =================
 
-            }
+      const role =
+        res.data.user.role;
 
-            else if (user.role === "JOB_SEEKER") {
+      // ADMIN
+      if (role === "ADMIN") {
 
-                navigate("/careers");
+        navigate("/dashboard");
 
-            }
+      }
 
-            else {
+      // HR
+      else if (role === "HR") {
 
-                navigate("/");
+        navigate("/employees");
 
-            }
+      }
 
-        } catch (err) {
+      // FINANCE
+      else if (role === "FINANCE") {
 
-            console.log(err);
+        navigate("/payroll-dashboard");
 
-            alert(
-                err.response?.data?.message ||
-                "Login Failed"
-            );
+      }
 
-        }
+      // EMPLOYEE
+      else if (role === "EMPLOYEE") {
 
-    };
+        navigate("/employee-dashboard");
 
-    return (
+      }
 
-        <div className="flex items-center justify-center h-screen bg-gray-100">
+      // JOB SEEKER
+      else if (role === "JOB_SEEKER") {
 
-            <form
-                onSubmit={submit}
-                className="bg-white p-8 rounded shadow w-80"
-            >
+        navigate("/careers");
 
-                <h2 className="text-2xl font-bold mb-4 text-center">
-                    Login
-                </h2>
+      }
 
-                <input
-                    type="email"
-                    placeholder="Email"
-                    className="w-full border p-2 mb-3 rounded"
-                    value={form.email}
-                    onChange={(e) =>
-                        setForm({
-                            ...form,
-                            email: e.target.value,
-                        })
-                    }
-                />
+      else {
 
-                <input
-                    type="password"
-                    placeholder="Password"
-                    className="w-full border p-2 mb-4 rounded"
-                    value={form.password}
-                    onChange={(e) =>
-                        setForm({
-                            ...form,
-                            password: e.target.value,
-                        })
-                    }
-                />
+        navigate("/");
 
-                <button
-                    type="submit"
-                    className="w-full bg-blue-600 text-white p-2 rounded"
-                >
-                    Login
-                </button>
+      }
 
-                <a
-                    href="http://localhost:5000/api/auth/google"
-                    className="bg-red-500 text-white px-4 py-2 rounded block text-center mt-4"
-                >
-                    Login with Google
-                </a>
+    } catch (err) {
 
-            </form>
+      console.log(err);
 
-        </div>
+      alert(
 
-    );
+        err.response?.data?.message ||
+
+        "Login Failed"
+
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
+  return (
+
+    <div className="flex items-center justify-center min-h-screen bg-slate-900">
+
+      <form
+
+        onSubmit={submit}
+
+        className="bg-slate-800 p-8 rounded-2xl shadow-lg w-[400px]"
+
+      >
+
+        <h2 className="text-3xl font-bold text-white text-center mb-6">
+
+          Login
+
+        </h2>
+
+        <input
+
+          type="email"
+
+          placeholder="Email"
+
+          className="w-full p-3 rounded bg-slate-700 text-white mb-4 outline-none"
+
+          value={form.email}
+
+          onChange={(e) =>
+
+            setForm({
+
+              ...form,
+
+              email:
+                e.target.value,
+
+            })
+
+          }
+
+        />
+
+        <input
+
+          type="password"
+
+          placeholder="Password"
+
+          className="w-full p-3 rounded bg-slate-700 text-white mb-5 outline-none"
+
+          value={form.password}
+
+          onChange={(e) =>
+
+            setForm({
+
+              ...form,
+
+              password:
+                e.target.value,
+
+            })
+
+          }
+
+        />
+
+        <button
+
+          type="submit"
+
+          disabled={loading}
+
+          className="w-full bg-cyan-500 hover:bg-cyan-600 transition-all text-white py-3 rounded-xl font-bold"
+
+        >
+
+          {
+
+            loading
+
+              ? "Logging in..."
+
+              : "Login"
+
+          }
+
+        </button>
+
+      </form>
+
+    </div>
+
+  );
 
 }

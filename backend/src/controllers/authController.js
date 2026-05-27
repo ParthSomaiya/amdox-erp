@@ -346,15 +346,19 @@ export const loginUser = async (req, res) => {
 
   try {
 
-    const {
-      email,
-      password,
-    } = req.body;
+    const { email, password } = req.body;
 
-    // USER
     const user = await User.findOne({
       email,
     }).select("+password");
+
+    if (!user) {
+
+      return res.status(404).json({
+        message: "User not found",
+      });
+
+    }
 
     if (!user.isActive) {
 
@@ -364,12 +368,10 @@ export const loginUser = async (req, res) => {
 
     }
 
-    // PASSWORD CHECK
-    const isMatch =
-      await bcrypt.compare(
-        password,
-        user.password
-      );
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
 
     if (!isMatch) {
 
@@ -379,38 +381,27 @@ export const loginUser = async (req, res) => {
 
     }
 
-    // ACCESS TOKEN
     const accessToken = jwt.sign(
-
       {
         id: user._id,
         role: user.role,
       },
-
       process.env.JWT_SECRET,
-
-      {
-        expiresIn: "15m",
-      }
-
-    );
-
-    // REFRESH TOKEN
-    const refreshToken = jwt.sign(
-
-      {
-        id: user._id,
-      },
-
-      process.env.JWT_REFRESH_SECRET,
-
       {
         expiresIn: "7d",
       }
-
     );
 
-    // SAVE REFRESH TOKEN
+    const refreshToken = jwt.sign(
+      {
+        id: user._id,
+      },
+      process.env.JWT_REFRESH_SECRET,
+      {
+        expiresIn: "30d",
+      }
+    );
+
     user.refreshToken = refreshToken;
 
     await user.save();
@@ -426,6 +417,7 @@ export const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        companyId: user.companyId,
 
       },
 

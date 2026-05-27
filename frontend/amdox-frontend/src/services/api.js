@@ -1,17 +1,15 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL:
-    "http://localhost:5000/api",
+  baseURL: "http://localhost:5000/api",
 });
 
 API.interceptors.request.use(
+
   (config) => {
 
     const token =
-      localStorage.getItem(
-        "token"
-      );
+      localStorage.getItem("token");
 
     if (token) {
 
@@ -22,31 +20,27 @@ API.interceptors.request.use(
 
     return config;
 
-  }
+  },
+
+  (error) => Promise.reject(error)
+
 );
 
 API.interceptors.response.use(
 
-  (res) => res,
+  (response) => response,
 
-  (err) => {
+  async (error) => {
 
-    if (
-      err.response?.status === 401
-    ) {
+    if (error.response?.status === 401) {
 
       localStorage.clear();
 
-      window.location.href =
-        "/login";
+      window.location.href = "/login";
 
     }
 
-    alert(
-      err.response?.data?.message
-    );
-
-    return Promise.reject(err);
+    return Promise.reject(error);
 
   }
 

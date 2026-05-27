@@ -1,73 +1,82 @@
-import { Link, useLocation } from "react-router-dom";
-
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-
-import { hasPermission } from "../utils/permissions";
 
 export default function Sidebar() {
 
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const token =
-    localStorage.getItem("token");
+  // =========================
+  // GET USER DATA
+  // =========================
 
-  if (!token) return null;
+  const token = localStorage.getItem("token");
 
-  const permissions = JSON.parse(
-    localStorage.getItem("permissions") || "[]"
-  );
+  const user =
+    JSON.parse(localStorage.getItem("user") || "{}");
 
-  let role = null;
+  if (!token || !user) return null;
+
+  let role = user?.role || null;
+
+  // =========================
+  // TOKEN CHECK
+  // =========================
 
   try {
 
-    const decoded =
-      jwtDecode(token);
+    const decoded = jwtDecode(token);
 
-    role = decoded.role;
+    role = decoded?.role || role;
 
   } catch (err) {
 
     console.log("Invalid token");
 
+    localStorage.clear();
+
+    navigate("/login");
+
   }
 
-  const canViewAnalytics =
-    ["ADMIN", "HR", "FINANCE"]
-      .includes(role);
+  // =========================
+  // MENU ACTIVE STYLE
+  // =========================
 
-  // =========================
-  // MENU STYLE
-  // =========================
+  const isActive = (path) => {
+
+    return location.pathname === path ||
+      location.pathname.startsWith(path + "/");
+
+  };
 
   const menuClass = (path) => `
   
-    group
     flex
     items-center
-    gap-4
+    gap-3
     px-4
     py-3
-    rounded-2xl
+    rounded-xl
     transition-all
     duration-300
     mb-2
+    font-medium
 
     ${
-      location.pathname === path
+      isActive(path)
 
         ? `
           bg-gradient-to-r
           from-cyan-500
-          to-blue-500
+          to-blue-600
           text-white
           shadow-lg
-          shadow-cyan-500/20
         `
 
         : `
-          text-slate-400
-          hover:bg-white/5
+          text-slate-300
+          hover:bg-slate-800
           hover:text-white
         `
     }
@@ -81,13 +90,14 @@ export default function Sidebar() {
 
     <div
       className="
-        text-[11px]
+        text-xs
         uppercase
-        tracking-[0.2em]
+        tracking-widest
         text-slate-500
-        mt-8
+        mt-7
         mb-3
-        px-3
+        px-2
+        font-bold
       "
     >
       {title}
@@ -95,158 +105,211 @@ export default function Sidebar() {
 
   );
 
+  // =========================
+  // LOGOUT
+  // =========================
+
+  const logout = () => {
+
+    localStorage.clear();
+
+    navigate("/login");
+
+  };
+
   return (
 
     <aside
       className="
-        w-[300px]
+        w-[280px]
         min-h-screen
         bg-[#020617]
         border-r
-        border-white/5
+        border-slate-800
         flex
         flex-col
       "
     >
 
-      {/* LOGO */}
+      {/* ================= LOGO ================= */}
 
       <div
         className="
-          h-24
+          h-20
           border-b
-          border-white/5
+          border-slate-800
           flex
           items-center
-          px-7
+          px-6
         "
       >
 
         <div
           className="
-            h-14
-            w-14
-            rounded-2xl
+            h-12
+            w-12
+            rounded-xl
             bg-gradient-to-r
             from-cyan-500
-            to-blue-500
+            to-blue-600
             flex
             items-center
             justify-center
-            text-2xl
-            shadow-xl
-            shadow-cyan-500/20
+            text-xl
           "
         >
           ⚡
         </div>
 
-        <div className="ml-4">
+        <div className="ml-3">
 
-          <h2 className="text-2xl font-black text-white tracking-tight">
-            AMDOX
-          </h2>
+          <h1 className="text-white font-black text-xl">
+            AMDOX ERP
+          </h1>
 
-          <p className="text-xs text-slate-500 mt-1">
-            Enterprise ERP
+          <p className="text-slate-500 text-xs">
+            Enterprise System
           </p>
 
         </div>
 
       </div>
 
-      {/* MENU */}
+      {/* ================= MENU ================= */}
 
       <div
         className="
           flex-1
           overflow-y-auto
-          px-5
-          py-6
+          px-4
+          py-5
         "
       >
 
-        {/* OVERVIEW */}
+        {/* ================= COMMON ================= */}
 
-        <Section title="Overview" />
+        <Section title="Main" />
 
         <Link
           to="/dashboard"
           className={menuClass("/dashboard")}
         >
-
-          <span className="text-xl">
-            📊
-          </span>
-
-          <span className="font-medium">
-            Dashboard
-          </span>
-
+          <span>📊</span>
+          <span>Dashboard</span>
         </Link>
 
-        {/* ADMIN */}
+        <Link
+          to="/notifications"
+          className={menuClass("/notifications")}
+        >
+          <span>🔔</span>
+          <span>Notifications</span>
+        </Link>
+
+        <Link
+          to="/calendar"
+          className={menuClass("/calendar")}
+        >
+          <span>📅</span>
+          <span>Calendar</span>
+        </Link>
+
+        {/* ================= ADMIN ================= */}
 
         {role === "ADMIN" && (
+
           <>
 
             <Section title="Administration" />
 
             <Link
-              to="/users"
-              className={menuClass("/users")}
+              to="/employees"
+              className={menuClass("/employees")}
             >
-              <span className="text-xl">👑</span>
-              <span>Users</span>
+              <span>👥</span>
+              <span>Employees</span>
             </Link>
 
             <Link
-              to="/reports"
-              className={menuClass("/reports")}
+              to="/analytics"
+              className={menuClass("/analytics")}
             >
-              <span className="text-xl">📄</span>
-              <span>Reports</span>
+              <span>📈</span>
+              <span>Analytics</span>
             </Link>
 
             <Link
-              to="/admin/adminsettings"
-              className={menuClass("/admin/adminsettings")}
+              to="/inventory"
+              className={menuClass("/inventory")}
             >
-              <span className="text-xl">⚙️</span>
+              <span>📦</span>
+              <span>Inventory</span>
+            </Link>
+
+            <Link
+              to="/projects"
+              className={menuClass("/projects")}
+            >
+              <span>🧩</span>
+              <span>Projects</span>
+            </Link>
+
+            <Link
+              to="/payroll-dashboard"
+              className={menuClass("/payroll-dashboard")}
+            >
+              <span>💵</span>
+              <span>Payroll</span>
+            </Link>
+
+            <Link
+              to="/gl"
+              className={menuClass("/gl")}
+            >
+              <span>📘</span>
+              <span>Finance</span>
+            </Link>
+
+            <Link
+              to="/admin/settings"
+              className={menuClass("/admin/settings")}
+            >
+              <span>⚙️</span>
               <span>Admin Settings</span>
             </Link>
 
             <Link
-              to="/admin/securitysettings"
-              className={menuClass("/admin/securitysettings")}
+              to="/admin/security"
+              className={menuClass("/admin/security")}
             >
-              <span className="text-xl">🔐</span>
+              <span>🔐</span>
               <span>Security</span>
             </Link>
 
             <Link
-              to="/admin/tenantmanagement"
-              className={menuClass("/admin/tenantmanagement")}
+              to="/admin/tenants"
+              className={menuClass("/admin/tenants")}
             >
-              <span className="text-xl">🏢</span>
+              <span>🏢</span>
               <span>Tenants</span>
             </Link>
 
             <Link
-              to="/admin/auditlogs"
-              className={menuClass("/admin/auditlogs")}
+              to="/admin/audit"
+              className={menuClass("/admin/audit")}
             >
-              <span className="text-xl">📜</span>
+              <span>📜</span>
               <span>Audit Logs</span>
             </Link>
 
           </>
+
         )}
 
-        {/* HR */}
+        {/* ================= HR ================= */}
 
-        {(role === "HR" ||
-          role === "ADMIN") && (
+        {(role === "HR" || role === "ADMIN") && (
+
           <>
 
             <Section title="Human Resources" />
@@ -255,186 +318,103 @@ export default function Sidebar() {
               to="/employees"
               className={menuClass("/employees")}
             >
-              <span className="text-xl">👥</span>
+              <span>👨‍💼</span>
               <span>Employees</span>
             </Link>
 
             <Link
-              to="/leave"
-              className={menuClass("/leave")}
+              to="/apply-leave"
+              className={menuClass("/apply-leave")}
             >
-              <span className="text-xl">📝</span>
-              <span>Leave</span>
+              <span>📝</span>
+              <span>Apply Leave</span>
             </Link>
 
             <Link
               to="/manage-leave"
               className={menuClass("/manage-leave")}
             >
-              <span className="text-xl">✅</span>
-              <span>Manage Leaves</span>
+              <span>✅</span>
+              <span>Manage Leave</span>
             </Link>
 
             <Link
               to="/attendance-report"
               className={menuClass("/attendance-report")}
             >
-              <span className="text-xl">📅</span>
-              <span>Attendance</span>
-            </Link>
-
-            <Link
-              to="/generate-payroll"
-              className={menuClass("/generate-payroll")}
-            >
-              <span className="text-xl">💵</span>
-              <span>Generate Payroll</span>
+              <span>📋</span>
+              <span>Attendance Report</span>
             </Link>
 
           </>
+
         )}
 
-        {/* FINANCE */}
+        {/* ================= FINANCE ================= */}
 
-        {(role === "FINANCE" ||
-          role === "ADMIN") && (
+        {(role === "FINANCE" || role === "ADMIN") && (
+
           <>
 
             <Section title="Finance" />
 
             <Link
-              to="/invoices"
-              className={menuClass("/invoices")}
+              to="/create-invoice"
+              className={menuClass("/create-invoice")}
             >
-              <span className="text-xl">🧾</span>
-              <span>Invoices</span>
+              <span>🧾</span>
+              <span>Create Invoice</span>
             </Link>
 
             <Link
-              to="/payments"
-              className={menuClass("/payments")}
+              to="/bills"
+              className={menuClass("/bills")}
             >
-              <span className="text-xl">💳</span>
-              <span>Payments</span>
+              <span>💳</span>
+              <span>Bills</span>
             </Link>
 
             <Link
-              to="/finance-analytics"
-              className={menuClass("/finance-analytics")}
+              to="/receivables"
+              className={menuClass("/receivables")}
             >
-              <span className="text-xl">📈</span>
-              <span>Analytics</span>
+              <span>💰</span>
+              <span>Receivables</span>
             </Link>
 
             <Link
-              to="/gl"
-              className={menuClass("/gl")}
+              to="/balance-sheet"
+              className={menuClass("/balance-sheet")}
             >
-              <span className="text-xl">📘</span>
-              <span>General Ledger</span>
+              <span>📊</span>
+              <span>Balance Sheet</span>
             </Link>
 
           </>
+
         )}
 
-        {/* SUPPLY */}
-
-        {(role === "ADMIN" ||
-          role === "FINANCE") && (
-          <>
-
-            <Section title="Inventory" />
-
-            <Link
-              to="/inventory"
-              className={menuClass("/inventory")}
-            >
-              <span className="text-xl">📦</span>
-              <span>Inventory</span>
-            </Link>
-
-            <Link
-              to="/products"
-              className={menuClass("/products")}
-            >
-              <span className="text-xl">🏷️</span>
-              <span>Products</span>
-            </Link>
-
-            <Link
-              to="/purchase-orders"
-              className={menuClass("/purchase-orders")}
-            >
-              <span className="text-xl">🧾</span>
-              <span>Purchase Orders</span>
-            </Link>
-
-          </>
-        )}
-
-        {/* PROJECT */}
-
-        {(role === "ADMIN" ||
-          role === "HR") && (
-          <>
-
-            <Section title="Projects" />
-
-            <Link
-              to="/projects"
-              className={menuClass("/projects")}
-            >
-              <span className="text-xl">📊</span>
-              <span>Projects</span>
-            </Link>
-
-            <Link
-              to="/tasks-board"
-              className={menuClass("/tasks-board")}
-            >
-              <span className="text-xl">🧩</span>
-              <span>Task Board</span>
-            </Link>
-
-            <Link
-              to="/calendar"
-              className={menuClass("/calendar")}
-            >
-              <span className="text-xl">📆</span>
-              <span>Calendar</span>
-            </Link>
-
-            <Link
-              to="/team-chat"
-              className={menuClass("/team-chat")}
-            >
-              <span className="text-xl">💬</span>
-              <span>Team Chat</span>
-            </Link>
-
-          </>
-        )}
-
-        {/* EMPLOYEE */}
+        {/* ================= EMPLOYEE ================= */}
 
         {role === "EMPLOYEE" && (
+
           <>
 
-            <Section title="Employee Portal" />
+            <Section title="Employee" />
 
             <Link
-              to="/profile"
-              className={menuClass("/profile")}
+              to="/dashboard"
+              className={menuClass("/dashboard")}
             >
-              <span className="text-xl">👤</span>
-              <span>My Profile</span>
+              <span>🏠</span>
+              <span>My Dashboard</span>
             </Link>
 
             <Link
               to="/attendance"
               className={menuClass("/attendance")}
             >
-              <span className="text-xl">⏱️</span>
+              <span>⏱️</span>
               <span>Attendance</span>
             </Link>
 
@@ -442,64 +422,70 @@ export default function Sidebar() {
               to="/apply-leave"
               className={menuClass("/apply-leave")}
             >
-              <span className="text-xl">📩</span>
+              <span>📩</span>
               <span>Apply Leave</span>
             </Link>
 
-          </>
-        )}
-
-        {/* ANALYTICS */}
-
-        {canViewAnalytics && (
-          <>
-
-            <Section title="Business Intelligence" />
-
             <Link
-              to="/analytics"
-              className={menuClass("/analytics")}
+              to="/my-payslip"
+              className={menuClass("/my-payslip")}
             >
-              <span className="text-xl">🚀</span>
-              <span>Analytics</span>
+              <span>💵</span>
+              <span>My Payslip</span>
             </Link>
 
           </>
+
+        )}
+
+        {/* ================= JOB SEEKER ================= */}
+
+        {role === "JOB_SEEKER" && (
+
+          <>
+
+            <Section title="Career Portal" />
+
+            <Link
+              to="/careers"
+              className={menuClass("/careers")}
+            >
+              <span>💼</span>
+              <span>Career Portal</span>
+            </Link>
+
+          </>
+
         )}
 
       </div>
 
-      {/* FOOTER */}
+      {/* ================= FOOTER ================= */}
 
       <div
         className="
           border-t
-          border-white/5
-          p-5
+          border-slate-800
+          p-4
         "
       >
 
-        <div
+        <button
+          onClick={logout}
           className="
-            rounded-3xl
-            bg-gradient-to-r
-            from-cyan-500/10
-            to-blue-500/10
-            border
-            border-cyan-500/10
-            p-5
+            w-full
+            bg-red-500
+            hover:bg-red-600
+            text-white
+            py-3
+            rounded-xl
+            transition-all
+            duration-300
+            font-semibold
           "
         >
-
-          <p className="text-sm text-slate-300">
-            Enterprise ERP v2.0
-          </p>
-
-          <p className="text-xs text-slate-500 mt-2">
-            Powered by AMDOX Intelligence
-          </p>
-
-        </div>
+          Logout
+        </button>
 
       </div>
 
