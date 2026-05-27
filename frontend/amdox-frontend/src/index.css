@@ -1,138 +1,72 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
 
-  --background: #020617;
-
-  --card: rgba(15, 23, 42, 0.72);
-
+  --bg: #030712;
+  --card: #111827;
   --border: rgba(255,255,255,0.08);
 
-  --text: #F8FAFC;
+  --primary: #6366f1;
+  --secondary: #8b5cf6;
 
-  --muted: #94A3B8;
-
-  --primary: #3B82F6;
-
-  --secondary: #8B5CF6;
-
-  --success: #10B981;
-
-  --danger: #EF4444;
-
-}
-
-* {
-
-  margin: 0;
-
-  padding: 0;
-
-  box-sizing: border-box;
-
-}
-
-html {
-
-  scroll-behavior: smooth;
+  --text: #f9fafb;
+  --muted: #9ca3af;
 
 }
 
 body {
 
-  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
 
   background:
-    radial-gradient(
-      circle at top left,
-      rgba(59,130,246,0.18),
-      transparent 30%
-    ),
+    radial-gradient(circle at top left,
+      rgba(99,102,241,0.15),
+      transparent 30%),
 
-    radial-gradient(
-      circle at bottom right,
-      rgba(139,92,246,0.15),
-      transparent 30%
-    ),
+    radial-gradient(circle at bottom right,
+      rgba(139,92,246,0.12),
+      transparent 30%),
 
-    #020617;
+    #030712;
 
   color: var(--text);
 
-  overflow-x: hidden;
+  font-family:
+    Inter,
+    sans-serif;
 
 }
 
-/* ================= SCROLLBAR ================= */
-
-::-webkit-scrollbar {
-
-  width: 10px;
-
+* {
+  box-sizing: border-box;
 }
-
-::-webkit-scrollbar-track {
-
-  background: #020617;
-
-}
-
-::-webkit-scrollbar-thumb {
-
-  background: linear-gradient(
-    to bottom,
-    #3B82F6,
-    #8B5CF6
-  );
-
-  border-radius: 999px;
-
-}
-
-/* ================= GLASS ================= */
 
 .glass {
 
-  background: rgba(15, 23, 42, 0.72);
+  background:
+    rgba(17,24,39,0.72);
 
-  border: 1px solid rgba(255,255,255,0.06);
+  border:
+    1px solid rgba(255,255,255,0.08);
 
-  backdrop-filter: blur(20px);
-
-  -webkit-backdrop-filter: blur(20px);
-
-}
-
-.glass-hover {
-
-  transition: all .35s ease;
-
-}
-
-.glass-hover:hover {
-
-  transform: translateY(-6px);
-
-  border-color: rgba(59,130,246,0.35);
+  backdrop-filter:
+    blur(20px);
 
   box-shadow:
-    0 10px 40px rgba(59,130,246,0.15);
+    0 10px 40px rgba(0,0,0,0.35);
 
 }
-
-/* ================= GRADIENT TEXT ================= */
 
 .gradient-text {
 
   background:
     linear-gradient(
       to right,
-      #3B82F6,
-      #8B5CF6
+      #818cf8,
+      #c084fc
     );
 
   -webkit-background-clip: text;
@@ -141,120 +75,48 @@ body {
 
 }
 
-/* ================= BUTTON ================= */
-
 .primary-btn {
 
   background:
     linear-gradient(
       to right,
-      #2563EB,
-      #7C3AED
+      #6366f1,
+      #8b5cf6
     );
 
-  border-radius: 16px;
+  border-radius: 18px;
 
-  transition: .3s;
-
-  box-shadow:
-    0 10px 35px rgba(59,130,246,0.35);
+  transition: 0.3s ease;
 
 }
 
 .primary-btn:hover {
 
-  transform: translateY(-3px);
+  transform:
+    translateY(-2px);
 
-  box-shadow:
-    0 18px 50px rgba(59,130,246,0.45);
-
-}
-
-/* ================= CARD ================= */
-
-.premium-card {
-
-  background: rgba(15, 23, 42, 0.78);
-
-  border: 1px solid rgba(255,255,255,0.05);
-
-  border-radius: 28px;
-
-  backdrop-filter: blur(18px);
-
-  transition: .35s;
+  opacity: 0.92;
 
 }
-
-.premium-card:hover {
-
-  transform: translateY(-8px);
-
-  border-color: rgba(59,130,246,0.25);
-
-  box-shadow:
-    0 15px 50px rgba(0,0,0,0.35);
-
-}
-
-/* ================= INPUT ================= */
 
 .premium-input {
 
   width: 100%;
 
-  background: rgba(15,23,42,0.9);
-
-  border: 1px solid rgba(255,255,255,0.08);
-
-  color: white;
-
-  padding: 16px;
+  height: 58px;
 
   border-radius: 18px;
 
+  border:
+    1px solid rgba(255,255,255,0.08);
+
+  background:
+    rgba(255,255,255,0.04);
+
+  padding: 0 18px;
+
+  color: white;
+
   outline: none;
 
-  transition: .3s;
-
 }
-
-.premium-input:focus {
-
-  border-color: #3B82F6;
-
-  box-shadow:
-    0 0 0 4px rgba(59,130,246,0.15);
-
-}
-
-/* ================= ANIMATION ================= */
-
-.float-animation {
-
-  animation: floating 5s ease-in-out infinite;
-
-}
-
-@keyframes floating {
-
-  0% {
-
-    transform: translateY(0px);
-
-  }
-
-  50% {
-
-    transform: translateY(-10px);
-
-  }
-
-  100% {
-
-    transform: translateY(0px);
-
-  }
-
-}
-
