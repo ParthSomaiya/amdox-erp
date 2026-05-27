@@ -7,14 +7,8 @@ import {
 
 const router = express.Router();
 
-router.post(
-  "/",
-  createSprint
-);
+router.post("/", protect, createSprint);
 
-router.get(
-  "/:projectId",
-  getSprints
-);
+router.get("/:projectId", protect, getSprints);
 
 export default router;

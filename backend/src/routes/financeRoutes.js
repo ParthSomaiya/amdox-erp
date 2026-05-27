@@ -24,7 +24,8 @@ import {
   allowRoles,
   authorizeRoles,
  } from "../middleware/roleMiddleware.js";
-import { checkPermission } from "../modules/admin/middleware/permissionMiddleware.js";
+ 
+import { checkPermission } from "../middleware/permissionMiddleware.js";
 
 import { 
   createJournalEntry,
@@ -90,10 +91,6 @@ router.post(
 
 router.get("/expense", authMiddleware, getExpenses);
 
-router.post(
-  "/journal",
-  createJournal
-);
 
 router.post(
   "/gst",

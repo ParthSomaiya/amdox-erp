@@ -19,7 +19,7 @@ import upload
 from "../config/multer.js";
 
 import { authMiddleware } from "../middleware/authMiddleware.js";
-import { protect } from "../middleware/authMiddleware.js";
+
 
 // =========================
 // JOBS
