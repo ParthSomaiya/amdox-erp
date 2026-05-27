@@ -15,11 +15,10 @@ export default function Login() {
     useState({
 
       email: "",
+
       password: "",
 
     });
-
-  // ================= LOGIN =================
 
   const submit = async (e) => {
 
@@ -30,97 +29,34 @@ export default function Login() {
       setLoading(true);
 
       const res = await API.post(
-
         "/auth/login",
-
         form
-
       );
 
-      // ================= SAVE =================
-
       localStorage.setItem(
-
         "token",
-
         res.data.accessToken
-
       );
 
       localStorage.setItem(
-
         "refreshToken",
-
         res.data.refreshToken
-
       );
 
       localStorage.setItem(
-
         "user",
-
         JSON.stringify(
           res.data.user
         )
-
       );
 
-      // ================= ROLE =================
-
-      const role =
-        res.data.user.role;
-
-      // ADMIN
-      if (role === "ADMIN") {
-
-        navigate("/dashboard");
-
-      }
-
-      // HR
-      else if (role === "HR") {
-
-        navigate("/employees");
-
-      }
-
-      // FINANCE
-      else if (role === "FINANCE") {
-
-        navigate("/payroll-dashboard");
-
-      }
-
-      // EMPLOYEE
-      else if (role === "EMPLOYEE") {
-
-        navigate("/employee-dashboard");
-
-      }
-
-      // JOB SEEKER
-      else if (role === "JOB_SEEKER") {
-
-        navigate("/careers");
-
-      }
-
-      else {
-
-        navigate("/");
-
-      }
+      navigate("/dashboard");
 
     } catch (err) {
 
-      console.log(err);
-
       alert(
-
         err.response?.data?.message ||
-
         "Login Failed"
-
       );
 
     } finally {
@@ -133,93 +69,136 @@ export default function Login() {
 
   return (
 
-    <div className="flex items-center justify-center min-h-screen bg-slate-900">
+    <div
+      className="
+        min-h-screen
+        flex
+        items-center
+        justify-center
+        relative
+        overflow-hidden
+        px-6
+      "
+    >
+
+      {/* BACKGROUND */}
+
+      <div
+        className="
+          absolute
+          w-[500px]
+          h-[500px]
+          bg-blue-500/20
+          blur-[120px]
+          rounded-full
+          -top-32
+          -left-32
+        "
+      />
+
+      <div
+        className="
+          absolute
+          w-[500px]
+          h-[500px]
+          bg-purple-500/20
+          blur-[120px]
+          rounded-full
+          bottom-0
+          right-0
+        "
+      />
+
+      {/* CARD */}
 
       <form
-
         onSubmit={submit}
-
-        className="bg-slate-800 p-8 rounded-2xl shadow-lg w-[400px]"
-
+        className="
+          glass
+          w-full
+          max-w-md
+          rounded-[32px]
+          p-10
+          relative
+          z-10
+        "
       >
 
-        <h2 className="text-3xl font-bold text-white text-center mb-6">
+        <div className="mb-10">
 
-          Login
+          <h1
+            className="
+              text-5xl
+              font-black
+              gradient-text
+            "
+          >
+            AMDOX
+          </h1>
 
-        </h2>
+          <p
+            className="
+              text-slate-400
+              mt-3
+            "
+          >
+            Enterprise ERP Platform
+          </p>
 
-        <input
+        </div>
 
-          type="email"
+        <div className="space-y-5">
 
-          placeholder="Email"
+          <input
+            type="email"
+            placeholder="Enter Email"
+            className="premium-input"
+            value={form.email}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                email:
+                  e.target.value,
+              })
+            }
+          />
 
-          className="w-full p-3 rounded bg-slate-700 text-white mb-4 outline-none"
+          <input
+            type="password"
+            placeholder="Enter Password"
+            className="premium-input"
+            value={form.password}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                password:
+                  e.target.value,
+              })
+            }
+          />
 
-          value={form.email}
+          <button
+            type="submit"
+            disabled={loading}
+            className="
+              primary-btn
+              w-full
+              py-4
+              text-white
+              font-bold
+              text-lg
+            "
+          >
 
-          onChange={(e) =>
+            {
+              loading
+                ? "Authenticating..."
+                : "Login To Dashboard"
+            }
 
-            setForm({
+          </button>
 
-              ...form,
-
-              email:
-                e.target.value,
-
-            })
-
-          }
-
-        />
-
-        <input
-
-          type="password"
-
-          placeholder="Password"
-
-          className="w-full p-3 rounded bg-slate-700 text-white mb-5 outline-none"
-
-          value={form.password}
-
-          onChange={(e) =>
-
-            setForm({
-
-              ...form,
-
-              password:
-                e.target.value,
-
-            })
-
-          }
-
-        />
-
-        <button
-
-          type="submit"
-
-          disabled={loading}
-
-          className="w-full bg-cyan-500 hover:bg-cyan-600 transition-all text-white py-3 rounded-xl font-bold"
-
-        >
-
-          {
-
-            loading
-
-              ? "Logging in..."
-
-              : "Login"
-
-          }
-
-        </button>
+        </div>
 
       </form>
 
