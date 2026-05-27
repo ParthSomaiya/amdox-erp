@@ -24,7 +24,7 @@ import {
   allowRoles,
   authorizeRoles,
  } from "../middleware/roleMiddleware.js";
- 
+
 import { checkPermission } from "../middleware/permissionMiddleware.js";
 
 import { 
@@ -83,9 +83,7 @@ router.post(
 
 router.post(
   "/journal",
-
   protect,
-
   createJournalEntry
 );
 

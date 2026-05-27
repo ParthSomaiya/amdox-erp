@@ -1,8 +1,11 @@
 import express from "express";
-import { downloadInvoice } from "../controllers/invoiceController.js";
+import { downloadPayslip } from "../controllers/pdfController.js";
 
 const router = express.Router();
 
-router.post("/invoice", downloadInvoice);
+router.get(
+  "/payslip/:payrollId",
+  downloadPayslip
+);
 
 export default router;

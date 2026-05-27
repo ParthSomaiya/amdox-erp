@@ -1,14 +1,36 @@
+// src/routes/sprintRoutes.js
+
 import express from "express";
 
 import {
+
   createSprint,
   getSprints,
+
 } from "../controllers/sprintController.js";
+
+import {
+
+  protect,
+
+} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", protect, createSprint);
+// ================= CREATE SPRINT =================
 
-router.get("/:projectId", protect, getSprints);
+router.post(
+  "/",
+  protect,
+  createSprint
+);
+
+// ================= GET SPRINTS =================
+
+router.get(
+  "/:projectId",
+  protect,
+  getSprints
+);
 
 export default router;

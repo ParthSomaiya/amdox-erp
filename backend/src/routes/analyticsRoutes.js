@@ -16,6 +16,8 @@ import {
 
 import { protect } from "../middleware/authMiddleware.js";
 
+import { checkPermission } from "../middleware/permissionMiddleware.js";
+
 const router = express.Router();
 
 // ✅ ADD YOUR LINE HERE

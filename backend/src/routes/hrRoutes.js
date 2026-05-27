@@ -1,53 +1,66 @@
+// src/routes/hrRoutes.js
+
 import express from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
 import Invite from "../models/Invite.js";
 import User from "../models/User.js";
-import Leave from "../models/Leave.js";
-
 
 import {
+
   addEmployee,
   getEmployees,
+
   applyLeave,
-  updateLeaveStatus,
   getLeaves,
+  updateLeaveStatus,
 
   approveLeave,
   rejectLeave,
+
   hrAnalytics,
+
   generatePayroll,
+
   biometricSync,
+
   leavePrediction,
+
   getTimeline,
+
   searchEmployees,
+
 } from "../controllers/hrController.js";
 
 import {
+
   createInvoice,
   markInvoicePaid,
   getInvoices,
+
   addExpense,
   getExpenses,
+
 } from "../controllers/financeController.js";
 
 import {
-  authMiddleware,
-  authorize,
+
   protect,
+
 } from "../middleware/authMiddleware.js";
 
 import {
+
   authorizeRoles,
+
 } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-
-// ==============================
-// 📩 INVITE GET
-// ==============================
+// ======================================================
+// INVITE - GET INVITE DETAILS
+// ======================================================
 
 router.get(
   "/invite/:token",
@@ -58,30 +71,32 @@ router.get(
 
       const invite =
         await Invite.findOne({
-          token:
-            req.params.token,
+          token: req.params.token,
         });
 
       if (
         !invite ||
-        invite.expiresAt <
-          new Date()
+        invite.expiresAt < new Date()
       ) {
 
         return res.status(400).json({
+          success: false,
           message:
             "Invalid or expired invite",
         });
 
       }
 
-      res.json(invite);
+      res.status(200).json({
+        success: true,
+        invite,
+      });
 
     } catch (err) {
 
       res.status(500).json({
-        message:
-          err.message,
+        success: false,
+        message: err.message,
       });
 
     }
@@ -89,15 +104,19 @@ router.get(
   }
 );
 
-
-// ==============================
-// 📩 CREATE INVITE
-// ==============================
+// ======================================================
+// CREATE INVITE
+// ======================================================
 
 router.post(
   "/invite",
 
   protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "HR"
+  ),
 
   async (req, res) => {
 
@@ -108,20 +127,46 @@ router.post(
         role,
       } = req.body;
 
+      if (!email || !role) {
+
+        return res.status(400).json({
+          success: false,
+          message:
+            "Email and role required",
+        });
+
+      }
+
+      const existingUser =
+        await User.findOne({
+          email,
+        });
+
+      if (existingUser) {
+
+        return res.status(400).json({
+          success: false,
+          message:
+            "User already exists",
+        });
+
+      }
+
       const token =
         crypto
-          .randomBytes(20)
+          .randomBytes(32)
           .toString("hex");
 
       await Invite.create({
 
         email,
+
         role,
+
+        token,
 
         companyId:
           req.user.companyId,
-
-        token,
 
         expiresAt:
           new Date(
@@ -138,20 +183,29 @@ router.post(
         `http://localhost:5173/invite/${token}`;
 
       console.log(
-        "Invite Link:",
+        "📩 Invite Link:",
         inviteLink
       );
 
-      res.json({
+      res.status(201).json({
+
+        success: true,
+
         message:
-          "Invite sent",
+          "Invite created successfully",
+
+        inviteLink,
+
       });
 
     } catch (err) {
 
       res.status(500).json({
-        message:
-          err.message,
+
+        success: false,
+
+        message: err.message,
+
       });
 
     }
@@ -159,10 +213,9 @@ router.post(
   }
 );
 
-
-// ==============================
-// 👤 REGISTER VIA INVITE
-// ==============================
+// ======================================================
+// REGISTER USING INVITE
+// ======================================================
 
 router.post(
   "/register-invite",
@@ -176,6 +229,19 @@ router.post(
         password,
       } = req.body;
 
+      if (
+        !token ||
+        !password
+      ) {
+
+        return res.status(400).json({
+          success: false,
+          message:
+            "Token and password required",
+        });
+
+      }
+
       const invite =
         await Invite.findOne({
           token,
@@ -184,13 +250,43 @@ router.post(
       if (!invite) {
 
         return res.status(400).json({
+          success: false,
           message:
-            "Invalid invite",
+            "Invalid invite token",
         });
 
       }
 
-      const hashed =
+      if (
+        invite.expiresAt <
+        new Date()
+      ) {
+
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invite expired",
+        });
+
+      }
+
+      const existingUser =
+        await User.findOne({
+          email:
+            invite.email,
+        });
+
+      if (existingUser) {
+
+        return res.status(400).json({
+          success: false,
+          message:
+            "User already exists",
+        });
+
+      }
+
+      const hashedPassword =
         await bcrypt.hash(
           password,
           10
@@ -202,7 +298,7 @@ router.post(
           invite.email,
 
         password:
-          hashed,
+          hashedPassword,
 
         role:
           invite.role,
@@ -216,16 +312,23 @@ router.post(
         token,
       });
 
-      res.json({
+      res.status(201).json({
+
+        success: true,
+
         message:
-          "Account created via invite",
+          "Account created successfully",
+
       });
 
     } catch (err) {
 
       res.status(500).json({
-        message:
-          err.message,
+
+        success: false,
+
+        message: err.message,
+
       });
 
     }
@@ -233,13 +336,14 @@ router.post(
   }
 );
 
+// ======================================================
+// EMPLOYEE MANAGEMENT
+// ======================================================
 
-// ==============================
-// 👨‍💼 EMPLOYEES
-// ==============================
+// ADD EMPLOYEE
 
 router.post(
-  "/add",
+  "/employees",
 
   protect,
 
@@ -251,8 +355,10 @@ router.post(
   addEmployee
 );
 
+// GET EMPLOYEES
+
 router.get(
-  "/",
+  "/employees",
 
   protect,
 
@@ -264,16 +370,26 @@ router.get(
   getEmployees
 );
 
+// SEARCH EMPLOYEES
+
 router.get(
-  "/search",
+  "/employees/search",
+
   protect,
-  authorizeRoles("ADMIN", "HR"),
+
+  authorizeRoles(
+    "ADMIN",
+    "HR"
+  ),
+
   searchEmployees
 );
 
-// ==============================
-// 📅 LEAVE
-// ==============================
+// ======================================================
+// LEAVE MANAGEMENT
+// ======================================================
+
+// APPLY LEAVE
 
 router.post(
   "/leave",
@@ -282,6 +398,8 @@ router.post(
 
   applyLeave
 );
+
+// GET ALL LEAVES
 
 router.get(
   "/leave",
@@ -296,6 +414,8 @@ router.get(
   getLeaves
 );
 
+// UPDATE LEAVE STATUS
+
 router.put(
   "/leave/status",
 
@@ -309,78 +429,10 @@ router.put(
   updateLeaveStatus
 );
 
+// APPROVE LEAVE
+
 router.put(
   "/leave/approve/:id",
-  authMiddleware,
-  authorize("HR", "ADMIN"),
-  approveLeave
-);
-
-router.put(
-  "/leave/reject/:id",
-  authMiddleware,
-  authorize("HR", "ADMIN"),
-  rejectLeave
-);
-
-router.get(
-  "/analytics",
-  authMiddleware,
-  authorize("HR", "ADMIN"),
-  hrAnalytics
-);
-
-// ==============================
-// 💰 INVOICE
-// ==============================
-
-router.post(
-  "/invoice",
-
-  protect,
-
-  createInvoice
-);
-
-router.get(
-  "/invoice",
-
-  protect,
-
-  getInvoices
-);
-
-router.post(
-  "/invoice/paid",
-
-  protect,
-
-  markInvoicePaid
-);
-
-
-// ==============================
-// 💸 EXPENSE
-// ==============================
-
-router.post(
-  "/expense",
-
-  protect,
-
-  addExpense
-);
-
-router.get(
-  "/expense",
-
-  protect,
-
-  getExpenses
-);
-
-router.post(
-  "/payroll/generate",
 
   protect,
 
@@ -389,16 +441,25 @@ router.post(
     "HR"
   ),
 
-  generatePayroll
+  approveLeave
 );
 
-router.post(
-  "/attendance/biometric",
+// REJECT LEAVE
+
+router.put(
+  "/leave/reject/:id",
 
   protect,
 
-  biometricSync
+  authorizeRoles(
+    "ADMIN",
+    "HR"
+  ),
+
+  rejectLeave
 );
+
+// LEAVE PREDICTION
 
 router.get(
   "/leave/prediction/:id",
@@ -413,9 +474,146 @@ router.get(
   leavePrediction
 );
 
+// ======================================================
+// HR ANALYTICS
+// ======================================================
+
+router.get(
+  "/analytics",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "HR"
+  ),
+
+  hrAnalytics
+);
+
+// ======================================================
+// PAYROLL
+// ======================================================
+
+router.post(
+  "/payroll/generate",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "HR"
+  ),
+
+  generatePayroll
+);
+
+// ======================================================
+// BIOMETRIC
+// ======================================================
+
+router.post(
+  "/attendance/biometric",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "HR"
+  ),
+
+  biometricSync
+);
+
+// ======================================================
+// TIMELINE
+// ======================================================
+
 router.get(
   "/timeline",
+
+  protect,
+
   getTimeline
+);
+
+// ======================================================
+// FINANCE
+// ======================================================
+
+// CREATE INVOICE
+
+router.post(
+  "/invoice",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "FINANCE"
+  ),
+
+  createInvoice
+);
+
+// GET INVOICES
+
+router.get(
+  "/invoice",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "FINANCE"
+  ),
+
+  getInvoices
+);
+
+// MARK INVOICE PAID
+
+router.post(
+  "/invoice/paid",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "FINANCE"
+  ),
+
+  markInvoicePaid
+);
+
+// ADD EXPENSE
+
+router.post(
+  "/expense",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "FINANCE"
+  ),
+
+  addExpense
+);
+
+// GET EXPENSES
+
+router.get(
+  "/expense",
+
+  protect,
+
+  authorizeRoles(
+    "ADMIN",
+    "FINANCE"
+  ),
+
+  getExpenses
 );
 
 export default router;
