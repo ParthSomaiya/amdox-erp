@@ -6,429 +6,305 @@ import Payroll from "../models/Payroll.js";
 import Timeline from "../models/Timeline.js";
 import Attendance from "../models/Attendance.js";
 
-export const getTimeline =
-  async (req, res) => {
+/* =====================================================
+   📌 TIMELINE
+===================================================== */
+export const getTimeline = async (req, res) => {
+  try {
+    const data = await Timeline.find()
+      .populate("employee", "name")
+      .sort({ createdAt: -1 });
 
-    try {
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-      const data =
-        await Timeline.find()
-          .populate(
-            "employee",
-            "name"
-          )
-          .sort({
-            createdAt: -1,
-          });
+/* =====================================================
+   📌 EMPLOYEES
+===================================================== */
 
-      res.json(data);
-
-    } catch (err) {
-
-      res.status(500).json({
-        message: err.message,
-      });
-
-    }
-
-  };
-
-
+// ➕ Add Employee
 export const addEmployee = async (req, res) => {
-  const { userId, position, salary } = req.body;
+  try {
+    const { userId, position, salary } = req.body;
 
-  const employee = await Employee.create({
-    userId,
-    position,
-    salary,
-    companyId: req.user.companyId,
-    joiningDate: new Date(),
-  });
+    const employee = await Employee.create({
+      userId,
+      position,
+      salary,
+      companyId: req.user.companyId,
+      joiningDate: new Date(),
+    });
 
-  res.json(employee);
+    res.json(employee);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// Get Employees
+// 📋 Get Employees
 export const getEmployees = async (req, res) => {
-  const employees = await Employee.find({
-    companyId: req.user.companyId,
-  }).populate("userId", "name email");
+  try {
+    const employees = await Employee.find({
+      companyId: req.user.companyId,
+    }).populate("userId", "name email");
 
-  res.json(employees);
+    res.json(employees);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// Apply Leave (Employee)
+/* =====================================================
+   📌 LEAVES (EMPLOYEE)
+===================================================== */
+
+// ➕ Apply Leave
 export const applyLeave = async (req, res) => {
-  const { fromDate, toDate, reason } = req.body;
+  try {
+    const { fromDate, toDate, reason } = req.body;
 
-  const leave = await Leave.create({
-    employeeId: req.user.id,
-    companyId: req.user.companyId,
-    fromDate,
-    toDate,
-    reason,
-  });
+    const leave = await Leave.create({
+      employeeId: req.user.id,
+      companyId: req.user.companyId,
+      fromDate,
+      toDate,
+      reason,
+      status: "PENDING",
+    });
 
-  res.json(leave);
+    res.json(leave);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// Approve / Reject Leave (HR)
-export const updateLeaveStatus = async (req, res) => {
-  const { leaveId, status } = req.body;
-
-  const leave = await Leave.findByIdAndUpdate(
-    leaveId,
-    { status },
-    { new: true }
-  );
-
-  res.json(leave);
-};
-
-// Get Leaves
+// 📋 Get Leaves
 export const getLeaves = async (req, res) => {
-  const leaves = await Leave.find({
-    companyId: req.user.companyId,
-  });
+  try {
+    const leaves = await Leave.find({
+      companyId: req.user.companyId,
+    });
 
-  res.json(leaves);
+    res.json(leaves);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-export const approveLeave =
-  async (req, res) => {
+/* =====================================================
+   📌 LEAVE APPROVAL (HR)
+===================================================== */
 
-    try {
+// ✅ Approve Leave
+export const approveLeave = async (req, res) => {
+  try {
+    const leave = await Leave.findById(req.params.id);
 
-      const leave =
-        await Leave.findById(
-          req.params.id
-        );
-
-      if (!leave) {
-
-        return res.status(404).json({
-          message: "Leave not found",
-        });
-
-      }
-
-      leave.status = "APPROVED";
-
-      leave.history.push({
-        status: "APPROVED",
-        changedBy: req.user.id,
-        changedAt: new Date(),
-      });
-
-      await leave.save();
-
-      // deduct leave balance
-      const balance =
-        await LeaveBalance.findOne({
-          employeeId:
-            leave.employeeId,
-        });
-
-      if (balance) {
-
-        balance.usedLeaves +=
-          leave.days;
-
-        balance.remainingLeaves -=
-          leave.days;
-
-        await balance.save();
-
-      }
-
-      res.json({
-        message:
-          "Leave approved",
-      });
-
-    } catch (err) {
-
-      res.status(500).json({
-        message: err.message,
-      });
-
+    if (!leave) {
+      return res.status(404).json({ message: "Leave not found" });
     }
 
-  };
+    leave.status = "APPROVED";
 
-export const rejectLeave =
-  async (req, res) => {
+    leave.history.push({
+      status: "APPROVED",
+      changedBy: req.user.id,
+      changedAt: new Date(),
+    });
 
-    try {
+    await leave.save();
 
-      const leave =
-        await Leave.findById(
-          req.params.id
-        );
+    // Deduct leave balance
+    const balance = await LeaveBalance.findOne({
+      employeeId: leave.employeeId,
+    });
 
-      leave.status = "REJECTED";
-
-      leave.history.push({
-        status: "REJECTED",
-        changedBy: req.user.id,
-        changedAt: new Date(),
-      });
-
-      await leave.save();
-
-      res.json({
-        message:
-          "Leave rejected",
-      });
-
-    } catch (err) {
-
-      res.status(500).json({
-        message: err.message,
-      });
-
+    if (balance) {
+      balance.usedLeaves += leave.days;
+      balance.remainingLeaves -= leave.days;
+      await balance.save();
     }
 
-  };
+    res.json({ message: "Leave approved successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-export const hrAnalytics =
-  async (req, res) => {
+// ❌ Reject Leave
+export const rejectLeave = async (req, res) => {
+  try {
+    const leave = await Leave.findById(req.params.id);
 
-    try {
-
-      const totalEmployees =
-        await User.countDocuments({
-          companyId:
-            req.user.companyId,
-        });
-
-      const totalLeaves =
-        await Leave.countDocuments({
-          companyId:
-            req.user.companyId,
-        });
-
-      res.json({
-
-        totalEmployees,
-
-        totalLeaves,
-
-      });
-
-    } catch (err) {
-
-      res.status(500).json({
-        message: err.message,
-      });
-
+    if (!leave) {
+      return res.status(404).json({ message: "Leave not found" });
     }
 
-  };
+    leave.status = "REJECTED";
 
+    leave.history.push({
+      status: "REJECTED",
+      changedBy: req.user.id,
+      changedAt: new Date(),
+    });
 
-export const searchEmployees =
-  async (req, res) => {
+    await leave.save();
 
-    try {
+    res.json({ message: "Leave rejected successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-      const { search } = req.query;
+/* =====================================================
+   📌 HR ANALYTICS
+===================================================== */
+export const hrAnalytics = async (req, res) => {
+  try {
+    const totalEmployees = await User.countDocuments({
+      companyId: req.user.companyId,
+    });
 
-      const employees =
-        await User.find({
+    const totalLeaves = await Leave.countDocuments({
+      companyId: req.user.companyId,
+    });
 
-          companyId:
-            req.user.companyId,
+    res.json({
+      totalEmployees,
+      totalLeaves,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-          name: {
-            $regex: search,
-            $options: "i",
-          },
+/* =====================================================
+   📌 SEARCH EMPLOYEES
+===================================================== */
+export const searchEmployees = async (req, res) => {
+  try {
+    const { search = "" } = req.query;
 
-        });
+    const employees = await User.find({
+      companyId: req.user.companyId,
+      name: { $regex: search, $options: "i" },
+    });
 
-      res.json(employees);
+    res.json(employees);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-    } catch (err) {
+/* =====================================================
+   📌 AUTO PAYROLL GENERATION
+===================================================== */
+export const generatePayroll = async (req, res) => {
+  try {
+    const employees = await Employee.find({
+      companyId: req.user.companyId,
+    });
 
-      res.status(500).json({
-        message: err.message,
+    const payrolls = [];
+
+    for (const emp of employees) {
+      const basicSalary = emp.salary || 30000;
+      const bonus = 2000;
+      const deductions = 1000;
+
+      const netSalary = basicSalary + bonus - deductions;
+
+      const payroll = await Payroll.create({
+        employeeId: emp.userId,
+        companyId: req.user.companyId,
+        basicSalary,
+        bonus,
+        deductions,
+        netSalary,
+        month: req.body.month,
       });
 
+      payrolls.push(payroll);
     }
 
-  };
+    res.json({
+      message: "Payroll generated successfully",
+      payrolls,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
+/* =====================================================
+   📌 BIOMETRIC SYNC
+===================================================== */
+export const biometricSync = async (req, res) => {
+  try {
+    const { employeeId, checkIn, checkOut } = req.body;
 
-// ==============================
-// AUTO GENERATE PAYROLL
-// ==============================
+    const totalHours =
+      (new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60);
 
-export const generatePayroll =
-  async (req, res) => {
+    const attendance = await Attendance.create({
+      employeeId,
+      companyId: req.user.companyId,
+      checkIn,
+      checkOut,
+      totalHours,
+    });
 
-    try {
+    res.json(attendance);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-      const employees =
-        await Employee.find({
-          companyId:
-            req.user.companyId,
-        });
+/* =====================================================
+   📌 AI LEAVE PREDICTION
+===================================================== */
+export const leavePrediction = async (req, res) => {
+  try {
+    const leaves = await Leave.find({
+      employeeId: req.params.id,
+    });
 
-      const payrolls = [];
+    const totalLeaves = leaves.length;
 
-      for (const emp of employees) {
+    let prediction = "LOW";
 
-        const basicSalary =
-          emp.salary || 30000;
+    if (totalLeaves > 10) prediction = "HIGH";
+    else if (totalLeaves > 5) prediction = "MEDIUM";
 
-        const bonus = 2000;
+    res.json({
+      employeeId: req.params.id,
+      totalLeaves,
+      prediction,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-        const deductions = 1000;
+export const updateLeaveStatus = async (req, res) => {
+  try {
+    const { leaveId, status } = req.body;
 
-        const netSalary =
-          basicSalary +
-          bonus -
-          deductions;
+    const leave = await Leave.findByIdAndUpdate(
+      leaveId,
+      { status },
+      { new: true }
+    );
 
-        const payroll =
-          await Payroll.create({
-
-            employeeId:
-              emp.userId,
-
-            companyId:
-              req.user.companyId,
-
-            basicSalary,
-
-            bonus,
-
-            deductions,
-
-            netSalary,
-
-            month:
-              req.body.month,
-          });
-
-        payrolls.push(payroll);
-
-      }
-
-      res.json({
-        message:
-          "Payroll Generated",
-        payrolls,
-      });
-
-    } catch (err) {
-
-      res.status(500).json({
-        message:
-          err.message,
-      });
-
+    if (!leave) {
+      return res.status(404).json({ message: "Leave not found" });
     }
 
-  };
-
-// ==============================
-// BIOMETRIC SYNC
-// ==============================
-
-export const biometricSync =
-  async (req, res) => {
-
-    try {
-
-      const {
-        employeeId,
-        checkIn,
-        checkOut,
-      } = req.body;
-
-      const totalHours =
-        (
-          new Date(checkOut) -
-          new Date(checkIn)
-        ) /
-        (1000 * 60 * 60);
-
-      const attendance =
-        await Attendance.create({
-
-          employeeId,
-
-          companyId:
-            req.user.companyId,
-
-          checkIn,
-
-          checkOut,
-
-          totalHours,
-        });
-
-      res.json(attendance);
-
-    } catch (err) {
-
-      res.status(500).json({
-        message:
-          err.message,
-      });
-
-    }
-
-  };
-
-// ==============================
-// AI LEAVE PREDICTION
-// ==============================
-
-export const leavePrediction =
-  async (req, res) => {
-
-    try {
-
-      const leaves =
-        await Leave.find({
-          employeeId:
-            req.params.id,
-        });
-
-      const totalLeaves =
-        leaves.length;
-
-      let prediction =
-        "LOW";
-
-      if (totalLeaves > 10) {
-        prediction = "HIGH";
-      } else if (
-        totalLeaves > 5
-      ) {
-        prediction =
-          "MEDIUM";
-      }
-
-      res.json({
-        employeeId:
-          req.params.id,
-
-        totalLeaves,
-
-        prediction,
-      });
-
-    } catch (err) {
-
-      res.status(500).json({
-        message:
-          err.message,
-      });
-
-    }
-
-  };
+    res.json(leave);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

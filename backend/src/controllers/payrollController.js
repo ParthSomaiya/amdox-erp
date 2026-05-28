@@ -4,13 +4,14 @@ import User from "../models/User.js";
 import { sendNotification } from "../utils/notify.js";
 import { emailQueue } from "../queues/emailQueue.js";
 
+// ================= UTILITY =================
+const toNumber = (val) => {
+  return Number(val || 0);
+};
 
-// ➕ Generate Payroll
-export const generatePayroll =
-async (req, res) => {
-
+// ➕ GENERATE PAYROLL
+export const generatePayroll = async (req, res) => {
   try {
-
     const {
       employeeId,
       basicSalary,
@@ -19,215 +20,221 @@ async (req, res) => {
       month,
     } = req.body;
 
-    const netSalary =
-      basicSalary +
-      bonus -
-      deductions;
-
-    // CREATE PAYROLL
-    const payroll =
-      await Payroll.create({
-
-        employeeId,
-
-        companyId:
-          req.user.companyId,
-
-        month,
-
-        basicSalary,
-
-        bonus,
-
-        deductions,
-
-        netSalary,
-
+    // ================= VALIDATION =================
+    if (!employeeId || !month) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee ID and Month are required",
       });
-
-    // 🔥 GET USER (IMPORTANT FIX)
-    const user =
-      await User.findById(
-        employeeId
-      );
-
-    // 🔥 EMAIL QUEUE (ASYNC)
-    if (user) {
-
-      await emailQueue.add(
-
-        "sendEmail",
-
-        {
-
-          to:
-            user.email,
-
-          subject:
-            "Payslip Generated",
-
-          html: `
-
-            <h2>Payslip Ready</h2>
-
-            <p>
-              Your payroll for ${month}
-              has been generated.
-            </p>
-
-            <p>
-              Net Salary: ${netSalary}
-            </p>
-
-          `,
-
-        }
-
-      );
-
     }
 
-    res.json(payroll);
+    // ================= CALCULATION =================
+    const netSalary =
+      toNumber(basicSalary) +
+      toNumber(bonus) -
+      toNumber(deductions);
 
-  } catch (err) {
-
-    res.status(500).json({
-      message:
-        err.message,
+    // ================= CREATE PAYROLL =================
+    const payroll = await Payroll.create({
+      employeeId,
+      companyId: req.user.companyId,
+      month,
+      basicSalary: toNumber(basicSalary),
+      bonus: toNumber(bonus),
+      deductions: toNumber(deductions),
+      netSalary,
     });
 
-  }
+    // ================= GET USER =================
+    const user = await User.findById(employeeId);
 
+    // ================= EMAIL QUEUE =================
+    if (user?.email) {
+      await emailQueue.add("sendEmail", {
+        to: user.email,
+        subject: "Payslip Generated",
+        html: `
+          <div style="font-family:Arial">
+            <h2>Payslip Generated</h2>
+            <p>Hello ${user.name || "Employee"},</p>
+            <p>Your payroll for <b>${month}</b> has been generated successfully.</p>
+            <hr/>
+            <p><b>Net Salary:</b> ₹${netSalary}</p>
+            <p>Thank you.</p>
+          </div>
+        `,
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Payroll generated successfully",
+      data: payroll,
+    });
+
+  } catch (err) {
+    console.error("Generate Payroll Error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to generate payroll",
+    });
+  }
 };
 
-
-// 💰 Mark Paid
-export const markPaid =
-async (req, res) => {
-
+// 💰 MARK AS PAID
+export const markPaid = async (req, res) => {
   try {
+    const { payrollId } = req.body;
 
-    const {
-      payrollId,
-    } = req.body;
+    if (!payrollId) {
+      return res.status(400).json({
+        success: false,
+        message: "Payroll ID required",
+      });
+    }
 
-    const payroll =
-      await Payroll.findOneAndUpdate(
-
-        {
-          _id: payrollId,
-
-          companyId:
-            req.user.companyId,
-        },
-
-        {
-          status: "PAID",
-        },
-
-        {
-          new: true,
-        }
-
-      );
+    const payroll = await Payroll.findOneAndUpdate(
+      {
+        _id: payrollId,
+        companyId: req.user.companyId,
+      },
+      {
+        status: "PAID",
+      },
+      {
+        new: true,
+      }
+    );
 
     if (!payroll) {
-
       return res.status(404).json({
-        message:
-          "Payroll not found",
+        success: false,
+        message: "Payroll not found",
       });
-
     }
 
+    // ================= NOTIFICATION =================
     await sendNotification(
-
       payroll.employeeId,
-
-      "Salary credited",
-
+      "Salary credited successfully",
       "PAYROLL",
-
       req.user.companyId
-
     );
 
-    res.json(payroll);
+    return res.json({
+      success: true,
+      message: "Payroll marked as paid",
+      data: payroll,
+    });
 
   } catch (err) {
+    console.error("Mark Paid Error:", err);
 
-    res.status(500).json({
-      message:
-        "Error marking paid",
+    return res.status(500).json({
+      success: false,
+      message: "Error marking payroll as paid",
     });
-
   }
-
 };
 
+// 📋 GET ALL PAYROLL
+export const getAllPayroll = async (req, res) => {
+  try {
+    const data = await Payroll.find({
+      companyId: req.user.companyId,
+    }).populate("employeeId", "name email");
 
-// 📋 All Payroll
-export const getAllPayroll =
-async (req, res) => {
+    return res.json({
+      success: true,
+      count: data.length,
+      data,
+    });
 
-  const data =
-    await Payroll.find({
+  } catch (err) {
+    console.error("Get Payroll Error:", err);
 
-      companyId:
-        req.user.companyId,
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch payroll data",
+    });
+  }
+};
 
-    }).populate(
-      "employeeId",
-      "email"
+// 👤 MY PAYROLL
+export const getMyPayroll = async (req, res) => {
+  try {
+    const data = await Payroll.find({
+      employeeId: req.user.id,
+      companyId: req.user.companyId,
+    }).sort({ createdAt: -1 });
+
+    return res.json({
+      success: true,
+      count: data.length,
+      data,
+    });
+
+  } catch (err) {
+    console.error("My Payroll Error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch payroll",
+    });
+  }
+};
+
+// 📄 DOWNLOAD PAYSLIP (PDF)
+export const downloadPayslip = async (req, res) => {
+  try {
+    const payroll = await Payroll.findById(req.params.id)
+      .populate("employeeId");
+
+    if (!payroll) {
+      return res.status(404).json({
+        success: false,
+        message: "Payroll not found",
+      });
+    }
+
+    const doc = new PDFDocument({ margin: 50 });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=payslip-${payroll._id}.pdf`
     );
 
-  res.json(data);
+    doc.pipe(res);
 
-};
+    // ================= PDF CONTENT =================
+    doc.fontSize(22).text("PAYSLIP", { align: "center" });
+    doc.moveDown();
 
+    doc.fontSize(14);
+    doc.text(`Employee: ${payroll.employeeId?.name || "N/A"}`);
+    doc.text(`Email: ${payroll.employeeId?.email || "N/A"}`);
+    doc.text(`Month: ${payroll.month}`);
+    doc.moveDown();
 
-// 👤 My Payroll
-export const getMyPayroll =
-async (req, res) => {
+    doc.text(`Basic Salary: ₹${payroll.basicSalary}`);
+    doc.text(`Bonus: ₹${payroll.bonus}`);
+    doc.text(`Deductions: ₹${payroll.deductions}`);
+    doc.moveDown();
 
-  const data =
-    await Payroll.find({
-
-      employeeId:
-        req.user.id,
-
-      companyId:
-        req.user.companyId,
-
+    doc.fontSize(16).text(`Net Salary: ₹${payroll.netSalary}`, {
+      underline: true,
     });
 
-  res.json(data);
+    doc.end();
 
-};
+  } catch (err) {
+    console.error("Download Payslip Error:", err);
 
-export const downloadPayslip = async (req, res) => {
-  const payroll = await Payroll.findById(req.params.id)
-    .populate("employeeId");
-
-  const doc = new PDFDocument();
-
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader(
-    "Content-Disposition",
-    "attachment; filename=payslip.pdf"
-  );
-
-  doc.pipe(res);
-
-  doc.fontSize(20).text("PAYSLIP", { align: "center" });
-  doc.moveDown();
-
-  doc.text(`Employee: ${payroll.employeeId.name}`);
-  doc.text(`Month: ${payroll.month}`);
-  doc.text(`Basic: ${payroll.basicSalary}`);
-  doc.text(`Bonus: ${payroll.bonus}`);
-  doc.text(`Deductions: ${payroll.deductions}`);
-  doc.text(`Net Salary: ${payroll.netSalary}`);
-
-  doc.end();
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate payslip",
+    });
+  }
 };

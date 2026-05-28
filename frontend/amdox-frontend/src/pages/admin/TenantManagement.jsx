@@ -21,14 +21,16 @@ export default function TenantManagement() {
 
       const res = await API.get("/admin/tenant-analytics");
 
+      const data = res.data || {};
+
       setAnalytics({
-        totalTenants: res.data?.totalTenants || 0,
-        totalUsers: res.data?.totalUsers || 0,
-        activeUsers: res.data?.activeUsers || 0,
+        totalTenants: data.totalTenants ?? 0,
+        totalUsers: data.totalUsers ?? 0,
+        activeUsers: data.activeUsers ?? 0,
       });
     } catch (err) {
       console.error("Tenant analytics error:", err);
-      setError("Failed to load tenant analytics");
+      setError("Failed to load tenant analytics. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -42,8 +44,10 @@ export default function TenantManagement() {
   if (loading) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center min-h-[300px] text-lg font-semibold">
-          Loading Tenant Analytics...
+        <div className="flex items-center justify-center min-h-[300px]">
+          <div className="text-lg font-semibold text-gray-600 animate-pulse">
+            Loading Tenant Analytics...
+          </div>
         </div>
       </MainLayout>
     );
@@ -53,8 +57,8 @@ export default function TenantManagement() {
   if (error) {
     return (
       <MainLayout>
-        <div className="bg-red-100 text-red-700 p-4 rounded-lg">
-          {error}
+        <div className="bg-red-50 border border-red-200 text-red-700 p-5 rounded-2xl">
+          <p className="font-semibold">{error}</p>
         </div>
       </MainLayout>
     );
@@ -63,23 +67,23 @@ export default function TenantManagement() {
   // ================= UI =================
   return (
     <MainLayout>
-      <div className="space-y-8">
+      <div className="space-y-10">
 
-        {/* HERO */}
-        <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 rounded-3xl p-8 text-white shadow-xl">
-          <h1 className="text-4xl font-black">
+        {/* HERO SECTION */}
+        <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 rounded-3xl p-10 text-white shadow-xl">
+          <h1 className="text-4xl md:text-5xl font-black">
             Tenant Management
           </h1>
-          <p className="mt-2 text-cyan-100">
-            Monitor system tenants and user activity
+          <p className="mt-3 text-cyan-100 text-lg">
+            Monitor tenants, users, and system activity in real time
           </p>
         </div>
 
         {/* STATS GRID */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-          {/* TENANTS */}
-          <div className="bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition">
+          {/* TOTAL TENANTS */}
+          <div className="bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
             <h2 className="text-gray-500 font-medium">
               Total Tenants
             </h2>
@@ -88,8 +92,8 @@ export default function TenantManagement() {
             </p>
           </div>
 
-          {/* USERS */}
-          <div className="bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition">
+          {/* TOTAL USERS */}
+          <div className="bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
             <h2 className="text-gray-500 font-medium">
               Total Users
             </h2>
@@ -99,7 +103,7 @@ export default function TenantManagement() {
           </div>
 
           {/* ACTIVE USERS */}
-          <div className="bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition">
+          <div className="bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
             <h2 className="text-gray-500 font-medium">
               Active Users
             </h2>
@@ -110,9 +114,9 @@ export default function TenantManagement() {
 
         </div>
 
-        {/* FOOTER NOTE */}
-        <div className="text-sm text-gray-500 text-center">
-          Real-time tenant analytics dashboard
+        {/* FOOTER */}
+        <div className="text-center text-sm text-gray-500">
+          Real-time SaaS tenant analytics dashboard
         </div>
 
       </div>

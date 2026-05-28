@@ -7,14 +7,16 @@ import {
   biometricSync,
 } from "../controllers/attendanceController.js";
 
-// ✅ CORRECT IMPORTS
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { allowRoles } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
+/* =========================================================
+   🧑 EMPLOYEE ROUTES
+========================================================= */
 
-// 🧑 Employee
+// 🔹 Check-in
 router.post(
   "/check-in",
   authMiddleware,
@@ -22,6 +24,7 @@ router.post(
   checkIn
 );
 
+// 🔹 Check-out
 router.post(
   "/check-out",
   authMiddleware,
@@ -29,6 +32,7 @@ router.post(
   checkOut
 );
 
+// 🔹 Get own attendance
 router.get(
   "/my",
   authMiddleware,
@@ -36,8 +40,11 @@ router.get(
   getMyAttendance
 );
 
+/* =========================================================
+   👨‍💼 HR / ADMIN ROUTES
+========================================================= */
 
-// 👨‍💼 HR/Admin
+// 🔹 Get all attendance records
 router.get(
   "/",
   authMiddleware,
@@ -45,8 +52,15 @@ router.get(
   getAllAttendance
 );
 
+/* =========================================================
+   🧬 BIOMETRIC SYNC (SECURED FIXED)
+   ✔ FIX: now protected with auth + role
+========================================================= */
+
 router.post(
   "/biometric-sync",
+  authMiddleware,
+  allowRoles("ADMIN", "HR"),
   biometricSync
 );
 

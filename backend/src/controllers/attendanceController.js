@@ -1,108 +1,170 @@
 import Attendance from "../models/Attendance.js";
+import { syncBiometricAttendance } from "../services/biometricService.js";
 
-import {
-  syncBiometricAttendance,
-} from "../services/biometricService.js";
+// ================= UTILITY =================
+const getTodayDate = () => {
+  const today = new Date();
+  return today.toISOString().split("T")[0];
+};
 
-// 🟢 Check In
+// ================= 🟢 CHECK IN =================
 export const checkIn = async (req, res) => {
   try {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayDate();
 
-    const exists = await Attendance.findOne({
+    // check existing attendance
+    const existingAttendance = await Attendance.findOne({
       employeeId: req.user.id,
       date: today,
     });
 
-    if (exists) {
-      return res.status(400).json({ message: "Already checked in" });
+    if (existingAttendance) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already checked in today",
+      });
     }
 
-    const record = await Attendance.create({
+    const newAttendance = await Attendance.create({
       employeeId: req.user.id,
       companyId: req.user.companyId,
       date: today,
       checkIn: new Date(),
     });
 
-    res.json(record);
+    return res.status(201).json({
+      success: true,
+      message: "Check-in successful",
+      data: newAttendance,
+    });
   } catch (err) {
-    res.status(500).json({ message: "Check-in failed" });
+    console.error("Check-in error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Check-in failed",
+    });
   }
 };
 
-// 🔴 Check Out
+// ================= 🔴 CHECK OUT =================
 export const checkOut = async (req, res) => {
   try {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayDate();
 
-    const record = await Attendance.findOne({
+    const attendance = await Attendance.findOne({
       employeeId: req.user.id,
       date: today,
     });
 
-    if (!record || record.checkOut) {
-      return res.status(400).json({ message: "Invalid checkout" });
+    if (!attendance) {
+      return res.status(400).json({
+        success: false,
+        message: "No check-in record found",
+      });
+    }
+
+    if (attendance.checkOut) {
+      return res.status(400).json({
+        success: false,
+        message: "Already checked out",
+      });
     }
 
     const checkOutTime = new Date();
-    const hours =
-      (checkOutTime - new Date(record.checkIn)) / (1000 * 60 * 60);
 
-    record.checkOut = checkOutTime;
-    record.totalHours = hours.toFixed(2);
+    const checkInTime = new Date(attendance.checkIn);
 
-    await record.save();
+    const hoursWorked =
+      (checkOutTime.getTime() - checkInTime.getTime()) /
+      (1000 * 60 * 60);
 
-    res.json(record);
+    attendance.checkOut = checkOutTime;
+    attendance.totalHours = Number(hoursWorked.toFixed(2));
+
+    await attendance.save();
+
+    return res.json({
+      success: true,
+      message: "Check-out successful",
+      data: attendance,
+    });
   } catch (err) {
-    res.status(500).json({ message: "Check-out failed" });
+    console.error("Check-out error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Check-out failed",
+    });
   }
 };
 
-// 👨‍💼 HR view all
+// ================= 👨‍💼 GET ALL ATTENDANCE (HR) =================
 export const getAllAttendance = async (req, res) => {
-  const data = await Attendance.find({
-    companyId: req.user.companyId,
-  }).populate("employeeId", "email");
+  try {
+    const data = await Attendance.find({
+      companyId: req.user.companyId,
+    })
+      .populate("employeeId", "name email")
+      .sort({ createdAt: -1 });
 
-  res.json(data);
+    return res.json({
+      success: true,
+      count: data.length,
+      data,
+    });
+  } catch (err) {
+    console.error("Get all attendance error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch attendance",
+    });
+  }
 };
 
-// 👤 Employee view own
+// ================= 👤 GET MY ATTENDANCE =================
 export const getMyAttendance = async (req, res) => {
-  const data = await Attendance.find({
-    employeeId: req.user.id,
-  });
+  try {
+    const data = await Attendance.find({
+      employeeId: req.user.id,
+    }).sort({ createdAt: -1 });
 
-  res.json(data);
+    return res.json({
+      success: true,
+      count: data.length,
+      data,
+    });
+  } catch (err) {
+    console.error("Get my attendance error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch your attendance",
+    });
+  }
 };
 
-export const biometricSync =
-  async (req, res) => {
+// ================= 🧬 BIOMETRIC SYNC =================
+export const biometricSync = async (req, res) => {
+  try {
+    const employees = req.body?.employees;
 
-    try {
-
-      const employees =
-        req.body.employees;
-
-      const result =
-        await syncBiometricAttendance(
-          employees
-        );
-
-      res.json({
-        success: result.success,
-        message:
-          "Biometric synced",
+    if (!employees || !Array.isArray(employees)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid employee data",
       });
-
-    } catch (err) {
-
-      res.status(500).json({
-        message: err.message,
-      });
-
     }
 
-  };
+    const result = await syncBiometricAttendance(employees);
+
+    return res.json({
+      success: true,
+      message: "Biometric synced successfully",
+      data: result,
+    });
+  } catch (err) {
+    console.error("Biometric sync error:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Biometric sync failed",
+    });
+  }
+};

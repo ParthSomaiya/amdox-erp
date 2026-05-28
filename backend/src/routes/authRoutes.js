@@ -1,163 +1,103 @@
 import express from "express";
-import bcrypt from "bcryptjs";
+import passport from "../config/passport.js";
 import jwt from "jsonwebtoken";
 
-import passport from "../config/passport.js";
-
-import Otp from "../models/Otp.js";
-import User from "../models/User.js";
-
 import {
-
   sendOTP,
   verifyOTP,
-
   registerAdmin,
   registerUser,
-
   loginUser,
-
   refreshToken,
-
   forgotPassword,
   resetPassword,
-
   registerEmployeeWithInvite,
-
   registerJobUser,
   verifyEmail,
-
 } from "../controllers/authController.js";
 
 const router = express.Router();
 
-// ================= OTP SEND =================
+/* ======================================================
+   🔐 AUTH BASIC
+====================================================== */
 
-router.post(
-  "/send-otp",
-  sendOTP
-);
+// OTP
+router.post("/send-otp", sendOTP);
+router.post("/verify-otp", verifyOTP);
 
-// ================= OTP VERIFY =================
+// EMAIL VERIFY
+router.get("/verify-email/:token", verifyEmail);
 
-router.post(
-  "/verify-otp",
-  verifyOTP
-);
 
+/* ======================================================
+   🧑 REGISTER ROUTES
+====================================================== */
+
+// ADMIN REGISTER
+router.post("/register-admin", registerAdmin);
+
+// NORMAL USER REGISTER
+router.post("/register-user", registerUser);
+
+// JOB SEEKER REGISTER
+router.post("/register-job", registerJobUser);
+
+// INVITE REGISTER (EMPLOYEE)
+router.post("/register-invite/:token", registerEmployeeWithInvite);
+
+
+/* ======================================================
+   🔑 LOGIN / AUTH
+====================================================== */
+
+router.post("/login", loginUser);
+router.post("/refresh", refreshToken);
+
+
+/* ======================================================
+   🔁 PASSWORD RESET
+====================================================== */
+
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:token", resetPassword);
+
+
+/* ======================================================
+   🌐 GOOGLE OAUTH
+====================================================== */
+
+// Google Login
 router.get(
-  "/verify-email/:token",
-  verifyEmail
-);
-
-// ================= REGISTER ADMIN =================
-
-router.post(
-  "/register-admin",
-  registerAdmin
-);
-
-// ================= REGISTER USER =================
-
-router.post(
-  "/register-user",
-  registerUser
-);
-
-// ================= LOGIN =================
-
-router.post(
-  "/login",
-  loginUser
-);
-
-// ================= REGISTER INVITE =================
-
-router.post(
-  "/register-invite/:token",
-  registerEmployeeWithInvite
-);
-
-// ================= FORGOT PASSWORD =================
-
-router.post(
-  "/forgot-password",
-  forgotPassword
-);
-
-// ================= RESET PASSWORD =================
-
-router.post(
-  "/reset-password/:token",
-  resetPassword
-);
-
-// ================= REFRESH TOKEN =================
-
-router.post(
-  "/refresh",
-  refreshToken
-);
-
-// ================= GOOGLE LOGIN =================
-
-router.get(
-
   "/google",
-
-  passport.authenticate(
-
-    "google",
-
-    {
-      scope: ["profile", "email"],
-    }
-
-  )
-
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
 );
 
-// ================= GOOGLE CALLBACK =================
-
+// Google Callback
 router.get(
-
   "/google/callback",
-
-  passport.authenticate(
-
-    "google",
-
-    {
-      session: false,
-    }
-
-  ),
-
+  passport.authenticate("google", { session: false }),
   (req, res) => {
+    try {
+      const token = jwt.sign(
+        {
+          id: req.user._id,
+          role: req.user.role,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
+      );
 
-    const token = jwt.sign(
-
-      {
-        id: req.user._id,
-      },
-
-      process.env.JWT_SECRET
-
-    );
-
-    res.redirect(
-
-      `http://localhost:5173/login-success?token=${token}`
-
-    );
-
+      res.redirect(
+        `http://localhost:5173/login-success?token=${token}`
+      );
+    } catch (err) {
+      console.error("Google auth error:", err);
+      res.redirect(`http://localhost:5173/login?error=auth_failed`);
+    }
   }
-
-);
-
-router.post(
-  "/register-job",
-  registerJobUser
 );
 
 export default router;
