@@ -2,12 +2,12 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
+import Invite from "../models/Invite.js"
 import User from "../models/User.js";
 import Company from "../models/Company.js";
 import OTP from "../models/Otp.js";
-import Invite from "../models/Invite.js";
 
-// ================= JWT =================
+// ================= TOKEN =================
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -29,45 +29,39 @@ const generateRefreshToken = (user) => {
 
 export const sendOTP = async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = req.body.email?.toLowerCase();
 
     if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email required",
-      });
+      return res.status(400).json({ message: "Email required" });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000);
 
     await OTP.create({
-      email: email.toLowerCase(),
+      email,
       otp,
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
 
     console.log("OTP:", otp);
 
-    return res.json({
+    res.json({
       success: true,
-      message: "OTP sent",
+      message: "OTP generated",
     });
   } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ message: err.message });
   }
 };
 
+// ================= VERIFY OTP =================
+
 export const verifyOTP = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const email = req.body.email?.toLowerCase();
+    const { otp } = req.body;
 
-    const record = await OTP.findOne({
-      email: email.toLowerCase(),
-      otp,
-    });
+    const record = await OTP.findOne({ email, otp });
 
     if (!record) {
       return res.status(400).json({
@@ -76,19 +70,152 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
+    await User.updateOne({ email }, { isVerified: true });
     await OTP.deleteMany({ email });
+
+    res.json({
+      success: true,
+      message: "Email verified successfully",
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ================= REGISTER =================
+
+export const registerUser = async (req, res) => {
+  try {
+    const email = req.body.email?.toLowerCase();
+
+    const existing = await User.findOne({ email });
+
+    if (existing) {
+      return res.status(400).json({ message: "User exists" });
+    }
+
+    const hashed = await bcrypt.hash(req.body.password, 10);
+
+    const user = await User.create({
+      name: req.body.name,
+      email,
+      password: hashed,
+      role: req.body.role || "EMPLOYEE",
+      isVerified: false,
+    });
+
+    // send OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    await OTP.create({
+      email,
+      otp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    });
+
+    res.json({
+      success: true,
+      message: "OTP sent for verification",
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ================= LOGIN (FINAL FIX) =================
+
+export const loginUser = async (req, res) => {
+  try {
+    console.log("BODY:", req.body);
+
+    const email = req.body.email?.toLowerCase();
+    const password = req.body.password;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password required",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.password) {
+      return res.status(500).json({
+        success: false,
+        message: "Password missing in DB",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Wrong password",
+      });
+    }
+
+    const accessToken = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     return res.json({
       success: true,
-      message: "OTP verified",
+      accessToken,
+      user,
     });
+
   } catch (err) {
+    console.log("LOGIN ERROR:", err);
     return res.status(500).json({
       success: false,
       message: err.message,
     });
   }
 };
+
+// ================= REFRESH TOKEN =================
+
+export const refreshToken = async (req, res) => {
+  try {
+    const token = req.body.refreshToken;
+
+    if (!token) {
+      return res.status(401).json({ message: "No token" });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_REFRESH_SECRET
+    );
+
+    const user = await User.findById(decoded.id);
+
+    if (!user || user.refreshToken !== token) {
+      return res.status(403).json({ message: "Invalid token" });
+    }
+
+    const newAccessToken = generateAccessToken(user);
+
+    res.json({
+      success: true,
+      accessToken: newAccessToken,
+    });
+  } catch (err) {
+    res.status(403).json({ message: "Token expired" });
+  }
+};
+
 
 // ================= REGISTER ADMIN =================
 
@@ -143,135 +270,6 @@ export const registerAdmin = async (req, res) => {
   }
 };
 
-// ================= REGISTER USER =================
-
-export const registerUser = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    const existing = await User.findOne({
-      email: email.toLowerCase(),
-    });
-
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: "User already exists",
-      });
-    }
-
-    const hashed = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email: email.toLowerCase(),
-      password: hashed,
-      role: "EMPLOYEE",
-      isVerified: true,
-    });
-
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    return res.json({
-      success: true,
-      accessToken,
-      refreshToken,
-      user,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-// ================= LOGIN =================
-
-export const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({
-      email: email.toLowerCase(),
-    });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid credentials",
-      });
-    }
-
-    const match = await bcrypt.compare(
-      password,
-      user.password
-    );
-
-    if (!match) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid credentials",
-      });
-    }
-
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    return res.json({
-      success: true,
-      accessToken,
-      refreshToken,
-      user,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-// ================= REFRESH TOKEN =================
-
-export const refreshToken = async (req, res) => {
-  try {
-    const { refreshToken } = req.body;
-
-    const decoded = jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_SECRET
-    );
-
-    const user = await User.findById(decoded.id);
-
-    if (!user || user.refreshToken !== refreshToken) {
-      return res.status(403).json({
-        success: false,
-        message: "Invalid refresh token",
-      });
-    }
-
-    const newToken = generateAccessToken(user);
-
-    return res.json({
-      success: true,
-      accessToken: newToken,
-    });
-  } catch (err) {
-    return res.status(403).json({
-      success: false,
-      message: "Token expired",
-    });
-  }
-};
 
 // ================= FORGOT PASSWORD =================
 

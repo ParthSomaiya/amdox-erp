@@ -4,11 +4,11 @@ import helmet from "helmet";
 import hpp from "hpp";
 import rateLimit from "express-rate-limit";
 import morgan from "morgan";
+import path from "path";
 
 import errorMiddleware from "./middleware/errorMiddleware.js";
 
 // ================= ROUTES =================
-
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
@@ -45,173 +45,91 @@ import apRoutes from "./routes/apRoutes.js";
 import arRoutes from "./routes/arRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
 
+// ================= APP INIT =================
 const app = express();
 
 // ================= SECURITY =================
-
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-    ],
+    origin: "http://localhost:5173",
     credentials: true,
   })
 );
 
 app.use(helmet());
-
 app.use(hpp());
 
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 300,
+    max: 500,
   })
 );
 
 // ================= BODY =================
-
-app.use(
-  express.json({
-    limit: "10mb",
-  })
-);
-
-app.use(
-  express.urlencoded({
-    extended: true,
-  })
-);
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
 // ================= LOGGER =================
-
 app.use(morgan("dev"));
 
-// ================= STATIC =================
+// ================= STATIC FILES =================
+app.use("/uploads", express.static("uploads"));
 
-app.use(
-  "/uploads",
-  express.static("uploads")
-);
+// ================= HEALTH CHECK =================
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "AMDOX ERP API Running 🚀",
+  });
+});
 
 // ================= ROUTES =================
-
 app.use("/api/auth", authRoutes);
-
 app.use("/api/admin", adminRoutes);
-
 app.use("/api/dashboard", dashboardRoutes);
-
 app.use("/api/employees", employeeRoutes);
-
 app.use("/api/hr", hrRoutes);
-
 app.use("/api/leave", leaveRoutes);
-
 app.use("/api/attendance", attendanceRoutes);
-
 app.use("/api/payroll", payrollRoutes);
-
 app.use("/api/analytics", analyticsRoutes);
-
 app.use("/api/finance", financeRoutes);
-
 app.use("/api/gl", glRoutes);
-
 app.use("/api/ap", apRoutes);
-
 app.use("/api/ar", arRoutes);
-
-app.use(
-  "/api/reconciliation",
-  reconciliationRoutes
-);
-
+app.use("/api/reconciliation", reconciliationRoutes);
 app.use("/api/reports", reportRoutes);
-
 app.use("/api/inventory", inventoryRoutes);
-
 app.use("/api/products", productRoutes);
-
 app.use("/api/vendors", vendorRoutes);
-
-app.use(
-  "/api/purchase-orders",
-  poRoutes
-);
-
+app.use("/api/purchase-orders", poRoutes);
 app.use("/api/stock", stockRoutes);
-
 app.use("/api/projects", projectRoutes);
-
 app.use("/api/tasks", taskRoutes);
-
 app.use("/api/sprints", sprintRoutes);
-
 app.use("/api/time", timeRoutes);
-
-app.use(
-  "/api/notifications",
-  notificationRoutes
-);
-
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/chat", chatRoutes);
-
 app.use("/api/lifecycle", lifecycleRoutes);
-
 app.use("/api/pdf", pdfRoutes);
-
 app.use("/api/export", exportRoutes);
-
 app.use("/api/jobs", jobRoutes);
-
-app.use(
-  "/api/applications",
-  applicationRoutes
-);
-
+app.use("/api/applications", applicationRoutes);
 app.use("/api/payment", paymentRoutes);
-
-app.use(
-  "/api/subscriptions",
-  subscriptionRoutes
-);
-
+app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/sms", smsRoutes);
-
 app.use("/api/ai", aiRoutes);
 
-// ================= ROOT =================
-
-app.get("/", (req, res) => {
-
-  res.status(200).json({
-
-    success: true,
-
-    message:
-      "AMDOX ERP API Running",
-
-  });
-
-});
-
 // ================= 404 =================
-
 app.use("*", (req, res) => {
-
   res.status(404).json({
-
     success: false,
-
     message: "Route Not Found",
-
   });
-
 });
 
-// ================= ERROR =================
-
+// ================= ERROR HANDLER =================
 app.use(errorMiddleware);
 
 export default app;

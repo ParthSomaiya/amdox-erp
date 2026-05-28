@@ -1,369 +1,135 @@
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import crypto from "crypto";
-
 import User from "../models/User.js";
-import Company from "../models/Company.js";
-import OTP from "../models/Otp.js";
-import Invite from "../models/Invite.js";
 
-import { generateOTP, saveOTP } from "../services/otpService.js";
-import { sendEmail } from "../services/emailService.js";
+// =============================
+// PROTECT ROUTE (AUTH CHECK)
+// =============================
 
-// ================= TOKEN =================
-
-const generateAccessToken = (user) => {
-  return jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-};
-
-const generateRefreshToken = (user) => {
-  return jwt.sign(
-    { id: user._id },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "30d" }
-  );
-};
-
-// ================= OTP =================
-
-export const sendOTP = async (req, res) => {
+export const protect = async (req, res, next) => {
   try {
-    const { email, phone } = req.body;
+    let token;
 
-    if (!email && !phone) {
-      return res.status(400).json({
-        success: false,
-        message: "Email or phone required",
-      });
+    // Check Authorization header
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
     }
 
-    const otp = generateOTP();
-    await saveOTP(email, phone, otp);
-
-    res.json({
-      success: true,
-      message: "OTP sent successfully",
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-export const verifyOTP = async (req, res) => {
-  try {
-    const { email, otp } = req.body;
-
-    const record = await OTP.findOne({
-      email: email.toLowerCase(),
-      otp
-    });
-
-    if (!record) {
-      return res.status(400).json({ message: "Invalid OTP" });
-    }
-
-    await User.updateOne(
-      { email: email.toLowerCase() },
-      { isVerified: true }
-    );
-
-    await OTP.deleteMany({ email: email.toLowerCase() });
-
-    return res.json({
-      success: true,
-      message: "OTP verified → now login allowed"
-    });
-
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
-
-// ================= REGISTER ADMIN =================
-
-export const registerAdmin = async (req, res) => {
-  try {
-    const { companyName, name, email, password } = req.body;
-
-    const existing = await User.findOne({ email });
-
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: "User already exists",
-      });
-    }
-
-    const company = await Company.create({ name: companyName });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: "ADMIN",
-      companyId: company._id,
-      isVerified: true,
-    });
-
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    res.json({
-      success: true,
-      accessToken,
-      refreshToken,
-      user,
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-// ================= REGISTER USER =================
-
-export const registerUser = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    const existing = await User.findOne({ email: email.toLowerCase() });
-
-    if (existing) {
-      return res.status(400).json({ message: "User exists" });
-    }
-
-    const hashed = await bcrypt.hash(password, 10);
-
-    // ❌ NOT verified directly
-    const user = await User.create({
-      name,
-      email: email.toLowerCase(),
-      password: hashed,
-      role: "EMPLOYEE",
-      isVerified: false,   // 🔥 IMPORTANT FIX
-    });
-
-    // send OTP
-    const otp = Math.floor(100000 + Math.random() * 900000);
-
-    await OTP.create({
-      email: email.toLowerCase(),
-      otp,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    });
-
-    return res.json({
-      success: true,
-      message: "OTP sent to email",
-    });
-
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-};
-
-// ================= LOGIN =================
-
-export const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid credentials",
-      });
-    }
-
-    if (!user.isVerified) {
-      return res.status(403).json({
-        success: false,
-        message: "Please verify your email first",
-      });
-    }
-
-    const match = await bcrypt.compare(password, user.password);
-
-    if (!match) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid credentials",
-      });
-    }
-
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    res.json({
-      success: true,
-      accessToken,
-      refreshToken,
-      user,
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-// ================= REFRESH TOKEN =================
-
-export const refreshToken = async (req, res) => {
-  try {
-    const { refreshToken } = req.body;
-
-    if (!refreshToken) {
+    if (!token) {
       return res.status(401).json({
         success: false,
-        message: "No refresh token",
+        message: "Not authorized, token missing",
       });
     }
 
-    const decoded = jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_SECRET
-    );
-
-    const user = await User.findById(decoded.id);
-
-    if (!user || user.refreshToken !== refreshToken) {
-      return res.status(403).json({
+    // Verify token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({
         success: false,
-        message: "Invalid refresh token",
+        message: "Token expired or invalid",
       });
     }
 
-    const newAccessToken = generateAccessToken(user);
-
-    res.json({
-      success: true,
-      accessToken: newAccessToken,
-    });
-  } catch (err) {
-    res.status(403).json({
-      success: false,
-      message: "Token expired",
-    });
-  }
-};
-
-// ================= FORGOT PASSWORD =================
-
-export const forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    const user = await User.findOne({ email });
+    // Find user
+    const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
-      return res.status(404).json({
+      return res.status(401).json({
         success: false,
         message: "User not found",
       });
     }
 
-    const token = crypto.randomBytes(32).toString("hex");
-
-    user.resetToken = token;
-    user.resetTokenExpiry = Date.now() + 3600000;
-
-    await user.save();
-
-    const resetUrl = `http://localhost:5173/reset-password/${token}`;
-
-    await sendEmail({
-      to: email,
-      subject: "Reset Password",
-      html: `<a href="${resetUrl}">Reset Password</a>`,
-    });
-
-    res.json({
-      success: true,
-      message: "Reset link sent",
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-// ================= RESET PASSWORD =================
-
-export const resetPassword = async (req, res) => {
-  try {
-    const { token } = req.params;
-    const { password } = req.body;
-
-    const user = await User.findOne({
-      resetToken: token,
-      resetTokenExpiry: { $gt: Date.now() },
-    });
-
-    if (!user) {
-      return res.status(400).json({
+    if (!user.isActive) {
+      return res.status(403).json({
         success: false,
-        message: "Invalid or expired token",
+        message: "Account disabled",
       });
     }
 
-    user.password = await bcrypt.hash(password, 10);
-    user.resetToken = undefined;
-    user.resetTokenExpiry = undefined;
+    // Attach user to request
+    req.user = user;
 
-    await user.save();
+    next();
+  } catch (error) {
+    console.error("AUTH ERROR:", error);
 
-    res.json({
-      success: true,
-      message: "Password reset successful",
+    return res.status(500).json({
+      success: false,
+      message: "Authentication failed",
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// ================= EMAIL VERIFY =================
+// =============================
+// ALIAS (BACKWARD COMPATIBILITY)
+// =============================
 
-export const verifyEmail = async (req, res) => {
+export const authMiddleware = (req, res, next) => {
   try {
-    const { token } = req.params;
+    const token = req.headers.authorization?.split(" ")[1];
 
-    const user = await User.findOne({ verificationToken: token });
-
-    if (!user) {
-      return res.status(400).json({
+    if (!token) {
+      return res.status(401).json({
         success: false,
-        message: "Invalid token",
+        message: "No token provided",
       });
     }
 
-    user.isVerified = true;
-    user.verificationToken = undefined;
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
 
-    await user.save();
-
-    res.json({
-      success: true,
-      message: "Email verified",
-    });
+    req.user = decoded;
+    next();
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    return res.status(401).json({
+      success: false,
+      message: "Invalid token",
+    });
   }
 };
 
-// ================= EXPORT ALL (IMPORTANT FIX) =================
+// =============================
+// ROLE BASED ACCESS CONTROL
+// =============================
 
-export {
-  generateAccessToken,
-  generateRefreshToken,
-};
+export const authorize =
+  (...roles) =>
+  (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      if (!roles.includes(req.user.role)) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied for this role",
+        });
+      }
+
+      next();
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: "Role authorization failed",
+      });
+    }
+  };
+
+// =============================
+// ALIAS (YOUR OLD CODE SUPPORT)
+// =============================
+
+export const allowRoles = authorize;
+export const authorizeRoles = authorize;

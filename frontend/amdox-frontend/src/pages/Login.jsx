@@ -27,39 +27,35 @@ export default function Login() {
   const submit = async (e) => {
     e.preventDefault();
 
-    if (loading) return;
-
     try {
       setLoading(true);
       setError("");
 
       const res = await API.post("/auth/login", {
-        email: form.email.trim().toLowerCase(),
+        email: form.email.toLowerCase(),
         password: form.password,
       });
 
-      const { accessToken, refreshToken, user } = res.data;
+      const { accessToken, user } = res.data;
 
-      // ================= TOKEN SAVE =================
       localStorage.setItem("token", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("user", JSON.stringify(user));
 
-      // ================= ROLE ROUTING =================
-      const role = user?.role;
-
-      if (role === "EMPLOYEE") {
-        navigate("/employee-dashboard", { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true });
+      switch (user.role) {
+        case "ADMIN":
+          navigate("/dashboard");
+          break;
+        case "EMPLOYEE":
+          navigate("/employee-dashboard");
+          break;
+        case "JOB_SEEKER":
+          navigate("/job-dashboard");
+          break;
+        default:
+          navigate("/");
       }
     } catch (err) {
-      console.log("LOGIN ERROR:", err);
-
-      setError(
-        err.response?.data?.message ||
-          "Something went wrong. Please try again."
-      );
+      setError(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
