@@ -1,75 +1,63 @@
 import nodemailer from "nodemailer";
 
 // ==============================
-// 📧 TRANSPORTER
+// 📧 CREATE TRANSPORTER (PRODUCTION READY)
 // ==============================
 
-const transporter =
-  nodemailer.createTransport({
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT) || 587,
+  secure: false, // true only for 465
 
-    host:
-      process.env.EMAIL_HOST,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 
-    port:
-      process.env.EMAIL_PORT,
-
-    secure: false,
-
-    auth: {
-
-      user:
-        process.env.EMAIL_USER,
-
-      pass:
-        process.env.EMAIL_PASS,
-
-    },
-
-  });
-
+  tls: {
+    rejectUnauthorized: false, // fixes many hosting issues
+  },
+});
 
 // ==============================
-// 📩 SEND EMAIL
+// 🧪 VERIFY CONNECTION (SAFE DEBUG)
 // ==============================
 
-export const sendEmail =
-  async ({
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ Email server connection failed:", error.message);
+  } else {
+    console.log("📧 Email server ready to send messages");
+  }
+});
 
-    to,
-    subject,
-    html,
+// ==============================
+// 📩 SEND EMAIL FUNCTION
+// ==============================
 
-  }) => {
-
-    try {
-
-      await transporter.sendMail({
-
-        from:
-          `"Amdox ERP" <${process.env.EMAIL_USER}>`,
-
-        to,
-
-        subject,
-
-        html,
-
-      });
-
-      console.log(
-        "✅ Email sent:",
-        to
-      );
-
-    } catch (err) {
-
-      console.log(
-        "❌ Email error:",
-        err.message
-      );
-
-      throw err;
-
+export const sendEmail = async ({ to, subject, html }) => {
+  try {
+    // ================= VALIDATION =================
+    if (!to || !subject || !html) {
+      throw new Error("Missing email fields (to, subject, html)");
     }
 
-  };
+    const mailOptions = {
+      from: `"Amdox ERP" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+
+    console.log(`✅ Email sent successfully → ${to}`);
+
+    return result;
+  } catch (err) {
+    console.error("❌ Email sending failed:", err.message);
+
+    // rethrow for queue handling
+    throw new Error("Email service error");
+  }
+};

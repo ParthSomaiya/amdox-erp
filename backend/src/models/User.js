@@ -2,16 +2,36 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    name: String,
+    // ================= BASIC INFO =================
+
+    name: {
+      type: String,
+      trim: true,
+      required: true,
+    },
 
     email: {
       type: String,
+      required: true,
       unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
     },
 
-    phone: String,
+    phone: {
+      type: String,
+      default: null,
+    },
 
-    password: String,
+    password: {
+      type: String,
+      required: true,
+      minlength: 6,
+      select: false, // SECURITY: never return password
+    },
+
+    // ================= ROLE SYSTEM =================
 
     role: {
       type: String,
@@ -24,41 +44,67 @@ const userSchema = new mongoose.Schema(
         "JOB_SEEKER",
       ],
       default: "EMPLOYEE",
+      index: true,
     },
 
-    // ✅ MULTIPLE PERMISSIONS
-    permissions: [
-      {
-        type: String,
-      },
-    ],
+    // ================= PERMISSIONS =================
 
-    refreshToken: String,
+    permissions: {
+      type: [String],
+      default: [],
+    },
 
-    resetToken: String,
+    // ================= AUTH TOKENS =================
 
-    resetTokenExpiry: Date,
+    refreshToken: {
+      type: String,
+      default: null,
+    },
 
-    // ✅ EMAIL VERIFICATION
+    resetToken: {
+      type: String,
+      default: null,
+    },
+
+    resetTokenExpiry: {
+      type: Date,
+      default: null,
+    },
+
+    verificationToken: {
+      type: String,
+      default: null,
+    },
+
+    // ================= EMAIL VERIFICATION =================
+
     isVerified: {
       type: Boolean,
       default: false,
+      index: true,
     },
 
-    verificationToken: String,
+    // ================= COMPANY RELATION =================
 
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
+      index: true,
     },
+
+    // ================= STATUS =================
 
     isActive: {
       type: Boolean,
       default: true,
     },
 
-    // ✅ ACTIVITY TRACKING
-    lastActive: Date,
+    // ================= ACTIVITY TRACKING =================
+
+    lastActive: {
+      type: Date,
+      default: Date.now,
+    },
 
     loginHistory: [
       {
@@ -71,12 +117,15 @@ const userSchema = new mongoose.Schema(
       },
     ],
   },
+
   {
     timestamps: true,
   }
 );
 
-export default mongoose.model(
-  "User",
-  userSchema
-);
+// ================= INDEXES (IMPORTANT FOR PERFORMANCE) =================
+
+userSchema.index({ email: 1, companyId: 1 });
+userSchema.index({ role: 1, isActive: 1 });
+
+export default mongoose.model("User", userSchema);
