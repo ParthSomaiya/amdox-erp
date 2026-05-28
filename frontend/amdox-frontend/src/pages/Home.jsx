@@ -1,108 +1,178 @@
 import { useNavigate } from "react-router-dom";
+import {
+  ArrowRight,
+  BarChart3,
+  BrainCircuit,
+  Building2,
+  CheckCircle2,
+  Globe2,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
+
 import Navbar from "../components/Navbar";
 
 export default function Home() {
-
   const navigate = useNavigate();
 
+  const features = [
+    {
+      icon: <Users size={34} />,
+      title: "HR & Workforce",
+      description:
+        "Employee lifecycle management, payroll, recruitment, attendance, and performance tracking.",
+    },
+    {
+      icon: <Building2 size={34} />,
+      title: "Finance Suite",
+      description:
+        "Smart accounting, invoicing, GST support, expense management, and financial analytics.",
+    },
+    {
+      icon: <BarChart3 size={34} />,
+      title: "Business Analytics",
+      description:
+        "Real-time dashboards, predictive reporting, and intelligent operational insights.",
+    },
+    {
+      icon: <BrainCircuit size={34} />,
+      title: "AI Automation",
+      description:
+        "AI-powered recommendations, workflow automation, and enterprise intelligence.",
+    },
+    {
+      icon: <Globe2 size={34} />,
+      title: "Global Operations",
+      description:
+        "Built for multi-location organizations with scalable and secure infrastructure.",
+    },
+    {
+      icon: <ShieldCheck size={34} />,
+      title: "Enterprise Security",
+      description:
+        "Advanced authentication, role management, audit tracking, and secure access control.",
+    },
+  ];
+
+  const stats = [
+    {
+      value: "50K+",
+      label: "Active Users",
+    },
+    {
+      value: "120+",
+      label: "Countries",
+    },
+    {
+      value: "99.9%",
+      label: "Platform Uptime",
+    },
+    {
+      value: "24/7",
+      label: "Support",
+    },
+  ];
+
   return (
-
-    <div className="min-h-screen bg-[#020617] text-white overflow-hidden">
-
-      {/* NAVBAR */}
-      <Navbar />
-
+    <div className="relative min-h-screen overflow-hidden bg-[#020617] text-white">
       {/* BACKGROUND EFFECTS */}
 
-      <div className="absolute top-0 left-0 w-full overflow-hidden pointer-events-none">
-
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
           className="
             absolute
-            top-[-250px]
-            left-[-200px]
-            w-[600px]
-            h-[600px]
+            -left-40
+            -top-40
+            h-[500px]
+            w-[500px]
+            rounded-full
             bg-cyan-500/20
             blur-[140px]
-            rounded-full
           "
         />
 
         <div
           className="
             absolute
+            right-[-120px]
             top-[100px]
-            right-[-200px]
-            w-[500px]
-            h-[500px]
+            h-[450px]
+            w-[450px]
+            rounded-full
             bg-blue-500/20
             blur-[140px]
-            rounded-full
           "
         />
 
-      </div>
-
-      {/* HERO */}
-
-      <section
-        className="
-          relative
-          pt-40
-          pb-32
-          px-6
-        "
-      >
-
         <div
           className="
-            max-w-7xl
+            absolute
+            bottom-[-150px]
+            left-[35%]
+            h-[400px]
+            w-[400px]
+            rounded-full
+            bg-indigo-500/20
+            blur-[140px]
+          "
+        />
+      </div>
+
+      {/* NAVBAR */}
+
+      <Navbar />
+
+      {/* HERO SECTION */}
+
+      <section className="relative px-6 pb-24 pt-36">
+        <div
+          className="
             mx-auto
             grid
-            lg:grid-cols-2
-            gap-20
+            max-w-7xl
             items-center
+            gap-20
+            lg:grid-cols-2
           "
         >
-
-          {/* LEFT */}
+          {/* LEFT CONTENT */}
 
           <div>
-
             {/* BADGE */}
 
             <div
               className="
+                mb-8
                 inline-flex
                 items-center
                 gap-2
-                px-4
-                py-2
                 rounded-full
                 border
-                border-cyan-500/20
-                bg-cyan-500/10
-                text-cyan-300
+                border-cyan-400/20
+                bg-cyan-400/10
+                px-5
+                py-2
                 text-sm
-                mb-8
+                font-medium
+                text-cyan-300
               "
             >
-              ✨ AI Powered Enterprise Platform
+              <CheckCircle2 size={16} />
+              AI-Powered Enterprise ERP Platform
             </div>
 
-            {/* TITLE */}
+            {/* HEADING */}
 
             <h1
               className="
-                text-6xl
-                lg:text-7xl
+                text-5xl
                 font-black
                 leading-tight
                 tracking-tight
+                md:text-6xl
+                xl:text-7xl
               "
             >
-
               Modern ERP
               <br />
 
@@ -116,334 +186,279 @@ export default function Home() {
                   text-transparent
                 "
               >
-                For Global Teams
+                For Smart Enterprises
               </span>
-
             </h1>
 
-            {/* DESC */}
+            {/* DESCRIPTION */}
 
             <p
               className="
                 mt-8
-                text-xl
-                text-slate-400
-                leading-relaxed
                 max-w-2xl
+                text-lg
+                leading-relaxed
+                text-slate-400
+                md:text-xl
               "
             >
-              Unified HR, Finance, Inventory,
-              Payroll, Projects, Analytics,
-              Team Collaboration and AI Operations —
-              all inside one next-generation ERP ecosystem.
+              Manage HR, payroll, finance, projects, analytics,
+              inventory, and AI automation from one intelligent
+              enterprise ecosystem built for modern businesses.
             </p>
 
             {/* BUTTONS */}
 
             <div className="mt-12 flex flex-wrap gap-5">
-
               <button
                 onClick={() => navigate("/login")}
                 className="
-                  px-8
-                  py-4
+                  flex
+                  items-center
+                  gap-3
                   rounded-2xl
                   bg-gradient-to-r
                   from-cyan-500
-                  to-blue-500
+                  to-blue-600
+                  px-8
+                  py-4
                   text-lg
-                  font-semibold
+                  font-bold
                   shadow-2xl
                   shadow-cyan-500/20
-                  hover:scale-105
                   transition-all
+                  duration-300
+                  hover:scale-105
                 "
               >
                 Launch Platform
+                <ArrowRight size={20} />
               </button>
 
               <button
                 onClick={() => navigate("/register")}
                 className="
-                  px-8
-                  py-4
                   rounded-2xl
                   border
                   border-white/10
                   bg-white/5
-                  backdrop-blur-xl
+                  px-8
+                  py-4
                   text-lg
                   font-semibold
-                  hover:bg-white/10
+                  backdrop-blur-xl
                   transition-all
+                  duration-300
+                  hover:bg-white/10
                 "
               >
                 Create Workspace
               </button>
-
             </div>
 
             {/* STATS */}
 
-            <div className="mt-16 grid grid-cols-3 gap-8">
+            <div
+              className="
+                mt-16
+                grid
+                grid-cols-2
+                gap-8
+                md:grid-cols-4
+              "
+            >
+              {stats.map((item, index) => (
+                <div key={index}>
+                  <h3 className="text-4xl font-black">
+                    {item.value}
+                  </h3>
 
-              <div>
-                <h2 className="text-4xl font-bold">
-                  50K+
-                </h2>
-
-                <p className="text-slate-400 mt-2">
-                  Users
-                </p>
-              </div>
-
-              <div>
-                <h2 className="text-4xl font-bold">
-                  120+
-                </h2>
-
-                <p className="text-slate-400 mt-2">
-                  Countries
-                </p>
-              </div>
-
-              <div>
-                <h2 className="text-4xl font-bold">
-                  99.9%
-                </h2>
-
-                <p className="text-slate-400 mt-2">
-                  Uptime
-                </p>
-              </div>
-
+                  <p className="mt-2 text-slate-400">
+                    {item.label}
+                  </p>
+                </div>
+              ))}
             </div>
-
           </div>
 
-          {/* RIGHT */}
+          {/* RIGHT SIDE */}
 
           <div className="relative">
-
             {/* MAIN CARD */}
 
             <div
               className="
                 relative
+                overflow-hidden
                 rounded-[40px]
                 border
                 border-white/10
                 bg-white/5
-                backdrop-blur-2xl
                 p-8
                 shadow-2xl
+                backdrop-blur-2xl
               "
             >
+              {/* HEADER */}
 
-              {/* TOP */}
-
-              <div className="flex items-center justify-between mb-8">
-
+              <div className="mb-10 flex items-center justify-between">
                 <div>
-                  <h3 className="text-2xl font-bold">
+                  <h2 className="text-3xl font-black">
                     Enterprise Overview
-                  </h3>
+                  </h2>
 
-                  <p className="text-slate-400 mt-1">
-                    Real-time business analytics
+                  <p className="mt-2 text-slate-400">
+                    Real-time business insights
                   </p>
                 </div>
 
                 <div
                   className="
-                    h-14
-                    w-14
-                    rounded-2xl
-                    bg-gradient-to-r
-                    from-cyan-500
-                    to-blue-500
                     flex
+                    h-16
+                    w-16
                     items-center
                     justify-center
-                    text-2xl
+                    rounded-3xl
+                    bg-gradient-to-r
+                    from-cyan-500
+                    to-blue-600
+                    text-3xl
                   "
                 >
                   📊
                 </div>
-
               </div>
 
-              {/* GRID */}
+              {/* ANALYTICS GRID */}
 
               <div className="grid grid-cols-2 gap-5">
+                {/* CARD */}
 
                 <div
                   className="
                     rounded-3xl
-                    bg-[#0F172A]
-                    p-6
                     border
                     border-white/5
+                    bg-[#0F172A]
+                    p-6
                   "
                 >
-
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-sm text-slate-400">
                     Revenue
                   </p>
 
-                  <h2 className="text-3xl font-bold mt-3">
+                  <h3 className="mt-4 text-3xl font-black">
                     $2.4M
-                  </h2>
+                  </h3>
 
-                  <div className="mt-5 h-2 rounded-full bg-slate-700 overflow-hidden">
-
-                    <div className="w-[78%] h-full bg-cyan-500 rounded-full" />
-
+                  <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-700">
+                    <div className="h-full w-[78%] rounded-full bg-cyan-500" />
                   </div>
-
                 </div>
 
                 <div
                   className="
                     rounded-3xl
-                    bg-[#0F172A]
-                    p-6
                     border
                     border-white/5
+                    bg-[#0F172A]
+                    p-6
                   "
                 >
-
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-sm text-slate-400">
                     Employees
                   </p>
 
-                  <h2 className="text-3xl font-bold mt-3">
+                  <h3 className="mt-4 text-3xl font-black">
                     1,284
-                  </h2>
+                  </h3>
 
                   <div className="mt-5 flex -space-x-3">
+                    <div className="h-10 w-10 rounded-full border-2 border-[#0F172A] bg-cyan-500" />
 
-                    <div className="h-10 w-10 rounded-full bg-cyan-500 border-2 border-[#0F172A]" />
+                    <div className="h-10 w-10 rounded-full border-2 border-[#0F172A] bg-blue-500" />
 
-                    <div className="h-10 w-10 rounded-full bg-blue-500 border-2 border-[#0F172A]" />
-
-                    <div className="h-10 w-10 rounded-full bg-indigo-500 border-2 border-[#0F172A]" />
-
+                    <div className="h-10 w-10 rounded-full border-2 border-[#0F172A] bg-indigo-500" />
                   </div>
-
                 </div>
 
                 <div
                   className="
                     rounded-3xl
-                    bg-[#0F172A]
-                    p-6
                     border
                     border-white/5
+                    bg-[#0F172A]
+                    p-6
                   "
                 >
-
-                  <p className="text-slate-400 text-sm">
-                    AI Insights
+                  <p className="text-sm text-slate-400">
+                    AI Efficiency
                   </p>
 
-                  <h2 className="text-3xl font-bold mt-3">
+                  <h3 className="mt-4 text-3xl font-black">
                     94%
-                  </h2>
+                  </h3>
 
-                  <p className="text-emerald-400 mt-4 text-sm">
-                    ↑ Operational efficiency
+                  <p className="mt-4 text-sm font-semibold text-emerald-400">
+                    ↑ Workflow Optimization
                   </p>
-
                 </div>
 
                 <div
                   className="
                     rounded-3xl
-                    bg-[#0F172A]
-                    p-6
                     border
                     border-white/5
+                    bg-[#0F172A]
+                    p-6
                   "
                 >
-
-                  <p className="text-slate-400 text-sm">
+                  <p className="text-sm text-slate-400">
                     Active Projects
                   </p>
 
-                  <h2 className="text-3xl font-bold mt-3">
+                  <h3 className="mt-4 text-3xl font-black">
                     48
-                  </h2>
+                  </h3>
 
-                  <p className="text-cyan-400 mt-4 text-sm">
-                    Real-time tracking enabled
+                  <p className="mt-4 text-sm font-semibold text-cyan-400">
+                    Live Collaboration Enabled
                   </p>
-
                 </div>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
-
       </section>
 
-      {/* MODULES */}
+      {/* FEATURES */}
 
-      <section className="relative py-28 px-6">
+      <section className="relative px-6 py-28">
+        <div className="mx-auto max-w-7xl">
+          {/* SECTION HEADER */}
 
-        <div className="max-w-7xl mx-auto">
-
-          <div className="text-center mb-20">
-
-            <h2 className="text-5xl font-bold">
-              Everything Your Enterprise Needs
+          <div className="mb-20 text-center">
+            <h2 className="text-4xl font-black md:text-5xl">
+              Everything Your Business Needs
             </h2>
 
-            <p className="text-slate-400 text-xl mt-6">
-              Built for modern organizations and global operations
+            <p className="mt-6 text-lg text-slate-400">
+              Powerful modules designed for enterprise productivity
             </p>
-
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
+          {/* FEATURE GRID */}
 
-            {[
-              {
-                icon: "👥",
-                title: "HR & Workforce",
-                desc: "Advanced employee lifecycle management, payroll, attendance, recruitment and AI analytics."
-              },
-              {
-                icon: "💰",
-                title: "Finance Suite",
-                desc: "Real-time accounting, GST, invoicing, balance sheets and automated reconciliation."
-              },
-              {
-                icon: "📦",
-                title: "Inventory Control",
-                desc: "Warehouse intelligence, procurement, stock analytics and supply chain automation."
-              },
-              {
-                icon: "📈",
-                title: "Business Analytics",
-                desc: "AI-powered dashboards, forecasting and real-time enterprise insights."
-              },
-              {
-                icon: "🧩",
-                title: "Project Management",
-                desc: "Task boards, collaboration, timelines and enterprise workflow orchestration."
-              },
-              {
-                icon: "🤖",
-                title: "AI Operations",
-                desc: "Intelligent automation, recommendations and predictive operational insights."
-              },
-            ].map((item, index) => (
-
+          <div
+            className="
+              grid
+              gap-8
+              md:grid-cols-2
+              xl:grid-cols-3
+            "
+          >
+            {features.map((feature, index) => (
               <div
                 key={index}
                 className="
@@ -451,34 +466,129 @@ export default function Home() {
                   border
                   border-white/10
                   bg-white/5
-                  backdrop-blur-2xl
                   p-8
-                  hover:translate-y-[-8px]
+                  backdrop-blur-xl
                   transition-all
                   duration-300
+                  hover:-translate-y-2
+                  hover:border-cyan-400/20
+                  hover:bg-white/[0.07]
                 "
               >
-
-                <div className="text-5xl mb-6">
-                  {item.icon}
+                <div
+                  className="
+                    mb-6
+                    flex
+                    h-16
+                    w-16
+                    items-center
+                    justify-center
+                    rounded-3xl
+                    bg-gradient-to-r
+                    from-cyan-500
+                    to-blue-600
+                    text-white
+                  "
+                >
+                  {feature.icon}
                 </div>
 
-                <h3 className="text-2xl font-bold">
-                  {item.title}
+                <h3 className="text-2xl font-black">
+                  {feature.title}
                 </h3>
 
-                <p className="mt-5 text-slate-400 leading-relaxed">
-                  {item.desc}
+                <p className="mt-5 leading-relaxed text-slate-400">
+                  {feature.description}
                 </p>
-
               </div>
-
             ))}
-
           </div>
-
         </div>
+      </section>
 
+      {/* CTA */}
+
+      <section className="relative px-6 pb-28">
+        <div
+          className="
+            mx-auto
+            max-w-7xl
+            rounded-[40px]
+            border
+            border-white/10
+            bg-gradient-to-r
+            from-cyan-600/20
+            via-blue-600/20
+            to-indigo-600/20
+            p-14
+            text-center
+            backdrop-blur-2xl
+          "
+        >
+          <h2
+            className="
+              text-4xl
+              font-black
+              md:text-5xl
+            "
+          >
+            Ready To Transform Your Enterprise?
+          </h2>
+
+          <p
+            className="
+              mx-auto
+              mt-6
+              max-w-3xl
+              text-lg
+              leading-relaxed
+              text-slate-300
+            "
+          >
+            Streamline operations, automate workflows, and
+            empower your teams with a next-generation ERP platform.
+          </p>
+
+          <div className="mt-10 flex justify-center gap-5">
+            <button
+              onClick={() => navigate("/register")}
+              className="
+                rounded-2xl
+                bg-gradient-to-r
+                from-cyan-500
+                to-blue-600
+                px-8
+                py-4
+                text-lg
+                font-bold
+                transition-all
+                duration-300
+                hover:scale-105
+              "
+            >
+              Get Started
+            </button>
+
+            <button
+              onClick={() => navigate("/login")}
+              className="
+                rounded-2xl
+                border
+                border-white/10
+                bg-white/5
+                px-8
+                py-4
+                text-lg
+                font-semibold
+                transition-all
+                duration-300
+                hover:bg-white/10
+              "
+            >
+              Sign In
+            </button>
+          </div>
+        </div>
       </section>
 
       {/* FOOTER */}
@@ -487,18 +597,14 @@ export default function Home() {
         className="
           border-t
           border-white/5
+          px-6
           py-10
           text-center
           text-slate-500
         "
       >
-
         © 2026 AMDOX ERP — Enterprise Intelligence Platform
-
       </footer>
-
     </div>
-
   );
-
 }

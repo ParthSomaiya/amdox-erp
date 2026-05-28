@@ -1,58 +1,425 @@
-import { useState } from "react";
+import {
+  useState,
+} from "react";
+
+import {
+  UserPlus,
+  Mail,
+  Briefcase,
+  User,
+} from "lucide-react";
+
+import {
+  useNavigate,
+} from "react-router-dom";
+
 import API from "../services/api";
 
 export default function AddEmployee() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [position, setPosition] = useState("");
 
-  const handleSubmit = async () => {
-    try {
-      await API.post("/hr/add", { name, email, position });
-      alert("Employee Added");
-    } catch (err) {
-      alert("Error adding employee");
-    }
+  const navigate =
+    useNavigate();
+
+  // ================= STATE =================
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [form, setForm] =
+    useState({
+
+      name: "",
+      email: "",
+      position: "",
+
+    });
+
+  // ================= CHANGE =================
+
+  const handleChange = (e) => {
+
+    setForm({
+
+      ...form,
+
+      [e.target.name]:
+        e.target.value,
+
+    });
+
   };
 
+  // ================= SUBMIT =================
+
+  const handleSubmit =
+    async (e) => {
+
+      e.preventDefault();
+
+      try {
+
+        setLoading(true);
+
+        await API.post(
+          "/hr/add",
+          form
+        );
+
+        alert(
+          "Employee Added Successfully"
+        );
+
+        navigate(
+          "/employees"
+        );
+
+      } catch (err) {
+
+        console.log(err);
+
+        alert(
+
+          err.response?.data
+            ?.message ||
+
+          "Error adding employee"
+
+        );
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
   return (
-    <div className="max-w-lg mx-auto bg-white shadow p-6 rounded">
 
-      <h2 className="text-2xl font-bold mb-5">
-        Add Employee
-      </h2>
+    <div className="space-y-8">
 
-      <input
-        className="border p-2 w-full mb-3 rounded"
-        placeholder="Name"
-        onChange={(e) =>
-          setName(e.target.value)
-        }
-      />
+      {/* HERO */}
 
-      <input
-        className="border p-2 w-full mb-3 rounded"
-        placeholder="Email"
-        onChange={(e) =>
-          setEmail(e.target.value)
-        }
-      />
-
-      <input
-        className="border p-2 w-full mb-3 rounded"
-        placeholder="Position"
-        onChange={(e) =>
-          setPosition(e.target.value)
-        }
-      />
-
-      <button
-        onClick={handleSubmit}
-        className="bg-blue-600 text-white px-5 py-2 rounded"
+      <div
+        className="
+          bg-gradient-to-r
+          from-cyan-600
+          via-blue-600
+          to-indigo-700
+          rounded-[32px]
+          p-10
+          text-white
+          shadow-xl
+        "
       >
-        Add Employee
-      </button>
+
+        <div
+          className="
+            flex
+            items-center
+            gap-5
+          "
+        >
+
+          <div
+            className="
+              h-20
+              w-20
+              rounded-3xl
+              bg-white/20
+              flex
+              items-center
+              justify-center
+            "
+          >
+
+            <UserPlus size={40} />
+
+          </div>
+
+          <div>
+
+            <h1
+              className="
+                text-5xl
+                font-black
+              "
+            >
+
+              Add Employee
+
+            </h1>
+
+            <p
+              className="
+                mt-3
+                text-cyan-100
+                text-lg
+              "
+            >
+
+              Create employee account professionally
+
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* FORM */}
+
+      <div
+        className="
+          bg-white
+          rounded-[32px]
+          shadow-lg
+          p-10
+          max-w-4xl
+        "
+      >
+
+        <form
+          onSubmit={handleSubmit}
+          className="
+            grid
+            grid-cols-1
+            md:grid-cols-2
+            gap-8
+          "
+        >
+
+          {/* NAME */}
+
+          <div>
+
+            <label
+              className="
+                font-bold
+                text-lg
+                mb-3
+                block
+              "
+            >
+
+              Full Name
+
+            </label>
+
+            <div
+              className="
+                h-16
+                border
+                border-gray-300
+                rounded-2xl
+                flex
+                items-center
+                px-5
+                focus-within:border-cyan-500
+              "
+            >
+
+              <User
+                className="
+                  text-gray-400
+                "
+              />
+
+              <input
+
+                type="text"
+
+                name="name"
+
+                value={form.name}
+
+                onChange={handleChange}
+
+                required
+
+                placeholder="Enter employee name"
+
+                className="
+                  flex-1
+                  h-full
+                  px-4
+                  outline-none
+                "
+              />
+
+            </div>
+
+          </div>
+
+          {/* EMAIL */}
+
+          <div>
+
+            <label
+              className="
+                font-bold
+                text-lg
+                mb-3
+                block
+              "
+            >
+
+              Email Address
+
+            </label>
+
+            <div
+              className="
+                h-16
+                border
+                border-gray-300
+                rounded-2xl
+                flex
+                items-center
+                px-5
+                focus-within:border-cyan-500
+              "
+            >
+
+              <Mail
+                className="
+                  text-gray-400
+                "
+              />
+
+              <input
+
+                type="email"
+
+                name="email"
+
+                value={form.email}
+
+                onChange={handleChange}
+
+                required
+
+                placeholder="Enter email"
+
+                className="
+                  flex-1
+                  h-full
+                  px-4
+                  outline-none
+                "
+              />
+
+            </div>
+
+          </div>
+
+          {/* POSITION */}
+
+          <div className="md:col-span-2">
+
+            <label
+              className="
+                font-bold
+                text-lg
+                mb-3
+                block
+              "
+            >
+
+              Position
+
+            </label>
+
+            <div
+              className="
+                h-16
+                border
+                border-gray-300
+                rounded-2xl
+                flex
+                items-center
+                px-5
+                focus-within:border-cyan-500
+              "
+            >
+
+              <Briefcase
+                className="
+                  text-gray-400
+                "
+              />
+
+              <input
+
+                type="text"
+
+                name="position"
+
+                value={form.position}
+
+                onChange={handleChange}
+
+                required
+
+                placeholder="Frontend Developer"
+
+                className="
+                  flex-1
+                  h-full
+                  px-4
+                  outline-none
+                "
+              />
+
+            </div>
+
+          </div>
+
+          {/* BUTTON */}
+
+          <div className="md:col-span-2">
+
+            <button
+
+              type="submit"
+
+              disabled={loading}
+
+              className="
+                h-16
+                px-10
+                rounded-2xl
+                bg-gradient-to-r
+                from-cyan-500
+                to-blue-600
+                text-white
+                font-black
+                text-lg
+                hover:scale-[1.02]
+                transition-all
+                duration-300
+              "
+            >
+
+              {
+
+                loading
+                  ? "Adding Employee..."
+                  : "Add Employee"
+
+              }
+
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
 
     </div>
+
   );
+
 }

@@ -2,14 +2,37 @@ import {
   Bell,
   Search,
   Sparkles,
+  LogOut,
 } from "lucide-react";
 
-const user = JSON.parse(
-  localStorage.getItem("user") || "{}"
-);
+import {
+  useNavigate,
+} from "react-router-dom";
 
 export default function Navbar() {
+
+  const navigate =
+    useNavigate();
+
+  // ================= USER =================
+
+  const user =
+    JSON.parse(
+      localStorage.getItem("user") || "{}"
+    );
+
+  // ================= LOGOUT =================
+
+  const logout = () => {
+
+    localStorage.clear();
+
+    navigate("/login");
+
+  };
+
   return (
+
     <nav
       className="
         sticky
@@ -22,23 +45,27 @@ export default function Navbar() {
         justify-between
         border-b
         border-white/10
-        bg-[#020617]/70
+        bg-[#020617]/90
         backdrop-blur-2xl
       "
     >
+
       {/* LEFT */}
+
       <div className="flex items-center gap-6">
 
         {/* SEARCH */}
+
         <div
           className="
+            hidden
+            md:flex
             w-[420px]
             h-14
             rounded-2xl
             border
             border-white/10
             bg-white/[0.03]
-            flex
             items-center
             px-5
             transition-all
@@ -47,6 +74,7 @@ export default function Navbar() {
             hover:bg-white/[0.05]
           "
         >
+
           <Search
             size={20}
             className="text-slate-400"
@@ -54,7 +82,7 @@ export default function Navbar() {
 
           <input
             type="text"
-            placeholder="Search employees, reports, invoices..."
+            placeholder="Search..."
             className="
               flex-1
               bg-transparent
@@ -65,16 +93,21 @@ export default function Navbar() {
               placeholder:text-slate-500
             "
           />
+
         </div>
 
       </div>
 
       {/* RIGHT */}
+
       <div className="flex items-center gap-5">
 
         {/* AI BUTTON */}
+
         <button
           className="
+            hidden
+            md:flex
             h-14
             px-6
             rounded-2xl
@@ -84,7 +117,6 @@ export default function Navbar() {
             to-indigo-600
             text-white
             font-semibold
-            flex
             items-center
             gap-3
             shadow-2xl
@@ -94,11 +126,15 @@ export default function Navbar() {
             duration-300
           "
         >
+
           <Sparkles size={20} />
+
           AI Assistant
+
         </button>
 
         {/* NOTIFICATION */}
+
         <button
           className="
             relative
@@ -115,6 +151,7 @@ export default function Navbar() {
             transition-all
           "
         >
+
           <Bell
             size={20}
             className="text-white"
@@ -131,9 +168,11 @@ export default function Navbar() {
               bg-red-500
             "
           />
+
         </button>
 
         {/* PROFILE */}
+
         <div
           className="
             flex
@@ -147,6 +186,9 @@ export default function Navbar() {
             bg-white/[0.04]
           "
         >
+
+          {/* AVATAR */}
+
           <div
             className="
               h-12
@@ -155,21 +197,78 @@ export default function Navbar() {
               bg-gradient-to-r
               from-cyan-400
               to-blue-600
+              flex
+              items-center
+              justify-center
+              text-white
+              font-black
+              text-lg
             "
-          />
+          >
+
+            {
+              user?.name
+                ?.charAt(0)
+                ?.toUpperCase()
+            }
+
+          </div>
+
+          {/* USER INFO */}
 
           <div>
+
             <h3 className="text-white font-semibold">
+
               {user?.name || "User"}
+
             </h3>
 
             <p className="text-slate-400 text-sm">
-              {user?.role || "Employee"}
+
+              {user?.role || "EMPLOYEE"}
+
             </p>
+
           </div>
+
         </div>
 
+        {/* LOGOUT */}
+
+        <button
+          onClick={logout}
+          className="
+            h-14
+            w-14
+            rounded-2xl
+            border
+            border-red-500/30
+            bg-red-500/10
+            flex
+            items-center
+            justify-center
+            hover:bg-red-500
+            transition-all
+            duration-300
+            group
+          "
+        >
+
+          <LogOut
+            size={20}
+            className="
+              text-red-400
+              group-hover:text-white
+            "
+          />
+
+        </button>
+
       </div>
+
     </nav>
+
   );
+
 }

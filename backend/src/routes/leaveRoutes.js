@@ -1,57 +1,139 @@
 import express from "express";
+
 import {
+
   applyLeave,
+
   getAllLeaves,
+
   updateLeaveStatus,
+
   getMyLeaves,
+
   getLeavePrediction,
+
 } from "../controllers/leaveController.js";
 
-// ✅ CORRECT IMPORTS
-import { authMiddleware } from "../middleware/authMiddleware.js";
-import { allowRoles } from "../middleware/roleMiddleware.js";
+import {
 
-const router = express.Router();
+  authMiddleware,
+
+} from "../middleware/authMiddleware.js";
+
+import {
+
+  allowRoles,
+
+} from "../middleware/roleMiddleware.js";
+
+const router =
+  express.Router();
 
 
-// 🧑 Employee apply leave
+// ========================================
+// EMPLOYEE APPLY LEAVE
+// ========================================
+
 router.post(
+
   "/apply",
+
   authMiddleware,
-  allowRoles("EMPLOYEE"),
+
+  allowRoles(
+    "EMPLOYEE",
+    "HR",
+    "ADMIN"
+  ),
+
   applyLeave
+
 );
 
 
-// 👤 Employee sees own leaves
+// ========================================
+// EMPLOYEE / USER MY LEAVES
+// ========================================
+
 router.get(
+
   "/my",
+
   authMiddleware,
-  allowRoles("EMPLOYEE"),
+
+  allowRoles(
+    "EMPLOYEE",
+    "HR",
+    "ADMIN"
+  ),
+
   getMyLeaves
+
 );
 
 
-// 👨‍💼 HR/Admin approve/reject
-router.post(
-  "/update",
-  authMiddleware,
-  allowRoles("HR", "ADMIN"),
-  updateLeaveStatus
-);
+// ========================================
+// HR / ADMIN VIEW ALL LEAVES
+// ========================================
 
-
-// 👨‍💼 HR/Admin view all leaves
 router.get(
+
   "/",
+
   authMiddleware,
-  allowRoles("HR", "ADMIN"),
+
+  allowRoles(
+    "HR",
+    "ADMIN"
+  ),
+
   getAllLeaves
+
 );
 
-router.get(
-  "/prediction/:id",
-  getLeavePrediction
+
+// ========================================
+// HR / ADMIN UPDATE LEAVE STATUS
+// ========================================
+
+router.put(
+
+  "/update",
+
+  authMiddleware,
+
+  allowRoles(
+    "HR",
+    "ADMIN"
+  ),
+
+  updateLeaveStatus
+
 );
+
+
+// ========================================
+// AI LEAVE PREDICTION
+// ========================================
+
+router.get(
+
+  "/prediction/:id",
+
+  authMiddleware,
+
+  allowRoles(
+    "HR",
+    "ADMIN"
+  ),
+
+  getLeavePrediction
+
+);
+
+
+// ========================================
+// EXPORT
+// ========================================
 
 export default router;

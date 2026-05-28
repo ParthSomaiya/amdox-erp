@@ -3,9 +3,18 @@ import {
   useState,
 } from "react";
 
-import axios from "axios";
+import {
+  MapPin,
+  Briefcase,
+  IndianRupee,
+  Search,
+} from "lucide-react";
+
+import API from "../../services/api";
 
 export default function CareerPortal() {
+
+  // ================= STATE =================
 
   const [jobs, setJobs] =
     useState([]);
@@ -16,9 +25,7 @@ export default function CareerPortal() {
   const [search, setSearch] =
     useState("");
 
-  // =========================
-  // FETCH JOBS
-  // =========================
+  // ================= FETCH JOBS =================
 
   useEffect(() => {
 
@@ -26,185 +33,333 @@ export default function CareerPortal() {
 
   }, []);
 
-  const fetchJobs = async () => {
+  const fetchJobs =
+    async () => {
 
-    try {
+      try {
 
-      setLoading(true);
-
-      const res =
-        await axios.get(
-          "http://localhost:5000/api/jobs"
-        );
-
-      if (Array.isArray(res.data)) {
+        const res =
+          await API.get(
+            "/jobs"
+          );
 
         setJobs(res.data);
 
-      } else {
+      } catch (err) {
 
-        setJobs([]);
+        console.log(err);
+
+      } finally {
+
+        setLoading(false);
 
       }
 
-    } catch (err) {
+    };
 
-      console.log(err);
-
-      setJobs([]);
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  };
-
-  // =========================
-  // FILTER
-  // =========================
+  // ================= FILTER =================
 
   const filteredJobs =
-    jobs.filter((job) => {
+    jobs.filter((job) =>
 
-      const title =
-        job?.title || "";
-
-      return title
-        .toLowerCase()
+      job.title
+        ?.toLowerCase()
         .includes(
           search.toLowerCase()
-        );
+        )
 
-    });
+    );
 
   return (
 
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-slate-100">
 
-      {/* ================= HERO ================= */}
+      {/* HERO */}
 
       <div
         className="
+          relative
+          overflow-hidden
           bg-gradient-to-r
-          from-blue-700
-          to-cyan-500
+          from-cyan-600
+          via-blue-600
+          to-indigo-700
+          px-6
+          py-20
           text-white
-          p-10
         "
       >
 
-        <h1 className="text-5xl font-black mb-4">
+        {/* GLOW */}
 
-          Find Your Dream Job 🚀
-
-        </h1>
-
-        <p className="text-lg text-blue-100 mb-6">
-
-          Explore latest career opportunities
-
-        </p>
-
-        <input
-          type="text"
-          placeholder="Search jobs..."
-          value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
+        <div
           className="
-            w-full
-            md:w-1/2
-            p-4
-            rounded-2xl
-            text-black
-            outline-none
+            absolute
+            top-0
+            right-0
+            h-96
+            w-96
+            rounded-full
+            bg-white/10
+            blur-3xl
           "
         />
 
-      </div>
+        <div
+          className="
+            relative
+            z-10
+            max-w-7xl
+            mx-auto
+          "
+        >
 
-      {/* ================= JOBS ================= */}
+          <h1
+            className="
+              text-5xl
+              md:text-6xl
+              font-black
+              leading-tight
+            "
+          >
 
-      <div className="p-8">
+            Find Your
+            <br />
 
-        {loading ? (
+            Dream Career
 
-          <div className="text-center py-20">
+          </h1>
 
-            <h2 className="text-2xl font-bold">
-              Loading Jobs...
-            </h2>
+          <p
+            className="
+              mt-5
+              text-lg
+              text-cyan-100
+              max-w-2xl
+            "
+          >
 
-          </div>
+            Join top companies and
+            build your future with
+            AMDOX Career Portal.
 
-        ) : filteredJobs.length === 0 ? (
+          </p>
+
+          {/* SEARCH */}
 
           <div
             className="
+              mt-10
+              flex
+              items-center
               bg-white
               rounded-3xl
-              shadow
-              p-10
-              text-center
+              overflow-hidden
+              shadow-2xl
+              max-w-2xl
             "
           >
 
-            <h2 className="text-3xl font-bold">
+            <div className="px-5">
 
-              No Jobs Found
+              <Search
+                className="text-gray-500"
+              />
 
-            </h2>
+            </div>
 
-            <p className="text-gray-500 mt-3">
+            <input
 
-              Try another search keyword
+              type="text"
 
-            </p>
+              placeholder="Search jobs..."
+
+              value={search}
+
+              onChange={(e) =>
+                setSearch(
+                  e.target.value
+                )
+              }
+
+              className="
+                flex-1
+                h-16
+                px-2
+                outline-none
+                text-black
+                text-lg
+              "
+            />
 
           </div>
 
-        ) : (
+        </div>
 
-          <div
+      </div>
+
+      {/* JOBS */}
+
+      <div
+        className="
+          max-w-7xl
+          mx-auto
+          px-6
+          py-14
+        "
+      >
+
+        {/* TITLE */}
+
+        <div className="mb-10">
+
+          <h2
             className="
-              grid
-              md:grid-cols-2
-              lg:grid-cols-3
-              gap-6
+              text-4xl
+              font-black
+              text-slate-800
             "
           >
 
-            {filteredJobs.map((job) => (
+            Open Positions
 
-              <div
-                key={job._id}
+          </h2>
+
+          <p className="text-gray-500 mt-3">
+
+            Explore latest career
+            opportunities
+
+          </p>
+
+        </div>
+
+        {/* LOADING */}
+
+        {
+          loading && (
+
+            <div
+              className="
+                text-center
+                py-20
+                text-xl
+                font-semibold
+              "
+            >
+
+              Loading jobs...
+
+            </div>
+
+          )
+        }
+
+        {/* EMPTY */}
+
+        {
+          !loading &&
+          filteredJobs.length === 0 && (
+
+            <div
+              className="
+                bg-white
+                rounded-3xl
+                shadow-lg
+                p-20
+                text-center
+              "
+            >
+
+              <h2
                 className="
-                  bg-white
-                  rounded-3xl
-                  shadow-lg
-                  p-6
-                  hover:shadow-2xl
-                  transition-all
-                  duration-300
+                  text-3xl
+                  font-black
                 "
               >
 
-                <div className="flex justify-between items-start">
+                No Jobs Found
+
+              </h2>
+
+              <p className="text-gray-500 mt-4">
+
+                Try another keyword
+
+              </p>
+
+            </div>
+
+          )
+        }
+
+        {/* JOB GRID */}
+
+        <div
+          className="
+            grid
+            grid-cols-1
+            md:grid-cols-2
+            xl:grid-cols-3
+            gap-8
+          "
+        >
+
+          {
+            filteredJobs.map((job) => (
+
+              <div
+
+                key={job._id}
+
+                className="
+                  bg-white
+                  rounded-[32px]
+                  shadow-lg
+                  p-8
+                  hover:shadow-2xl
+                  transition-all
+                  duration-300
+                  hover:-translate-y-2
+                  border
+                  border-slate-100
+                "
+              >
+
+                {/* TOP */}
+
+                <div
+                  className="
+                    flex
+                    items-start
+                    justify-between
+                  "
+                >
 
                   <div>
 
-                    <h2 className="text-2xl font-black">
+                    <h2
+                      className="
+                        text-2xl
+                        font-black
+                        text-slate-800
+                      "
+                    >
 
-                      {job?.title || "Job"}
+                      {job.title}
 
                     </h2>
 
-                    <p className="text-gray-500 mt-2">
+                    <p
+                      className="
+                        text-cyan-600
+                        font-semibold
+                        mt-2
+                      "
+                    >
 
-                      {job?.company || "Company"}
+                      {job.company ||
+                        "AMDOX ERP"}
 
                     </p>
 
@@ -212,63 +367,155 @@ export default function CareerPortal() {
 
                   <div
                     className="
-                      bg-blue-100
-                      text-blue-700
-                      px-3
-                      py-1
-                      rounded-full
-                      text-sm
-                      font-bold
+                      h-16
+                      w-16
+                      rounded-2xl
+                      bg-gradient-to-r
+                      from-cyan-500
+                      to-blue-600
+                      flex
+                      items-center
+                      justify-center
+                      text-white
+                      text-3xl
                     "
                   >
-                    Active
+
+                    💼
+
                   </div>
 
                 </div>
 
-                <p className="mt-5 text-gray-700 line-clamp-4">
+                {/* DESCRIPTION */}
 
-                  {job?.description ||
-                    "No Description"}
+                <p
+                  className="
+                    text-gray-600
+                    mt-6
+                    leading-7
+                    line-clamp-4
+                  "
+                >
+
+                  {
+                    job.description
+                  }
 
                 </p>
 
-                <div className="mt-6">
+                {/* DETAILS */}
 
-                  <p className="text-green-600 text-2xl font-black">
+                <div
+                  className="
+                    mt-8
+                    space-y-4
+                  "
+                >
 
-                    ₹{job?.salary || 0}
+                  <div
+                    className="
+                      flex
+                      items-center
+                      gap-3
+                      text-gray-600
+                    "
+                  >
 
-                  </p>
+                    <MapPin size={18} />
+
+                    <span>
+
+                      {
+                        job.location ||
+                        "Ahmedabad"
+                      }
+
+                    </span>
+
+                  </div>
+
+                  <div
+                    className="
+                      flex
+                      items-center
+                      gap-3
+                      text-gray-600
+                    "
+                  >
+
+                    <Briefcase size={18} />
+
+                    <span>
+
+                      {
+                        job.type ||
+                        "Full Time"
+                      }
+
+                    </span>
+
+                  </div>
+
+                  <div
+                    className="
+                      flex
+                      items-center
+                      gap-3
+                      text-green-600
+                      font-bold
+                    "
+                  >
+
+                    <IndianRupee size={18} />
+
+                    <span>
+
+                      {
+                        job.salary ||
+                        "Negotiable"
+                      }
+
+                    </span>
+
+                  </div>
 
                 </div>
 
+                {/* BUTTON */}
+
                 <a
+
                   href={`/apply-job/${job._id}`}
+
                   className="
-                    mt-6
-                    inline-block
-                    w-full
-                    text-center
-                    bg-blue-600
-                    hover:bg-blue-700
-                    text-white
-                    py-3
+                    mt-8
+                    h-14
                     rounded-2xl
-                    font-semibold
+                    bg-gradient-to-r
+                    from-cyan-500
+                    to-blue-600
+                    text-white
+                    font-bold
+                    flex
+                    items-center
+                    justify-center
+                    hover:scale-[1.02]
                     transition-all
+                    duration-300
                   "
                 >
+
                   Apply Now
+
                 </a>
 
               </div>
 
-            ))}
+            ))
+          }
 
-          </div>
-
-        )}
+        </div>
 
       </div>
 

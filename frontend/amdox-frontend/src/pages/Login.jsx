@@ -1,6 +1,11 @@
-import { useState } from "react";
+import {
+  useState,
+} from "react";
 
-import { useNavigate } from "react-router-dom";
+import {
+  useNavigate,
+  Link,
+} from "react-router-dom";
 
 import API from "../services/api";
 
@@ -8,6 +13,8 @@ export default function Login() {
 
   const navigate =
     useNavigate();
+
+  // ================= STATE =================
 
   const [loading, setLoading] =
     useState(false);
@@ -19,6 +26,8 @@ export default function Login() {
       password: "",
 
     });
+
+  // ================= HANDLE CHANGE =================
 
   const handleChange = (e) => {
 
@@ -33,6 +42,8 @@ export default function Login() {
 
   };
 
+  // ================= SUBMIT =================
+
   const submit = async (e) => {
 
     e.preventDefault();
@@ -41,13 +52,19 @@ export default function Login() {
 
       setLoading(true);
 
-      const res = await API.post(
-        "/auth/login",
-        {
-          email: form.email.trim(),
-          password: form.password,
-        }
-      );
+      const res =
+        await API.post(
+          "/auth/login",
+          {
+            email:
+              form.email.trim(),
+
+            password:
+              form.password,
+          }
+        );
+
+      // ================= STORE =================
 
       localStorage.setItem(
         "token",
@@ -61,12 +78,19 @@ export default function Login() {
 
       localStorage.setItem(
         "user",
-        JSON.stringify(res.data.user)
+        JSON.stringify(
+          res.data.user
+        )
       );
 
-      const role = res.data.user.role;
+      // ================= ROLE REDIRECT =================
 
-      if (role === "EMPLOYEE") {
+      const role =
+        res.data.user.role;
+
+      if (
+        role === "EMPLOYEE"
+      ) {
 
         navigate(
           "/employee-dashboard",
@@ -91,8 +115,12 @@ export default function Login() {
       console.log(err);
 
       alert(
-        err.response?.data?.message ||
+
+        err.response?.data
+          ?.message ||
+
         "Login Failed"
+
       );
 
     } finally {
@@ -111,20 +139,21 @@ export default function Login() {
         flex
         items-center
         justify-center
+        bg-[#020617]
         relative
         overflow-hidden
         px-6
       "
     >
 
-      {/* BACKGROUND */}
+      {/* GLOW */}
 
       <div
         className="
           absolute
           w-[500px]
           h-[500px]
-          bg-blue-500/20
+          bg-cyan-500/20
           blur-[120px]
           rounded-full
           -top-32
@@ -137,7 +166,7 @@ export default function Login() {
           absolute
           w-[500px]
           h-[500px]
-          bg-purple-500/20
+          bg-blue-500/20
           blur-[120px]
           rounded-full
           bottom-0
@@ -148,17 +177,25 @@ export default function Login() {
       {/* CARD */}
 
       <form
+
         onSubmit={submit}
+
         className="
-          glass
+          relative
+          z-10
           w-full
           max-w-md
           rounded-[32px]
+          bg-white/[0.05]
+          border
+          border-white/10
+          backdrop-blur-2xl
           p-10
-          relative
-          z-10
+          shadow-2xl
         "
       >
+
+        {/* LOGO */}
 
         <div className="mb-10">
 
@@ -166,10 +203,12 @@ export default function Login() {
             className="
               text-5xl
               font-black
-              gradient-text
+              text-white
             "
           >
+
             AMDOX
+
           </h1>
 
           <p
@@ -178,43 +217,86 @@ export default function Login() {
               mt-3
             "
           >
+
             Enterprise ERP Platform
+
           </p>
 
         </div>
 
+        {/* FORM */}
+
         <div className="space-y-5">
+
+          {/* EMAIL */}
 
           <input
             type="email"
             name="email"
             placeholder="Enter Email"
-            className="premium-input"
             value={form.email}
             onChange={handleChange}
             required
+            className="
+              w-full
+              h-14
+              rounded-2xl
+              bg-white/[0.05]
+              border
+              border-white/10
+              px-5
+              text-white
+              outline-none
+              placeholder:text-slate-500
+              focus:border-cyan-500
+            "
           />
+
+          {/* PASSWORD */}
 
           <input
             type="password"
             name="password"
             placeholder="Enter Password"
-            className="premium-input"
             value={form.password}
             onChange={handleChange}
             required
+            className="
+              w-full
+              h-14
+              rounded-2xl
+              bg-white/[0.05]
+              border
+              border-white/10
+              px-5
+              text-white
+              outline-none
+              placeholder:text-slate-500
+              focus:border-cyan-500
+            "
           />
 
+          {/* BUTTON */}
+
           <button
+
             type="submit"
+
             disabled={loading}
+
             className="
-              primary-btn
               w-full
-              py-4
+              h-14
+              rounded-2xl
+              bg-gradient-to-r
+              from-cyan-500
+              to-blue-600
               text-white
               font-bold
               text-lg
+              hover:scale-[1.02]
+              transition-all
+              duration-300
             "
           >
 
@@ -225,6 +307,27 @@ export default function Login() {
             }
 
           </button>
+
+          {/* FORGOT */}
+
+          <div className="text-center pt-3">
+
+            <Link
+
+              to="/forgot-password"
+
+              className="
+                text-cyan-400
+                hover:text-cyan-300
+                text-sm
+              "
+            >
+
+              Forgot Password ?
+
+            </Link>
+
+          </div>
 
         </div>
 
