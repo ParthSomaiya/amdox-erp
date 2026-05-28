@@ -57,30 +57,29 @@ export const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    const record = await OTP.findOne({ email, otp });
+    const record = await OTP.findOne({
+      email: email.toLowerCase(),
+      otp
+    });
 
     if (!record) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid OTP",
-      });
+      return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    if (record.expiresAt < new Date()) {
-      return res.status(400).json({
-        success: false,
-        message: "OTP expired",
-      });
-    }
+    await User.updateOne(
+      { email: email.toLowerCase() },
+      { isVerified: true }
+    );
 
-    await OTP.deleteMany({ email });
+    await OTP.deleteMany({ email: email.toLowerCase() });
 
-    res.json({
+    return res.json({
       success: true,
-      message: "OTP verified",
+      message: "OTP verified → now login allowed"
     });
+
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -135,39 +134,39 @@ export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    const existing = await User.findOne({ email });
+    const existing = await User.findOne({ email: email.toLowerCase() });
 
     if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: "User already exists",
-      });
+      return res.status(400).json({ message: "User exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
+    // ❌ NOT verified directly
     const user = await User.create({
       name,
-      email,
-      password: hashedPassword,
+      email: email.toLowerCase(),
+      password: hashed,
       role: "EMPLOYEE",
-      isVerified: true,
+      isVerified: false,   // 🔥 IMPORTANT FIX
     });
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+    // send OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
 
-    user.refreshToken = refreshToken;
-    await user.save();
+    await OTP.create({
+      email: email.toLowerCase(),
+      otp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    });
 
-    res.json({
+    return res.json({
       success: true,
-      accessToken,
-      refreshToken,
-      user,
+      message: "OTP sent to email",
     });
+
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
