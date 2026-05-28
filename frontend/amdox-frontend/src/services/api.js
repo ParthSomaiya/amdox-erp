@@ -1,7 +1,5 @@
 import axios from "axios";
 
-// ================= API INSTANCE =================
-
 const API = axios.create({
 
   baseURL:
@@ -10,8 +8,6 @@ const API = axios.create({
   withCredentials: true,
 
 });
-
-// ================= REQUEST INTERCEPTOR =================
 
 API.interceptors.request.use(
 
@@ -31,23 +27,15 @@ API.interceptors.request.use(
 
   },
 
-  (error) => {
-
-    return Promise.reject(error);
-
-  }
+  (error) => Promise.reject(error)
 
 );
-
-// ================= RESPONSE INTERCEPTOR =================
 
 API.interceptors.response.use(
 
   (response) => response,
 
   async (error) => {
-
-    // ================= TOKEN EXPIRED =================
 
     if (
       error.response?.status === 401

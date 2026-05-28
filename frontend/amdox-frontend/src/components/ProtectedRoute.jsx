@@ -1,53 +1,31 @@
-import {
-  Navigate,
-} from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({
   children,
+  allowedRoles = [],
 }) {
-
-  // ================= TOKEN =================
 
   const token =
     localStorage.getItem("token");
 
-  // ================= USER =================
-
-  const user =
-    JSON.parse(
-      localStorage.getItem("user") || "null"
-    );
-
-  // ================= NOT LOGGED IN =================
+  const user = JSON.parse(
+    localStorage.getItem("user") || "null"
+  );
 
   if (!token || !user) {
 
-    return (
-      <Navigate
-        to="/login"
-        replace
-      />
-    );
+    return <Navigate to="/login" replace />;
 
   }
-
-  // ================= ROLE BASED REDIRECT =================
 
   if (
-    user.role === "EMPLOYEE" &&
-    window.location.pathname === "/dashboard"
+    allowedRoles.length > 0 &&
+    !allowedRoles.includes(user.role)
   ) {
 
-    return (
-      <Navigate
-        to="/employee-dashboard"
-        replace
-      />
-    );
+    return <Navigate to="/dashboard" replace />;
 
   }
-
-  // ================= ALLOW =================
 
   return children;
 
