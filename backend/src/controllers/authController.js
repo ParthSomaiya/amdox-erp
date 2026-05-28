@@ -126,11 +126,9 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    console.log("BODY:", req.body);
+    const { email, password } = req.body;
 
-    const email = req.body.email?.toLowerCase();
-    const password = req.body.password;
-
+    // validation
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -138,40 +136,56 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    // find user
+    const user = await User.findOne({
+      email: email.toLowerCase().trim(),
+    });
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "User not found",
+        message: "Invalid credentials",
       });
     }
 
+    // check password exists
     if (!user.password) {
-      return res.status(500).json({
+      return res.status(400).json({
         success: false,
-        message: "Password missing in DB",
+        message: "Password not set for this user",
       });
     }
 
+    // compare password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(400).json({
         success: false,
-        message: "Wrong password",
+        message: "Invalid credentials",
       });
     }
 
+    // create tokens
     const accessToken = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    return res.json({
+    const refreshToken = jwt.sign(
+      { id: user._id },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "30d" }
+    );
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    return res.status(200).json({
       success: true,
       accessToken,
+      refreshToken,
       user,
     });
 
@@ -179,7 +193,8 @@ export const loginUser = async (req, res) => {
     console.log("LOGIN ERROR:", err);
     return res.status(500).json({
       success: false,
-      message: err.message,
+      message: "Server error in login",
+      error: err.message,
     });
   }
 };
