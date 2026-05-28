@@ -1,28 +1,22 @@
 import { useEffect, useState } from "react";
+import { Loader2, ShieldCheck, Building2, Users, Radio } from "lucide-react";
 import API from "../../services/api";
-import MainLayout from "../../layouts/MainLayout";
 
 export default function TenantManagement() {
-  // ================= STATE =================
   const [analytics, setAnalytics] = useState({
     totalTenants: 0,
     totalUsers: 0,
     activeUsers: 0,
   });
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // ================= FETCH DATA =================
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
       setError("");
-
       const res = await API.get("/admin/tenant-analytics");
-
       const data = res.data || {};
-
       setAnalytics({
         totalTenants: data.totalTenants ?? 0,
         totalUsers: data.totalUsers ?? 0,
@@ -40,86 +34,72 @@ export default function TenantManagement() {
     fetchAnalytics();
   }, []);
 
-  // ================= LOADING =================
   if (loading) {
     return (
-      <MainLayout>
-        <div className="flex items-center justify-center min-h-[300px]">
-          <div className="text-lg font-semibold text-gray-600 animate-pulse">
-            Loading Tenant Analytics...
-          </div>
+      <div className="min-h-[60vh] flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mx-auto" />
+          <h2 className="text-xl font-bold mt-6 text-slate-700">Loading SaaS Metrics...</h2>
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
-  // ================= ERROR =================
   if (error) {
     return (
-      <MainLayout>
+      <div className="p-6">
         <div className="bg-red-50 border border-red-200 text-red-700 p-5 rounded-2xl">
           <p className="font-semibold">{error}</p>
         </div>
-      </MainLayout>
+      </div>
     );
   }
 
-  // ================= UI =================
   return (
-    <MainLayout>
-      <div className="space-y-10">
-
-        {/* HERO SECTION */}
-        <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 rounded-3xl p-10 text-white shadow-xl">
-          <h1 className="text-4xl md:text-5xl font-black">
-            Tenant Management
-          </h1>
-          <p className="mt-3 text-cyan-100 text-lg">
-            Monitor tenants, users, and system activity in real time
-          </p>
-        </div>
-
-        {/* STATS GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-          {/* TOTAL TENANTS */}
-          <div className="bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
-            <h2 className="text-gray-500 font-medium">
-              Total Tenants
-            </h2>
-            <p className="text-4xl font-black mt-3 text-blue-600">
-              {analytics.totalTenants}
-            </p>
-          </div>
-
-          {/* TOTAL USERS */}
-          <div className="bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
-            <h2 className="text-gray-500 font-medium">
-              Total Users
-            </h2>
-            <p className="text-4xl font-black mt-3 text-indigo-600">
-              {analytics.totalUsers}
-            </p>
-          </div>
-
-          {/* ACTIVE USERS */}
-          <div className="bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
-            <h2 className="text-gray-500 font-medium">
-              Active Users
-            </h2>
-            <p className="text-4xl font-black mt-3 text-green-600">
-              {analytics.activeUsers}
-            </p>
-          </div>
-
-        </div>
-
-        {/* FOOTER */}
-        <div className="text-center text-sm text-gray-500">
-          Real-time SaaS tenant analytics dashboard
-        </div>
-
+    <div className="p-6 space-y-8 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 rounded-3xl p-8 text-white shadow-md">
+        <h1 className="text-3xl font-extrabold tracking-tight">Tenant Control Center</h1>
+        <p className="mt-2 text-indigo-100">Monitor SaaS instances, database tenants, and active system operations.</p>
       </div>
-    </MainLayout>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Total Tenants</span>
+            <h2 className="text-4xl font-black text-indigo-600 mt-2">{analytics.totalTenants}</h2>
+          </div>
+          <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <Building2 size={22} />
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Provisioned Users</span>
+            <h2 className="text-4xl font-black text-slate-800 mt-2">{analytics.totalUsers}</h2>
+          </div>
+          <div className="h-12 w-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center">
+            <Users size={22} />
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Active Sessions</span>
+            <h2 className="text-4xl font-black text-emerald-600 mt-2">{analytics.activeUsers}</h2>
+          </div>
+          <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <Radio size={22} className="animate-pulse" />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-center gap-2 pt-6 border-t border-slate-100 text-xs text-slate-400 font-medium">
+        <ShieldCheck size={14} />
+        <span>SaaS Multi-Tenant Management Center Active</span>
+      </div>
+    </div>
   );
 }

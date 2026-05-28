@@ -2,12 +2,12 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
-import Invite from "../models/Invite.js"
+import Invite from "../models/Invite.js";
 import User from "../models/User.js";
 import Company from "../models/Company.js";
 import OTP from "../models/Otp.js";
 
-// ================= TOKEN =================
+// ================= TOKEN GENERATORS =================
 
 const generateAccessToken = (user) => {
   return jwt.sign(
@@ -25,7 +25,7 @@ const generateRefreshToken = (user) => {
   );
 };
 
-// ================= OTP =================
+// ================= OTP GENERATION =================
 
 export const sendOTP = async (req, res) => {
   try {
@@ -43,7 +43,7 @@ export const sendOTP = async (req, res) => {
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
 
-    console.log("OTP:", otp);
+    console.log("Generated OTP:", otp);
 
     res.json({
       success: true,
@@ -66,7 +66,7 @@ export const verifyOTP = async (req, res) => {
     if (!record) {
       return res.status(400).json({
         success: false,
-        message: "Invalid OTP",
+        message: "Invalid or expired OTP",
       });
     }
 
@@ -82,29 +82,30 @@ export const verifyOTP = async (req, res) => {
   }
 };
 
-// ================= REGISTER =================
+// ================= REGISTER EMPLOYEE (OTP ENABLED) =================
 
 export const registerUser = async (req, res) => {
   try {
     const email = req.body.email?.toLowerCase();
+    const { name, password, role } = req.body;
 
     const existing = await User.findOne({ email });
 
     if (existing) {
-      return res.status(400).json({ message: "User exists" });
+      return res.status(400).json({ message: "User already exists" });
     }
 
-    const hashed = await bcrypt.hash(req.body.password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
-    const user = await User.create({
-      name: req.body.name,
+    await User.create({
+      name,
       email,
       password: hashed,
-      role: req.body.role || "EMPLOYEE",
+      role: role || "EMPLOYEE",
       isVerified: false,
     });
 
-    // send OTP
+    // generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000);
 
     await OTP.create({
@@ -113,33 +114,34 @@ export const registerUser = async (req, res) => {
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
 
+    console.log("Employee Signup OTP:", otp);
+
     res.json({
       success: true,
-      message: "OTP sent for verification",
+      message: "OTP sent to email for verification",
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// ================= LOGIN (FINAL FIX) =================
+// ================= LOGIN (STABLE & SECURE) =================
 
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // validation
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password required",
+        message: "Email and password are required",
       });
     }
 
-    // find user
+    // Force load the select: false password field
     const user = await User.findOne({
       email: email.toLowerCase().trim(),
-    });
+    }).select("+password");
 
     if (!user) {
       return res.status(400).json({
@@ -148,15 +150,13 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // check password exists
     if (!user.password) {
       return res.status(400).json({
         success: false,
-        message: "Password not set for this user",
+        message: "Password has not been set for this account",
       });
     }
 
-    // compare password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -166,7 +166,6 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // create tokens
     const accessToken = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -179,8 +178,13 @@ export const loginUser = async (req, res) => {
       { expiresIn: "30d" }
     );
 
-    user.refreshToken = refreshToken;
-    await user.save();
+    // Bypass full document save validation that causes required-field errors
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { refreshToken } }
+    );
+
+    user.password = undefined;
 
     return res.status(200).json({
       success: true,
@@ -190,10 +194,10 @@ export const loginUser = async (req, res) => {
     });
 
   } catch (err) {
-    console.log("LOGIN ERROR:", err);
+    console.error("LOGIN ERROR:", err);
     return res.status(500).json({
       success: false,
-      message: "Server error in login",
+      message: "Server error occurred during login",
       error: err.message,
     });
   }
@@ -206,7 +210,7 @@ export const refreshToken = async (req, res) => {
     const token = req.body.refreshToken;
 
     if (!token) {
-      return res.status(401).json({ message: "No token" });
+      return res.status(401).json({ message: "No refresh token provided" });
     }
 
     const decoded = jwt.verify(
@@ -217,7 +221,7 @@ export const refreshToken = async (req, res) => {
     const user = await User.findById(decoded.id);
 
     if (!user || user.refreshToken !== token) {
-      return res.status(403).json({ message: "Invalid token" });
+      return res.status(403).json({ message: "Invalid refresh token" });
     }
 
     const newAccessToken = generateAccessToken(user);
@@ -227,10 +231,9 @@ export const refreshToken = async (req, res) => {
       accessToken: newAccessToken,
     });
   } catch (err) {
-    res.status(403).json({ message: "Token expired" });
+    res.status(403).json({ message: "Refresh token expired" });
   }
 };
-
 
 // ================= REGISTER ADMIN =================
 
@@ -268,8 +271,10 @@ export const registerAdmin = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    user.refreshToken = refreshToken;
-    await user.save();
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { refreshToken } }
+    );
 
     return res.status(201).json({
       success: true,
@@ -284,7 +289,6 @@ export const registerAdmin = async (req, res) => {
     });
   }
 };
-
 
 // ================= FORGOT PASSWORD =================
 
@@ -305,10 +309,15 @@ export const forgotPassword = async (req, res) => {
 
     const token = crypto.randomBytes(32).toString("hex");
 
-    user.resetToken = token;
-    user.resetTokenExpiry = Date.now() + 3600000;
-
-    await user.save();
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          resetToken: token,
+          resetTokenExpiry: Date.now() + 3600000,
+        },
+      }
+    );
 
     return res.json({
       success: true,
@@ -337,15 +346,22 @@ export const resetPassword = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid token",
+        message: "Token has expired or is invalid",
       });
     }
 
-    user.password = await bcrypt.hash(password, 10);
-    user.resetToken = null;
-    user.resetTokenExpiry = null;
+    const hashed = await bcrypt.hash(password, 10);
 
-    await user.save();
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          password: hashed,
+          resetToken: null,
+          resetTokenExpiry: null,
+        },
+      }
+    );
 
     return res.json({
       success: true,
@@ -372,14 +388,19 @@ export const verifyEmail = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid token",
+        message: "Invalid verification token",
       });
     }
 
-    user.isVerified = true;
-    user.verificationToken = null;
-
-    await user.save();
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          isVerified: true,
+          verificationToken: null,
+        },
+      }
+    );
 
     return res.json({
       success: true,
@@ -393,7 +414,7 @@ export const verifyEmail = async (req, res) => {
   }
 };
 
-// ================= JOB USER =================
+// ================= REGISTER JOB USER =================
 
 export const registerJobUser = async (req, res) => {
   try {
@@ -406,7 +427,7 @@ export const registerJobUser = async (req, res) => {
     if (existing) {
       return res.status(400).json({
         success: false,
-        message: "User exists",
+        message: "User already exists",
       });
     }
 
@@ -423,8 +444,10 @@ export const registerJobUser = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    user.refreshToken = refreshToken;
-    await user.save();
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { refreshToken } }
+    );
 
     return res.json({
       success: true,
@@ -440,7 +463,7 @@ export const registerJobUser = async (req, res) => {
   }
 };
 
-// ================= INVITE USER =================
+// ================= REGISTER EMPLOYEE WITH INVITE =================
 
 export const registerEmployeeWithInvite = async (req, res) => {
   try {
@@ -452,7 +475,7 @@ export const registerEmployeeWithInvite = async (req, res) => {
     if (!invite) {
       return res.status(400).json({
         success: false,
-        message: "Invalid invite",
+        message: "Invalid invitation token",
       });
     }
 

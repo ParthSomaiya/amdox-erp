@@ -1,112 +1,83 @@
 import { askGemini } from "../services/geminiService.js";
+import { extractInvoiceText } from "../services/invoiceOCR.js";
 
-import {
-    extractInvoiceText,
-} from "../services/invoiceOCR.js";
+// ================= AI CHAT (RESOLVES PROMPT/MESSAGE PAYLOAD KEYS) =================
+export const aiChat = async (req, res) => {
+  try {
+    // Accommodate both "prompt" (AIAssistant.jsx) and "message" (SmartSearch.jsx) payload keys
+    const message = req.body.message || req.body.prompt;
 
+    if (!message) {
+      return res.status(400).json({
+        success: false,
+        message: "A prompt or message parameter is required.",
+      });
+    }
 
-// ================= AI CHAT =================
+    const response = await askGemini(message);
 
-export const aiChat =
-    async (req, res) => {
-
-        try {
-
-            const { message } = req.body;
-
-            const response =
-                await askGemini(message);
-
-            res.json({
-
-                success: true,
-                response,
-
-            });
-
-        } catch (err) {
-
-            res.status(500).json({
-
-                success: false,
-                message: err.message,
-
-            });
-
-        }
-
-    };
-
+    // Normalize response key to "reply" to resolve frontend UI errors
+    res.json({
+      success: true,
+      reply: response,
+      response: response,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 
 // ================= AI ANALYTICS =================
+export const aiAnalytics = async (req, res) => {
+  try {
+    const prompt = `
+      Analyze the following business parameters:
+      - Total Revenue: ${req.body.revenue || "0"}
+      - Total Expenses: ${req.body.expenses || "0"}
+      - Total Employees: ${req.body.employees || "0"}
 
-export const aiAnalytics =
-    async (req, res) => {
+      Provide core business insights, trend analysis, and actionable recommendations.
+    `;
 
-        try {
+    const response = await askGemini(prompt);
 
-            const prompt = `
-      Analyze business performance:
-      Revenue: ${req.body.revenue}
-      Expenses: ${req.body.expenses}
-      Employees: ${req.body.employees}
+    // Normalize response keys to satisfy AIInsightsCards.jsx
+    res.json({
+      success: true,
+      insights: response,
+      reply: response,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 
-      Give insights and recommendations.
-      `;
+// ================= OCR INVOICE =================
+export const invoiceOCR = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No invoice file uploaded.",
+      });
+    }
 
-            const response =
-                await askGemini(prompt);
+    const text = await extractInvoiceText(req.file.path);
 
-            res.json({
-
-                success: true,
-                insights: response,
-
-            });
-
-        } catch (err) {
-
-            res.status(500).json({
-
-                success: false,
-                message: err.message,
-
-            });
-
-        }
-
-    };
-
-
-
-// ================= OCR =================
-
-export const invoiceOCR =
-    async (req, res) => {
-
-        try {
-
-            const text =
-                await extractInvoiceText(
-                    req.file.path
-                );
-
-            res.json({
-
-                success: true,
-                text,
-
-            });
-
-        } catch (err) {
-
-            res.status(500).json({
-
-                success: false,
-                message: err.message,
-
-            });
-
-        }
-
-    };
+    res.json({
+      success: true,
+      text,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};

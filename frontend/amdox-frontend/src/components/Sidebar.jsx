@@ -1,406 +1,223 @@
-import {
-  Link,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export default function Sidebar() {
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const location =
-    useLocation();
-
-  const navigate =
-    useNavigate();
-
-  // ================= USER =================
-
-  const user =
-    JSON.parse(
-      localStorage.getItem("user") || "{}"
-    );
-
-  const role =
-    user?.role;
-
-  // ================= ACTIVE CLASS =================
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const role = user?.role;
 
   const menuClass = (path) => `
-
     flex
     items-center
     gap-3
     px-4
-    py-3
-    rounded-2xl
+    py-2.5
+    rounded-xl
     transition-all
-    duration-300
-    mb-2
-    font-medium
+    duration-200
+    mb-1.5
+    text-sm
+    font-semibold
 
     ${
       location.pathname === path
-
-        ? `
-          bg-gradient-to-r
-          from-cyan-500
-          to-blue-600
-          text-white
-          shadow-lg
-        `
-
-        : `
-          text-slate-300
-          hover:bg-slate-800
-          hover:text-white
-        `
+        ? "bg-indigo-50 text-indigo-600 shadow-inner"
+        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
     }
-
   `;
 
-  // ================= SECTION =================
-
-  const Section = ({ title }) => (
-
-    <div
-      className="
-        text-xs
-        uppercase
-        tracking-widest
-        text-slate-500
-        mt-8
-        mb-3
-        px-3
-      "
-    >
+  const SectionHeader = ({ title }) => (
+    <div className="text-[10px] uppercase tracking-wider text-slate-400 mt-6 mb-2.5 px-4 font-bold">
       {title}
     </div>
-
   );
 
-  // ================= LOGOUT =================
-
   const logout = () => {
-
     localStorage.clear();
-
     navigate("/login");
-
   };
 
   return (
-
     <aside
       className="
+        fixed
+        top-0
+        bottom-0
+        left-0
         w-[280px]
-        min-h-screen
-        bg-[#020617]
+        h-screen
+        bg-white
         border-r
-        border-slate-800
+        border-slate-200/80
         overflow-y-auto
+        z-40
+        flex
+        flex-col
+        justify-between
+        py-6
       "
     >
-
-      {/* LOGO */}
-
-      <div
-        className="
-          h-24
-          flex
-          items-center
-          px-6
-          border-b
-          border-slate-800
-        "
-      >
-
-        <div
-          className="
-            h-14
-            w-14
-            rounded-2xl
-            bg-gradient-to-r
-            from-cyan-500
-            to-blue-600
-            flex
-            items-center
-            justify-center
-            text-2xl
-            text-white
-            font-black
-          "
-        >
-          A
+      <div>
+        {/* Brand Header */}
+        <div className="px-6 pb-6 border-b border-slate-100 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-xl text-white font-black">
+            A
+          </div>
+          <div>
+            <h1 className="text-lg font-black text-slate-800 leading-none">AMDOX</h1>
+            <p className="text-slate-400 text-[10px] mt-1 font-bold uppercase tracking-wider">Enterprise ERP</p>
+          </div>
         </div>
 
-        <div className="ml-4">
+        {/* Menu Items */}
+        <div className="px-4 py-4">
+          
+          {/* ======================================================
+             💼 JOB SEEKER / CANDIDATE MENU
+          ====================================================== */}
+          {role === "JOB_SEEKER" ? (
+            <>
+              <SectionHeader title="Candidate Portal" />
+              <Link to="/careers" className={menuClass("/careers")}>
+                💼 Job Openings
+              </Link>
+              <Link to="/notifications" className={menuClass("/notifications")}>
+                🔔 Notifications
+              </Link>
+            </>
+          ) : (
+            /* ======================================================
+               🏢 STANDARD ERP WORKSPACE MENU (ADMIN, HR, FINANCE, EMPLOYEE)
+            ====================================================== */
+            <>
+              <SectionHeader title="Overview" />
+              {role === "EMPLOYEE" ? (
+                <Link to="/employee-dashboard" className={menuClass("/employee-dashboard")}>
+                  👤 Portal Dashboard
+                </Link>
+              ) : (
+                <Link to="/dashboard" className={menuClass("/dashboard")}>
+                  📊 Admin Dashboard
+                </Link>
+              )}
 
-          <h1 className="text-2xl font-black text-white">
+              {/* HR SECTION */}
+              {(role === "ADMIN" || role === "HR") && (
+                <>
+                  <SectionHeader title="HR Administration" />
+                  <Link to="/employees" className={menuClass("/employees")}>
+                    👥 Employees List
+                  </Link>
+                  <Link to="/attendance" className={menuClass("/attendance")}>
+                    📅 Attendance Log
+                  </Link>
+                  <Link to="/manage-leave" className={menuClass("/manage-leave")}>
+                    ✅ Leave Approval
+                  </Link>
+                </>
+              )}
 
-            AMDOX
+              {/* EMPLOYEE PORTAL */}
+              {role === "EMPLOYEE" && (
+                <>
+                  <SectionHeader title="Employee Portal" />
+                  <Link to="/attendance" className={menuClass("/attendance")}>
+                    📅 Log Attendance
+                  </Link>
+                  <Link to="/apply-leave" className={menuClass("/apply-leave")}>
+                    📩 Apply for Leave
+                  </Link>
+                </>
+              )}
 
-          </h1>
+              {/* FINANCE SECTION */}
+              {(role === "ADMIN" || role === "FINANCE") && (
+                <>
+                  <SectionHeader title="Financial Control" />
+                  <Link to="/gl" className={menuClass("/gl")}>
+                    📘 General Ledger
+                  </Link>
+                  <Link to="/bills" className={menuClass("/bills")}>
+                    🧾 Vendor Bills
+                  </Link>
+                  <Link to="/receivables" className={menuClass("/receivables")}>
+                    💳 Receivables
+                  </Link>
+                </>
+              )}
 
-          <p className="text-slate-500 text-xs">
+              {/* PROJECTS SECTION */}
+              {(role === "ADMIN" || role === "HR") && (
+                <>
+                  <SectionHeader title="Sprints & Tasks" />
+                  <Link to="/projects" className={menuClass("/projects")}>
+                    🚀 Workspace Projects
+                  </Link>
+                  <Link to="/tasks-board" className={menuClass("/tasks-board")}>
+                    🧩 Kanban Board
+                  </Link>
+                </>
+              )}
 
-            Enterprise ERP
+              {/* SYSTEM SETTINGS */}
+              {role === "ADMIN" && (
+                <>
+                  <SectionHeader title="Administration" />
+                  <Link to="/admin/settings" className={menuClass("/admin/settings")}>
+                    ⚙️ Settings Configuration
+                  </Link>
+                  <Link to="/admin/security" className={menuClass("/admin/security")}>
+                    🔐 Security Access
+                  </Link>
+                  <Link to="/admin/tenants" className={menuClass("/admin/tenants")}>
+                    🏢 Tenant Manager
+                  </Link>
+                  <Link to="/admin/audit" className={menuClass("/admin/audit")}>
+                    📜 Audit Activity
+                  </Link>
+                </>
+              )}
 
-          </p>
+              <SectionHeader title="Workspace" />
+              <Link to="/calendar" className={menuClass("/calendar")}>
+                📆 Calendar Events
+              </Link>
+              <Link to="/team-chat" className={menuClass("/team-chat")}>
+                💬 Team Workspace Chat
+              </Link>
+              <Link to="/notifications" className={menuClass("/notifications")}>
+                🔔 Activity Stream
+              </Link>
+            </>
+          )}
 
         </div>
-
       </div>
 
-      {/* MENU */}
-
-      <div className="p-5">
-
-        {/* COMMON */}
-
-        <Section title="Overview" />
-
-        {
-          role === "EMPLOYEE"
-
-            ? (
-
-              <Link
-                to="/employee-dashboard"
-                className={menuClass("/employee-dashboard")}
-              >
-                👤 Employee Dashboard
-              </Link>
-
-            )
-
-            : (
-
-              <Link
-                to="/dashboard"
-                className={menuClass("/dashboard")}
-              >
-                📊 Dashboard
-              </Link>
-
-            )
-        }
-
-        {/* HR */}
-
-        {
-          (
-            role === "ADMIN" ||
-            role === "HR"
-          ) && (
-            <>
-
-              <Section title="HR Management" />
-
-              <Link
-                to="/employees"
-                className={menuClass("/employees")}
-              >
-                👥 Employees
-              </Link>
-
-              <Link
-                to="/attendance"
-                className={menuClass("/attendance")}
-              >
-                📅 Attendance
-              </Link>
-
-              <Link
-                to="/manage-leave"
-                className={menuClass("/manage-leave")}
-              >
-                ✅ Leave Management
-              </Link>
-
-            </>
-          )
-        }
-
-        {/* EMPLOYEE */}
-
-        {
-          role === "EMPLOYEE" && (
-            <>
-
-              <Section title="Employee Portal" />
-
-              <Link
-                to="/attendance"
-                className={menuClass("/attendance")}
-              >
-                📅 Attendance
-              </Link>
-
-              <Link
-                to="/apply-leave"
-                className={menuClass("/apply-leave")}
-              >
-                📩 Apply Leave
-              </Link>
-
-            </>
-          )
-        }
-
-        {/* FINANCE */}
-
-        {
-          (
-            role === "ADMIN" ||
-            role === "FINANCE"
-          ) && (
-            <>
-
-              <Section title="Finance" />
-
-              <Link
-                to="/gl"
-                className={menuClass("/gl")}
-              >
-                📘 General Ledger
-              </Link>
-
-              <Link
-                to="/bills"
-                className={menuClass("/bills")}
-              >
-                🧾 Bills
-              </Link>
-
-              <Link
-                to="/receivables"
-                className={menuClass("/receivables")}
-              >
-                💳 Receivables
-              </Link>
-
-            </>
-          )
-        }
-
-        {/* PROJECT */}
-
-        {
-          (
-            role === "ADMIN" ||
-            role === "HR"
-          ) && (
-            <>
-
-              <Section title="Projects" />
-
-              <Link
-                to="/projects"
-                className={menuClass("/projects")}
-              >
-                🚀 Projects
-              </Link>
-
-              <Link
-                to="/tasks-board"
-                className={menuClass("/tasks-board")}
-              >
-                🧩 Task Board
-              </Link>
-
-            </>
-          )
-        }
-
-        {/* ADMIN */}
-
-        {
-          role === "ADMIN" && (
-            <>
-
-              <Section title="Administration" />
-
-              <Link
-                to="/admin/settings"
-                className={menuClass("/admin/settings")}
-              >
-                ⚙️ Settings
-              </Link>
-
-              <Link
-                to="/admin/security"
-                className={menuClass("/admin/security")}
-              >
-                🔐 Security
-              </Link>
-
-              <Link
-                to="/admin/tenants"
-                className={menuClass("/admin/tenants")}
-              >
-                🏢 Tenants
-              </Link>
-
-              <Link
-                to="/admin/audit"
-                className={menuClass("/admin/audit")}
-              >
-                📜 Audit Logs
-              </Link>
-
-            </>
-          )
-        }
-
-        {/* OTHER */}
-
-        <Section title="Workspace" />
-
-        <Link
-          to="/calendar"
-          className={menuClass("/calendar")}
-        >
-          📆 Calendar
-        </Link>
-
-        <Link
-          to="/team-chat"
-          className={menuClass("/team-chat")}
-        >
-          💬 Team Chat
-        </Link>
-
-        <Link
-          to="/notifications"
-          className={menuClass("/notifications")}
-        >
-          🔔 Notifications
-        </Link>
-
-        {/* LOGOUT */}
-
+      {/* Logout Trigger */}
+      <div className="px-4">
         <button
           onClick={logout}
           className="
-            mt-10
             w-full
-            bg-red-500
-            hover:bg-red-600
-            text-white
+            border
+            border-rose-200
+            bg-rose-50/50
+            hover:bg-rose-500
+            text-rose-600
+            hover:text-white
             py-3
-            rounded-2xl
-            font-semibold
+            rounded-xl
+            font-bold
+            text-sm
             transition-all
+            duration-200
           "
         >
-
-          Logout
-
+          Sign Out
         </button>
-
       </div>
-
     </aside>
-
   );
-
 }

@@ -1,520 +1,135 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
-import {
-  Search,
-  Users,
-  Mail,
-  Briefcase,
-  Plus,
-} from "lucide-react";
-
-import {
-  Link,
-} from "react-router-dom";
-
+import { useEffect, useState } from "react";
+import { Search, Users, Mail, Briefcase, Plus, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import API from "../services/api";
 
 export default function Employees() {
-
-  // ================= STATE =================
-
-  const [employees, setEmployees] =
-    useState([]);
-
-  const [filteredEmployees, setFilteredEmployees] =
-    useState([]);
-
-  const [search, setSearch] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(true);
-
-  // ================= FETCH =================
+  const [employees, setEmployees] = useState([]);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
     fetchEmployees();
-
   }, []);
 
-  const fetchEmployees =
-    async () => {
-
-      try {
-
-        const res =
-          await API.get("/hr");
-
-        setEmployees(res.data);
-
-        setFilteredEmployees(
-          res.data
-        );
-
-      } catch (err) {
-
-        console.log(err);
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
-    };
-
-  // ================= SEARCH =================
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      const res = await API.get("/hr");
+      setEmployees(res.data || []);
+      setFilteredEmployees(res.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
+    const filtered = employees.filter((emp) => {
+      const name = emp?.userId?.name?.toLowerCase() || "";
+      const email = emp?.userId?.email?.toLowerCase() || "";
+      const position = emp?.position?.toLowerCase() || "";
+      const searchText = search.toLowerCase();
 
-    const filtered =
-      employees.filter((emp) => {
-
-        const name =
-          emp?.userId?.name
-            ?.toLowerCase() || "";
-
-        const email =
-          emp?.userId?.email
-            ?.toLowerCase() || "";
-
-        const position =
-          emp?.position
-            ?.toLowerCase() || "";
-
-        return (
-
-          name.includes(
-            search.toLowerCase()
-          ) ||
-
-          email.includes(
-            search.toLowerCase()
-          ) ||
-
-          position.includes(
-            search.toLowerCase()
-          )
-
-        );
-
-      });
-
+      return name.includes(searchText) || email.includes(searchText) || position.includes(searchText);
+    });
     setFilteredEmployees(filtered);
-
   }, [search, employees]);
 
   return (
-
-    <div className="space-y-8">
-
-      {/* HERO */}
-
-      <div
-        className="
-          bg-gradient-to-r
-          from-cyan-600
-          via-blue-600
-          to-indigo-700
-          rounded-[32px]
-          p-10
-          text-white
-          shadow-xl
-        "
-      >
-
-        <div
-          className="
-            flex
-            flex-col
-            lg:flex-row
-            lg:items-center
-            lg:justify-between
-            gap-6
-          "
-        >
-
-          <div>
-
-            <h1
-              className="
-                text-5xl
-                font-black
-              "
-            >
-
-              Employees
-
-            </h1>
-
-            <p
-              className="
-                mt-4
-                text-cyan-100
-                text-lg
-              "
-            >
-
-              Manage all company employees professionally
-
-            </p>
-
-          </div>
-
-          <Link
-            to="/add-employee"
-            className="
-              h-14
-              px-8
-              rounded-2xl
-              bg-white
-              text-blue-700
-              font-bold
-              flex
-              items-center
-              justify-center
-              gap-3
-              hover:scale-105
-              transition-all
-              duration-300
-            "
-          >
-
-            <Plus size={22} />
-
-            Add Employee
-
-          </Link>
-
+    <div className="space-y-6">
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">Employees</h1>
+          <p className="mt-2 text-indigo-100 text-sm">Manage company-wide personnel registry and permissions.</p>
         </div>
-
+        <Link
+          to="/add-employee"
+          className="h-11 px-5 rounded-xl bg-white hover:bg-slate-50 text-indigo-600 text-sm font-bold flex items-center justify-center gap-2 transition shadow-sm"
+        >
+          <Plus size={16} /> Add Employee
+        </Link>
       </div>
 
-      {/* SEARCH */}
-
-      <div
-        className="
-          bg-white
-          rounded-[28px]
-          shadow-lg
-          p-6
-        "
-      >
-
-        <div
-          className="
-            h-16
-            border
-            border-gray-200
-            rounded-2xl
-            flex
-            items-center
-            px-5
-            focus-within:border-cyan-500
-          "
-        >
-
-          <Search
-            size={22}
-            className="
-              text-gray-400
-            "
-          />
-
+      {/* Filter and search bar */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-sm">
+        <div className="relative max-w-md">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
-
             type="text"
-
-            placeholder="Search employee by name, email or position..."
-
+            placeholder="Search by name, email, or position..."
             value={search}
-
-            onChange={(e) =>
-              setSearch(
-                e.target.value
-              )
-            }
-
-            className="
-              flex-1
-              h-full
-              px-4
-              outline-none
-              text-lg
-            "
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-11 rounded-xl border border-slate-300 pl-11 pr-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50 focus:bg-white transition"
           />
-
         </div>
-
       </div>
 
-      {/* TABLE */}
-
-      <div
-        className="
-          bg-white
-          rounded-[32px]
-          shadow-lg
-          overflow-hidden
-        "
-      >
-
-        {/* HEADER */}
-
-        <div
-          className="
-            grid
-            grid-cols-12
-            bg-slate-100
-            px-8
-            py-5
-            font-bold
-            text-gray-600
-            text-sm
-            uppercase
-            tracking-wider
-          "
-        >
-
-          <div className="col-span-4">
-            Employee
+      {/* Grid Table Card */}
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="p-20 text-center">
+            <Loader2 className="animate-spin h-10 w-10 text-indigo-600 mx-auto" />
+            <p className="mt-4 text-slate-500 font-semibold text-sm">Loading employees...</p>
           </div>
-
-          <div className="col-span-3">
-            Email
+        ) : filteredEmployees.length === 0 ? (
+          <div className="p-20 text-center text-slate-400 space-y-4">
+            <Users size={64} className="mx-auto text-slate-300" />
+            <h3 className="text-xl font-bold text-slate-700">No Employees Found</h3>
+            <p className="text-sm">Verify your database record or register new staff members.</p>
           </div>
-
-          <div className="col-span-3">
-            Position
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-slate-600">
+              <thead className="bg-slate-50 text-slate-700 border-b">
+                <tr>
+                  <th className="p-4 text-left font-semibold">Employee</th>
+                  <th className="p-4 text-left font-semibold">Email</th>
+                  <th className="p-4 text-left font-semibold">Position</th>
+                  <th className="p-4 text-left font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredEmployees.map((emp) => (
+                  <tr key={emp._id} className="border-b hover:bg-slate-50/50 transition">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 font-bold flex items-center justify-center uppercase">
+                          {emp?.userId?.name?.charAt(0) || "E"}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-800 text-sm">{emp?.userId?.name}</h4>
+                          <span className="text-xs text-slate-400 font-medium">ID: {emp._id.slice(-6)}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2 text-slate-500 text-sm">
+                        <Mail size={14} />
+                        {emp?.userId?.email}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2 text-slate-600 font-semibold text-sm">
+                        <Briefcase size={14} className="text-slate-400" />
+                        {emp?.position}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-100">
+                        Active
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-
-          <div className="col-span-2">
-            Status
-          </div>
-
-        </div>
-
-        {/* BODY */}
-
-        {
-
-          loading ? (
-
-            <div className="p-20 text-center">
-
-              <h2
-                className="
-                  text-2xl
-                  font-bold
-                "
-              >
-
-                Loading Employees...
-
-              </h2>
-
-            </div>
-
-          ) : filteredEmployees.length === 0 ? (
-
-            <div className="p-20 text-center">
-
-              <Users
-                size={70}
-                className="
-                  mx-auto
-                  text-gray-300
-                "
-              />
-
-              <h2
-                className="
-                  text-3xl
-                  font-black
-                  mt-6
-                "
-              >
-
-                No Employees Found
-
-              </h2>
-
-            </div>
-
-          ) : (
-
-            filteredEmployees.map((emp) => (
-
-              <div
-
-                key={emp._id}
-
-                className="
-                  grid
-                  grid-cols-12
-                  px-8
-                  py-6
-                  border-b
-                  hover:bg-slate-50
-                  transition-all
-                "
-              >
-
-                {/* EMPLOYEE */}
-
-                <div
-                  className="
-                    col-span-4
-                    flex
-                    items-center
-                    gap-4
-                  "
-                >
-
-                  <div
-                    className="
-                      h-14
-                      w-14
-                      rounded-2xl
-                      bg-gradient-to-r
-                      from-cyan-500
-                      to-blue-600
-                      flex
-                      items-center
-                      justify-center
-                      text-white
-                      font-black
-                      text-xl
-                    "
-                  >
-
-                    {
-
-                      emp?.userId?.name
-                        ?.charAt(0)
-                        ?.toUpperCase()
-
-                    }
-
-                  </div>
-
-                  <div>
-
-                    <h2
-                      className="
-                        font-bold
-                        text-lg
-                      "
-                    >
-
-                      {
-                        emp?.userId?.name
-                      }
-
-                    </h2>
-
-                    <p className="text-gray-500 text-sm">
-
-                      Employee ID:
-                      {" "}
-                      {emp._id.slice(-6)}
-
-                    </p>
-
-                  </div>
-
-                </div>
-
-                {/* EMAIL */}
-
-                <div
-                  className="
-                    col-span-3
-                    flex
-                    items-center
-                    gap-3
-                    text-gray-600
-                  "
-                >
-
-                  <Mail size={18} />
-
-                  {
-                    emp?.userId?.email
-                  }
-
-                </div>
-
-                {/* POSITION */}
-
-                <div
-                  className="
-                    col-span-3
-                    flex
-                    items-center
-                    gap-3
-                  "
-                >
-
-                  <Briefcase
-                    size={18}
-                    className="
-                      text-cyan-600
-                    "
-                  />
-
-                  <span className="font-semibold">
-
-                    {emp?.position}
-
-                  </span>
-
-                </div>
-
-                {/* STATUS */}
-
-                <div
-                  className="
-                    col-span-2
-                    flex
-                    items-center
-                  "
-                >
-
-                  <span
-                    className="
-                      px-4
-                      py-2
-                      rounded-full
-                      text-sm
-                      font-bold
-                      bg-green-100
-                      text-green-700
-                    "
-                  >
-
-                    Active
-
-                  </span>
-
-                </div>
-
-              </div>
-
-            ))
-
-          )
-
-        }
-
+        )}
       </div>
-
     </div>
-
   );
-
 }
