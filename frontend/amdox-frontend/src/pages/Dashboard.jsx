@@ -1,15 +1,80 @@
-import { useMemo } from "react";
-import { Users, Briefcase, CalendarDays, IndianRupee, ArrowUpRight, Clock, Plus } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Users, Briefcase, CalendarDays, IndianRupee, ArrowUpRight, Clock, Plus, CheckCircle2, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import API from "../services/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
+  // ================= STATE =================
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState({
+    totalEmployees: 120,
+    activeProjects: 18,
+    attendanceRate: "95%",
+    monthlyBudget: "₹8.4L",
+    activities: [
+      {
+        id: 1,
+        title: "New Employee Onboarding",
+        description: "John Doe joined the Engineering department",
+        time: "2 min ago",
+        type: "plus"
+      },
+      {
+        id: 2,
+        title: "Payroll Cycles Processed",
+        description: "April payroll cycle finalized and validated",
+        time: "1 hour ago",
+        type: "check"
+      }
+    ]
+  });
+
+  // ================= DYNAMIC DATA FETCHING =================
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        // Try fetching from the master dashboard endpoint
+        const res = await API.get("/dashboard");
+        if (res.data && res.data.success) {
+          setDashboardData(res.data);
+        } else {
+          throw new Error("Master dashboard endpoint bypassed");
+        }
+      } catch (err) {
+        console.warn("Using fallback analytics endpoints to populate metrics:", err.message);
+        
+        // Parallel fallback queries to individual module endpoints
+        try {
+          const [hrRes, projectRes] = await Promise.all([
+            API.get("/hr/analytics"),
+            API.get("/projects")
+          ]);
+
+          setDashboardData((prev) => ({
+            ...prev,
+            totalEmployees: hrRes.data?.totalEmployees ?? prev.totalEmployees,
+            activeProjects: Array.isArray(projectRes.data) ? projectRes.data.length : prev.activeProjects,
+          }));
+        } catch (subErr) {
+          console.warn("Fallback sub-endpoints not fully reachable:", subErr.message);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // ================= MEMOIZED STATS GRID =================
   const stats = useMemo(() => [
     {
       title: "Total Employees",
-      value: "120",
+      value: dashboardData.totalEmployees,
       change: "+4.75%",
       isPositive: true,
       icon: <Users size={22} className="text-indigo-600" />,
@@ -17,7 +82,7 @@ export default function Dashboard() {
     },
     {
       title: "Active Projects",
-      value: "18",
+      value: dashboardData.activeProjects,
       change: "+12.5%",
       isPositive: true,
       icon: <Briefcase size={22} className="text-sky-600" />,
@@ -25,7 +90,7 @@ export default function Dashboard() {
     },
     {
       title: "Attendance Rate",
-      value: "95%",
+      value: dashboardData.attendanceRate,
       change: "-0.2%",
       isPositive: false,
       icon: <CalendarDays size={22} className="text-emerald-600" />,
@@ -33,13 +98,24 @@ export default function Dashboard() {
     },
     {
       title: "Monthly Budget",
-      value: "₹8.4L",
+      value: dashboardData.monthlyBudget,
       change: "+8.2%",
       isPositive: true,
       icon: <IndianRupee size={22} className="text-amber-600" />,
       bg: "bg-amber-50",
     },
-  ], []);
+  ], [dashboardData]);
+
+  if (loading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 border-t-transparent animate-spin text-indigo-600 mx-auto" />
+          <p className="mt-4 text-slate-500 font-semibold text-sm">Aggregating live analytics...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -55,7 +131,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Metrics Cards */}
+      {/* Metrics Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((item, idx) => (
           <div key={idx} className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex items-center justify-between">
@@ -92,35 +168,24 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-start justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                  <Plus size={18} />
+            {dashboardData.activities?.map((activity) => (
+              <div key={activity.id} className="flex items-start justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                <div className="flex items-start gap-3">
+                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    activity.type === "plus" ? "bg-indigo-50 text-indigo-600" : "bg-emerald-50 text-emerald-600"
+                  }`}>
+                    {activity.type === "plus" ? <Plus size={18} /> : <CheckCircle2 size={18} />}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm">{activity.title}</h4>
+                    <p className="text-xs text-slate-500 mt-1">{activity.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">New Employee Onboarding</h4>
-                  <p className="text-xs text-slate-500 mt-1">John Doe joined the Engineering department</p>
-                </div>
+                <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                  <Clock size={12} /> {activity.time}
+                </span>
               </div>
-              <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
-                <Clock size={12} /> 2m ago
-              </span>
-            </div>
-
-            <div className="flex items-start justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                  <CheckCircle2 size={18} />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Payroll Cycles Processed</h4>
-                  <p className="text-xs text-slate-500 mt-1">April payroll cycle finalized and validated</p>
-                </div>
-              </div>
-              <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
-                <Clock size={12} /> 1h ago
-              </span>
-            </div>
+            ))}
           </div>
         </div>
 
@@ -143,11 +208,4 @@ export default function Dashboard() {
       </div>
     </div>
   );
-}
-
-// Inline CheckCircle2 fallback if not imported
-function CheckCircle2(props) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
-  )
 }

@@ -1,11 +1,10 @@
 import express from "express";
 import { createEntry, getLedger } from "../controllers/glController.js";
-import { authMiddleware } from "../middleware/authMiddleware.js";
-import { allowRoles } from "../middleware/roleMiddleware.js";
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", authMiddleware, allowRoles("FINANCE"), createEntry);
-router.get("/", authMiddleware, allowRoles("FINANCE"), getLedger);
+router.post("/", protect, authorizeRoles("FINANCE", "ADMIN"), createEntry);
+router.get("/", protect, authorizeRoles("FINANCE", "ADMIN"), getLedger);
 
 export default router;

@@ -29,8 +29,7 @@ import {
   getExpenses,
 } from "../controllers/financeController.js";
 
-import { protect } from "../middleware/authMiddleware.js";
-import { authorizeRoles } from "../middleware/roleMiddleware.js";
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -41,9 +40,7 @@ const router = express.Router();
 // GET INVITE DETAILS
 router.get("/invite/:token", async (req, res) => {
   try {
-    const invite = await Invite.findOne({
-      token: req.params.token,
-    });
+    const invite = await Invite.findOne({ token: req.params.token });
 
     if (!invite || invite.expiresAt < new Date()) {
       return res.status(400).json({
@@ -52,15 +49,9 @@ router.get("/invite/:token", async (req, res) => {
       });
     }
 
-    return res.json({
-      success: true,
-      invite,
-    });
+    return res.json({ success: true, invite });
   } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 
@@ -109,10 +100,7 @@ router.post(
         inviteLink,
       });
     } catch (err) {
-      return res.status(500).json({
-        success: false,
-        message: err.message,
-      });
+      return res.status(500).json({ success: false, message: err.message });
     }
   }
 );
@@ -145,9 +133,7 @@ router.post("/register-invite", async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({
-      email: invite.email,
-    });
+    const existingUser = await User.findOne({ email: invite.email });
 
     if (existingUser) {
       return res.status(400).json({
@@ -163,6 +149,7 @@ router.post("/register-invite", async (req, res) => {
       password: hashedPassword,
       role: invite.role,
       companyId: invite.companyId,
+      isVerified: true,
     });
 
     await Invite.deleteOne({ token });
@@ -172,10 +159,7 @@ router.post("/register-invite", async (req, res) => {
       message: "Account created successfully",
     });
   } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 
@@ -183,100 +167,38 @@ router.post("/register-invite", async (req, res) => {
    👨‍💼 EMPLOYEE MANAGEMENT
 ========================================================= */
 
-router.post(
-  "/employees",
-  protect,
-  authorizeRoles("ADMIN", "HR"),
-  addEmployee
-);
-
-router.get(
-  "/employees",
-  protect,
-  authorizeRoles("ADMIN", "HR"),
-  getEmployees
-);
-
-router.get(
-  "/employees/search",
-  protect,
-  authorizeRoles("ADMIN", "HR"),
-  searchEmployees
-);
+router.post("/employees", protect, authorizeRoles("ADMIN", "HR"), addEmployee);
+router.get("/employees", protect, authorizeRoles("ADMIN", "HR"), getEmployees);
+router.get("/employees/search", protect, authorizeRoles("ADMIN", "HR"), searchEmployees);
 
 /* =========================================================
    🟡 LEAVE MANAGEMENT
 ========================================================= */
 
 router.post("/leave", protect, applyLeave);
-
-router.get(
-  "/leave",
-  protect,
-  authorizeRoles("ADMIN", "HR"),
-  getLeaves
-);
-
-router.put(
-  "/leave/status",
-  protect,
-  authorizeRoles("ADMIN", "HR"),
-  updateLeaveStatus
-);
-
-router.put(
-  "/leave/approve/:id",
-  protect,
-  authorizeRoles("ADMIN", "HR"),
-  approveLeave
-);
-
-router.put(
-  "/leave/reject/:id",
-  protect,
-  authorizeRoles("ADMIN", "HR"),
-  rejectLeave
-);
-
-router.get(
-  "/leave/prediction/:id",
-  protect,
-  authorizeRoles("ADMIN", "HR"),
-  leavePrediction
-);
+router.get("/leave", protect, authorizeRoles("ADMIN", "HR"), getLeaves);
+router.put("/leave/status", protect, authorizeRoles("ADMIN", "HR"), updateLeaveStatus);
+router.put("/leave/approve/:id", protect, authorizeRoles("ADMIN", "HR"), approveLeave);
+router.put("/leave/reject/:id", protect, authorizeRoles("ADMIN", "HR"), rejectLeave);
+router.get("/leave/prediction/:id", protect, authorizeRoles("ADMIN", "HR"), leavePrediction);
 
 /* =========================================================
    📊 HR ANALYTICS
 ========================================================= */
 
-router.get(
-  "/analytics",
-  protect,
-  authorizeRoles("ADMIN", "HR"),
-  hrAnalytics
-);
+router.get("/analytics", protect, authorizeRoles("ADMIN", "HR"), hrAnalytics);
 
 /* =========================================================
    💰 PAYROLL
 ========================================================= */
 
-router.post(
-  "/payroll/generate",
-  protect,
-  authorizeRoles("ADMIN", "HR"),
-  generatePayroll
-);
+router.post("/payroll/generate", protect, authorizeRoles("ADMIN", "HR"), generatePayroll);
 
 /* =========================================================
    🕒 ATTENDANCE / BIOMETRIC
 ========================================================= */
 
-router.post(
-  "/attendance/biometric",
-  protect,
-  authorizeRoles("ADMIN", "HR"),
-  biometricSync
-);
+router.post("/attendance/biometric", protect, authorizeRoles("ADMIN", "HR"), biometricSync);
 
 /* =========================================================
    📌 TIMELINE
@@ -285,42 +207,13 @@ router.post(
 router.get("/timeline", protect, getTimeline);
 
 /* =========================================================
-   💼 FINANCE MODULE
+   💼 FINANCE MODULE (HR ALIASES)
 ========================================================= */
 
-router.post(
-  "/invoice",
-  protect,
-  authorizeRoles("ADMIN", "FINANCE"),
-  createInvoice
-);
-
-router.get(
-  "/invoice",
-  protect,
-  authorizeRoles("ADMIN", "FINANCE"),
-  getInvoices
-);
-
-router.post(
-  "/invoice/paid",
-  protect,
-  authorizeRoles("ADMIN", "FINANCE"),
-  markInvoicePaid
-);
-
-router.post(
-  "/expense",
-  protect,
-  authorizeRoles("ADMIN", "FINANCE"),
-  addExpense
-);
-
-router.get(
-  "/expense",
-  protect,
-  authorizeRoles("ADMIN", "FINANCE"),
-  getExpenses
-);
+router.post("/invoice", protect, authorizeRoles("ADMIN", "FINANCE"), createInvoice);
+router.get("/invoice", protect, authorizeRoles("ADMIN", "FINANCE"), getInvoices);
+router.post("/invoice/paid", protect, authorizeRoles("ADMIN", "FINANCE"), markInvoicePaid);
+router.post("/expense", protect, authorizeRoles("ADMIN", "FINANCE"), addExpense);
+router.get("/expense", protect, authorizeRoles("ADMIN", "FINANCE"), getExpenses);
 
 export default router;

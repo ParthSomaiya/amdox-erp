@@ -44,6 +44,7 @@ import stockRoutes from "./routes/stockRoutes.js";
 import apRoutes from "./routes/apRoutes.js";
 import arRoutes from "./routes/arRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
+import calendarRoutes from "./routes/calendarRoutes.js"; // IMPORT NEW CALENDAR ROUTES
 
 // ================= APP INIT =================
 const app = express();
@@ -120,6 +121,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/sms", smsRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/calendar", calendarRoutes); // REGISTER NEW CALENDAR ROUTES
 
 // ================= 404 =================
 app.use("*", (req, res) => {

@@ -5,7 +5,7 @@ import {
   getInvoices,
   addExpense,
   getExpenses,
-  createJournal,
+  createJournalEntry,
   gstCalculation,
   auditReport,
 } from "../controllers/financeController.js";
@@ -15,90 +15,80 @@ import {
   getMonthlyFinance,
 } from "../controllers/financeAnalyticsController.js";
 
-import { 
-  authMiddleware,
-  protect,
-} from "../middleware/authMiddleware.js";
-
-import { 
-  allowRoles,
-  authorizeRoles,
- } from "../middleware/roleMiddleware.js";
-
-import { checkPermission } from "../middleware/permissionMiddleware.js";
-
-import { 
-  createJournalEntry,
-  getProfitAnalytics,
-} from "../controllers/financeController.js";
-
-import { PERMISSIONS } from "../config/permissions.js";
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Summary
+// Summary Analytics
 router.get(
   "/analytics",
-  authMiddleware,
-  checkPermission(PERMISSIONS.VIEW_ANALYTICS),
+  protect,
+  authorizeRoles("FINANCE", "ADMIN"),
   getFinanceAnalytics
 );
 
 router.get(
   "/analytics/monthly",
-  authMiddleware,
-  checkPermission(PERMISSIONS.VIEW_ANALYTICS),
+  protect,
+  authorizeRoles("FINANCE", "ADMIN"),
   getMonthlyFinance
 );
 
-// View allowed for admin + finance
+// Invoices
 router.get(
   "/invoice",
-  authMiddleware,
-  allowRoles("FINANCE", "ADMIN"),
+  protect,
+  authorizeRoles("FINANCE", "ADMIN"),
   getInvoices
 );
 
-// ONLY FINANCE + ADMIN
 router.post(
   "/invoice",
-  authMiddleware,
-  checkPermission(PERMISSIONS.CREATE_INVOICE),
+  protect,
+  authorizeRoles("FINANCE", "ADMIN"),
   createInvoice
 );
 
 router.post(
   "/invoice/paid",
-  authMiddleware,
-  allowRoles("FINANCE", "ADMIN"),
+  protect,
+  authorizeRoles("FINANCE", "ADMIN"),
   markInvoicePaid
+);
+
+// Expenses
+router.get(
+  "/expense",
+  protect,
+  authorizeRoles("FINANCE", "ADMIN"),
+  getExpenses
 );
 
 router.post(
   "/expense",
-  authMiddleware,
-  allowRoles("FINANCE", "ADMIN"),
+  protect,
+  authorizeRoles("FINANCE", "ADMIN"),
   addExpense
 );
 
+// Journals
 router.post(
   "/journal",
   protect,
+  authorizeRoles("FINANCE", "ADMIN"),
   createJournalEntry
 );
 
-router.get("/expense", authMiddleware, getExpenses);
-
-
 router.post(
   "/gst",
+  protect,
   gstCalculation
 );
 
 router.post(
   "/audit-report",
+  protect,
   auditReport
 );
-
 
 export default router;

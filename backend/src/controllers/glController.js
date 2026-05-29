@@ -1,4 +1,4 @@
-import JournalEntry from "../modules/finance/models/JournalEntry.js";
+import JournalEntry from "../models/JournalEntry.js";
 
 // Create journal entry
 export const createEntry = async (req, res) => {
@@ -8,17 +8,23 @@ export const createEntry = async (req, res) => {
       companyId: req.user.companyId,
     });
 
-    res.json(entry);
+    res.status(201).json(entry);
   } catch (err) {
-    res.status(500).json({ message: "GL error" });
+    console.error("GL entry creation error:", err);
+    res.status(500).json({ message: "Failed to create general ledger entry" });
   }
 };
 
 // Get ledger
 export const getLedger = async (req, res) => {
-  const data = await JournalEntry.find({
-    companyId: req.user.companyId,
-  }).sort({ createdAt: -1 });
+  try {
+    const data = await JournalEntry.find({
+      companyId: req.user.companyId,
+    }).sort({ createdAt: -1 });
 
-  res.json(data);
+    res.json(data);
+  } catch (err) {
+    console.error("Get ledger error:", err);
+    res.status(500).json({ message: "Failed to retrieve general ledger" });
+  }
 };

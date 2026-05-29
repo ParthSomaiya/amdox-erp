@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.post("/", protect, createTask);
 router.get("/", protect, getTasks);
-router.put("/status", protect, updateTaskStatus);
+router.put("/:id", protect, updateTaskStatus); 
 router.post("/log-hours", protect, logHours);
 
 export default router;

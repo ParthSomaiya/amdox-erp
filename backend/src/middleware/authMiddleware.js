@@ -1,15 +1,13 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-// =============================
-// PROTECT ROUTE (AUTH CHECK)
-// =============================
-
+// =============================================
+// PROTECT ROUTE (JWT VERIFICATION)
+// =============================================
 export const protect = async (req, res, next) => {
   try {
     let token;
 
-    // Check Authorization header
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")
@@ -20,7 +18,7 @@ export const protect = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Not authorized, token missing",
+        message: "Not authorized, session token missing",
       });
     }
 
@@ -36,100 +34,60 @@ export const protect = async (req, res, next) => {
     }
 
     // Find user
-    const user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.id);
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "User not found",
+        message: "User session not found",
       });
     }
 
     if (!user.isActive) {
       return res.status(403).json({
         success: false,
-        message: "Account disabled",
+        message: "This account has been disabled",
       });
     }
 
-    // Attach user to request
+    // Attach verified user instance with companyId to the request
     req.user = user;
-
     next();
   } catch (error) {
     console.error("AUTH ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Authentication failed",
-    });
-  }
-};
-
-// =============================
-// ALIAS (BACKWARD COMPATIBILITY)
-// =============================
-
-export const authMiddleware = (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.split(" ")[1];
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "No token provided",
-      });
-    }
-
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
-
-    req.user = decoded;
-    next();
-  } catch (err) {
     return res.status(401).json({
       success: false,
-      message: "Invalid token",
+      message: "Internal server authentication error",
     });
   }
 };
 
-// =============================
-// ROLE BASED ACCESS CONTROL
-// =============================
-
-export const authorize =
-  (...roles) =>
-  (req, res, next) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          message: "Unauthorized",
-        });
-      }
-
-      if (!roles.includes(req.user.role)) {
-        return res.status(403).json({
-          success: false,
-          message: "Access denied for this role",
-        });
-      }
-
-      next();
-    } catch (err) {
-      return res.status(500).json({
+// =============================================
+// ROLE AUTHORIZATION GUARD
+// =============================================
+export const authorizeRoles = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
         success: false,
-        message: "Role authorization failed",
+        message: "Unauthorized access, user missing",
       });
     }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: `Role '${req.user.role}' is not authorized to access this route`,
+      });
+    }
+
+    next();
   };
+};
 
-// =============================
-// ALIAS (YOUR OLD CODE SUPPORT)
-// =============================
-
-export const allowRoles = authorize;
-export const authorizeRoles = authorize;
+// =============================================
+// ALIASES FOR COMPATIBILITY
+// =============================================
+export const authMiddleware = protect;
+export const allowRoles = authorizeRoles;
+export const authorize = authorizeRoles; 

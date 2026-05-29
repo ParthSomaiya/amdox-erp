@@ -1,108 +1,77 @@
 import Task from "../models/Task.js";
 
+// Create Task
+export const createTask = async (req, res) => {
+  try {
+    const { title, description, priority, status } = req.body;
 
-// ==============================
-// ➕ CREATE TASK
-// ==============================
-
-export const createTask =
-  async (req, res) => {
-
-    try {
-
-      const task =
-        await Task.create({
-
-          ...req.body,
-
-          companyId:
-            req.user.companyId,
-
-        });
-
-      res.json(task);
-
-    } catch (err) {
-
-      res.status(500).json({
-        message:
-          err.message,
+    if (!title) {
+      return res.status(400).json({
+        success: false,
+        message: "Task title is required",
       });
-
     }
 
-  };
+    const task = await Task.create({
+      companyId: req.user.companyId,
+      title,
+      description: description || "",
+      priority: priority || "MEDIUM",
+      status: status || "TODO",
+    });
 
+    res.status(201).json(task);
+  } catch (err) {
+    console.error("Create task error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
-// ==============================
-// 📋 GET TASKS
-// ==============================
+// Get Tasks
+export const getTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({
+      companyId: req.user.companyId,
+    }).sort({ createdAt: -1 });
 
-export const getTasks =
-  async (req, res) => {
+    res.json(tasks);
+  } catch (err) {
+    console.error("Get tasks error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
-    try {
+// Update Task Status
+export const updateTaskStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, title, description, priority } = req.body;
 
-      const tasks =
-        await Task.find({
+    const updateFields = {};
+    if (status) updateFields.status = status;
+    if (title) updateFields.title = title;
+    if (description) updateFields.description = description;
+    if (priority) updateFields.priority = priority;
 
-          companyId:
-            req.user.companyId,
+    const task = await Task.findOneAndUpdate(
+      { _id: id, companyId: req.user.companyId },
+      { $set: updateFields },
+      { new: true }
+    );
 
-        });
-
-      res.json(tasks);
-
-    } catch (err) {
-
-      res.status(500).json({
-        message:
-          err.message,
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: "Task not found",
       });
-
     }
 
-  };
-
-
-// ==============================
-// 🔄 UPDATE STATUS
-// ==============================
-
-export const updateTaskStatus =
-  async (req, res) => {
-
-    try {
-
-      const {
-        taskId,
-        status,
-      } = req.body;
-
-      const task =
-        await Task.findByIdAndUpdate(
-
-          taskId,
-
-          { status },
-
-          { new: true }
-
-        );
-
-      res.json(task);
-
-    } catch (err) {
-
-      res.status(500).json({
-        message:
-          err.message,
-      });
-
-    }
-
-  };
-
+    res.json(task);
+  } catch (err) {
+    console.error("Update task error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 // ==============================
 // ⏱ LOG HOURS

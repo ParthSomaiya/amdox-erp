@@ -1,5 +1,4 @@
 import express from "express";
-
 import {
   generatePayroll,
   markPaid,
@@ -8,68 +7,21 @@ import {
   downloadPayslip,
 } from "../controllers/payrollController.js";
 
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
 
-/* =========================================================
-   ➕ PAYROLL GENERATION
-========================================================= */
-
-router.post(
-  "/generate",
-  protect,
-  generatePayroll
-);
-
-/* =========================================================
-   💰 MARK PAYROLL AS PAID
-========================================================= */
-
-router.put(
-  "/paid",
-  protect,
-  markPaid
-);
-
-/* =========================================================
-   📋 GET ALL PAYROLL (ADMIN/HR)
-========================================================= */
-
-router.get(
-  "/",
-  protect,
-  getAllPayroll
-);
-
-/* =========================================================
-   👤 GET MY PAYROLL (EMPLOYEE)
-========================================================= */
-
-router.get(
-  "/my",
-  protect,
-  getMyPayroll
-);
-
-/* =========================================================
-   📄 DOWNLOAD PAYSLIP (PDF)
-========================================================= */
-
-router.get(
-  "/payslip/:id",
-  protect,
-  downloadPayslip
-);
-
-/* =========================================================
-   📁 UPLOAD PAYSLIP (OPTIONAL FEATURE)
-========================================================= */
+router.post("/generate", protect, authorizeRoles("HR", "ADMIN"), generatePayroll);
+router.put("/paid", protect, authorizeRoles("HR", "ADMIN"), markPaid);
+router.get("/", protect, authorizeRoles("HR", "ADMIN"), getAllPayroll);
+router.get("/my", protect, getMyPayroll);
+router.get("/payslip/:id", protect, downloadPayslip);
 
 router.post(
   "/upload-payslip",
   protect,
+  authorizeRoles("HR", "ADMIN"),
   upload.single("file"),
   async (req, res) => {
     try {
@@ -89,10 +41,8 @@ router.post(
           size: req.file.size,
         },
       });
-
     } catch (err) {
       console.error("Upload Payslip Error:", err);
-
       return res.status(500).json({
         success: false,
         message: err.message || "Upload failed",
