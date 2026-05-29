@@ -45,6 +45,8 @@ import apRoutes from "./routes/apRoutes.js";
 import arRoutes from "./routes/arRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
 import calendarRoutes from "./routes/calendarRoutes.js"; // IMPORT NEW CALENDAR ROUTES
+import { getPurchaseOrders } from "./controllers/inventoryController.js";
+import { receivePurchaseOrder } from "./controllers/inventoryController.js";
 
 // ================= APP INIT =================
 const app = express();
@@ -122,6 +124,8 @@ app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/sms", smsRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/calendar", calendarRoutes); // REGISTER NEW CALENDAR ROUTES
+app.get("/api/po", getPurchaseOrders);
+app.use("/api", inventoryRoutes);
 
 // ================= 404 =================
 app.use("*", (req, res) => {

@@ -3,6 +3,52 @@ import { createPortal } from "react-dom";
 import { Search, Package, Plus, Trash2, Edit3, Loader2, Upload, X, Check } from "lucide-react";
 import API from "../services/api";
 
+// 🔹 ઇમેજ લોડ કરવા માટેનું હેલ્પર કોમ્પોનન્ટ (CORS અને CORP એરર હેન્ડલિંગ સાથે)
+function ProductImage({ p }) {
+  const path = p.imageUrl || p.image || p.productImage;
+  const [imgSrc, setImgSrc] = useState("");
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    if (!path) {
+      setHasError(true);
+      return;
+    }
+
+    if (path.startsWith("http")) {
+      setImgSrc(path);
+      return;
+    }
+
+    const cleanPath = path.replace(/^\//, "");
+    if (cleanPath.startsWith("uploads/") || cleanPath.startsWith("images/")) {
+      setImgSrc(`http://localhost:5000/${cleanPath}`);
+    } else {
+      setImgSrc(`http://localhost:5000/uploads/${cleanPath}`);
+    }
+  }, [path]);
+
+  if (hasError || !imgSrc) {
+    return (
+      <div className="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+        <Package size={20} />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={imgSrc}
+      alt={p.name}
+      crossOrigin="anonymous" // 🔹 આ એટ્રિબ્યુટ ERR_BLOCKED_BY_RESPONSE ને રોકવા માટે ઉમેરેલ છે
+      className="h-12 w-12 rounded-xl object-cover border border-slate-200"
+      onError={() => {
+        setHasError(true);
+      }}
+    />
+  );
+}
+
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +89,7 @@ export default function Products() {
 
       const formData = new FormData();
       formData.append("name", newProduct.name);
-      formData.append("stock", Number(newProduct.stock || 0)); // 🔹 ક્વાન્ટિટી સેવ કરવા માટે
+      formData.append("stock", Number(newProduct.stock || 0));
       formData.append("price", Number(newProduct.price || 0));
       if (imageFile) {
         formData.append("image", imageFile);
@@ -69,7 +115,7 @@ export default function Products() {
     setSelectedProduct(product);
     setUpdateForm({
       name: product.name || "",
-      stock: product.quantity || product.stock || 0, // 🔹 ક્વાન્ટિટી ગ્રેબિંગ
+      stock: product.quantity || product.stock || 0,
       price: product.price || 0,
     });
     setUpdateImageFile(null);
@@ -157,7 +203,7 @@ export default function Products() {
             onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
             className="h-11 rounded-xl border border-slate-300 px-4 outline-none focus:border-indigo-500 text-sm"
           />
-          
+
           {/* Image Input */}
           <div className="md:col-span-3">
             <label className="h-11 border border-dashed border-slate-300 rounded-xl flex items-center justify-center cursor-pointer bg-slate-50/50 hover:bg-white text-xs font-semibold text-slate-600 gap-2">
@@ -219,15 +265,11 @@ export default function Products() {
                 {filteredProducts.map((p) => (
                   <tr key={p._id} className="border-b hover:bg-slate-50/50 transition">
                     <td className="p-4">
-                      {p.image ? (
-                        <img src={`http://localhost:5000/${p.image}`} alt={p.name} className="h-12 w-12 rounded-xl object-cover border" />
-                      ) : (
-                        <div className="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400"><Package size={20} /></div>
-                      )}
+                      {/* 🔹 NEW IMPLEMENTATION OF PRODUCT IMAGE */}
+                      <ProductImage p={p} />
                     </td>
                     <td className="p-4 font-bold text-slate-800">{p.name}</td>
                     <td className="p-4">
-                      {/* 🔹 FIXED: Render quantity/stock properly */}
                       <span className="font-semibold text-slate-700">{(p.quantity !== undefined ? p.quantity : p.stock) || 0} units</span>
                     </td>
                     <td className="p-4 font-bold text-slate-700">₹{p.price?.toLocaleString()}</td>
@@ -267,6 +309,7 @@ export default function Products() {
             </div>
 
             <form onSubmit={handleUpdateProductSubmit} className="space-y-4">
+              {/* Product Name */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">Product Name</label>
                 <input
@@ -278,6 +321,7 @@ export default function Products() {
                 />
               </div>
 
+              {/* Stock Quantity */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">Stock Quantity</label>
                 <input
@@ -289,6 +333,7 @@ export default function Products() {
                 />
               </div>
 
+              {/* Unit Price */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">Unit Price (INR)</label>
                 <input
@@ -300,14 +345,63 @@ export default function Products() {
                 />
               </div>
 
+              {/* Product Image Section */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Update Image</label>
-                <label className="h-11 border border-dashed rounded-xl flex items-center justify-center cursor-pointer bg-slate-50/50 hover:bg-white text-xs font-semibold text-slate-600 gap-2">
-                  <Upload size={16} /> {updateImageFile ? updateImageFile.name : "Select New Image"}
-                  <input type="file" hidden accept="image/*" onChange={(e) => setUpdateImageFile(e.target.files[0])} />
-                </label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Product Image Preview</label>
+                <div className="flex items-center gap-4 mb-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                  {/* 🔹 CURRENT / PREVIEW IMAGE VIEWER */}
+                  {(() => {
+                    const currentPath = selectedProduct?.imageUrl || selectedProduct?.image || selectedProduct?.productImage;
+                    let currentImgUrl = "";
+
+                    if (updateImageFile) {
+                      // જો યુઝરે નવો ફોટો સિલેક્ટ કર્યો હોય તો તેનું પ્રીવ્યૂ બતાવશે
+                      currentImgUrl = URL.createObjectURL(updateImageFile);
+                    } else if (currentPath) {
+                      // નહીંતર જૂનો સેવ કરેલો ફોટો બતાવશે
+                      const cleanPath = currentPath.replace(/^\//, "");
+                      currentImgUrl = currentPath.startsWith("http")
+                        ? currentPath
+                        : (cleanPath.startsWith("uploads/") || cleanPath.startsWith("images/")
+                          ? `http://localhost:5000/${cleanPath}`
+                          : `http://localhost:5000/uploads/${cleanPath}`);
+                    }
+
+                    if (currentImgUrl) {
+                      return (
+                        <img
+                          src={currentImgUrl}
+                          alt="Preview"
+                          crossOrigin="anonymous"
+                          className="h-16 w-16 rounded-xl object-cover border border-slate-200 bg-white"
+                          onError={(e) => {
+                            if (!currentImgUrl.includes("/uploads/") && !updateImageFile) {
+                              e.target.src = `http://localhost:5000/uploads/${currentPath.replace(/^\//, "")}`;
+                            } else {
+                              e.target.style.display = 'none';
+                            }
+                          }}
+                        />
+                      );
+                    }
+                    return (
+                      <div className="h-16 w-16 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                        <Package size={24} />
+                      </div>
+                    );
+                  })()}
+
+                  {/* 🔹 FILE UPLOADER BUTTON */}
+                  <div className="flex-1">
+                    <label className="h-11 border border-dashed rounded-xl flex items-center justify-center cursor-pointer bg-white hover:bg-slate-50 text-xs font-semibold text-slate-600 gap-2">
+                      <Upload size={16} /> {updateImageFile ? updateImageFile.name : "Select New Image"}
+                      <input type="file" hidden accept="image/*" onChange={(e) => setUpdateImageFile(e.target.files[0])} />
+                    </label>
+                  </div>
+                </div>
               </div>
 
+              {/* Buttons */}
               <div className="flex gap-3 pt-3">
                 <button
                   type="button"

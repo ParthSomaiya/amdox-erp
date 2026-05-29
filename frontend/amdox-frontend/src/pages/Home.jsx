@@ -1,5 +1,5 @@
 import { useNavigate, Link } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -18,8 +18,12 @@ import {
   Activity,
   Database,
   Lock,
+  Package,
+  ShoppingCart,
+  Loader2,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
+import axios from "axios"; // 🔹 ડાયરેક્ટ પબ્લિક કનેક્શન માટે
 
 export default function Home() {
   const navigate = useNavigate();
@@ -29,6 +33,100 @@ export default function Home() {
 
   // Interactive FAQ State
   const [openFaq, setOpenFaq] = useState(null);
+
+  // Live Products State
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      // પબ્લિક યુઆરએલ દ્વારા ડેટા મેળવવો
+      const res = await axios.get("http://localhost:5000/api/inventory/product");
+      setProducts(res.data || []);
+    } catch (err) {
+      console.error("Failed to load products on landing page:", err);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  // Razorpay સ્ક્રિપ્ટ લોડ કરવાનું હેલ્પર
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  // Razorpay ટેસ્ટ પેમેન્ટ હેન્ડલર (ડાયરેક્ટ axios પોસ્ટ કોલ સાથે ગેસ્ટ સપોર્ટ)
+  const handlePurchase = async (product) => {
+    const isScriptLoaded = await loadRazorpayScript();
+    if (!isScriptLoaded) {
+      alert("Razorpay SDK failed to load. Are you online?");
+      return;
+    }
+
+    try {
+      // ૧. બેકએન્ડ પર ઓર્ડર ક્રિએટ કરવો (ડાયરેક્ટ ક્રોસઓરિજિન બાયપાસ કોલ)
+      const res = await axios.post("http://localhost:5000/api/payment/create-order", {
+        productId: product._id,
+        amount: product.price,
+      });
+
+      const { id: order_id, amount, currency } = res.data;
+
+      // ૨. Razorpay પોપઅપ કન્ફિગરેશન
+      const options = {
+        key: "rzp_test_SvHkUG3LDOpePY", // 🔹 તમારો ટેસ્ટ કી આઈડી ઉમેરો
+        amount: amount,
+        currency: currency,
+        name: "AMDOX ERP",
+        description: `Order placement for ${product.name}`,
+        order_id: order_id,
+        handler: async function (response) {
+          try {
+            // ૩. બેકએન્ડ વેરિફિકેશન (ડાયરેક્ટ axios કોલ)
+            const verifyRes = await axios.post("http://localhost:5000/api/payment/verify-order", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              productId: product._id,
+            });
+
+            if (verifyRes.data.success) {
+              alert("🎉 Payment Completed Successfully! Stock and Purchase History updated.");
+              fetchProducts(); // હોમપેજ કેટલોગ અપડેટ કરવા
+            }
+          } catch (verifyErr) {
+            console.error(verifyErr);
+            alert("Payment Verification Failed!");
+          }
+        },
+        prefill: {
+          name: "Guest Client",
+          email: "guest@amdox.com",
+          contact: "9999999999",
+        },
+        theme: {
+          color: "#4f46e5",
+        },
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Oops! Something went wrong. Payment failed");
+    }
+  };
 
   // Staggered Load Variants
   const containerVariants = {
@@ -103,7 +201,7 @@ export default function Home() {
     },
     {
       q: "Is there support for automated tax and GST calculations?",
-      a: "Absolutely. When generating invoices or payroll records, the systems dynamically apply customizable local, state, and central taxes (such as CGST/SGST matrices) based on the business region.",
+      a: "Absolutely. When generating invoices or payroll records, the systems dynamically apply customizable local, state, and central taxes (such as Slate/GST matrices) based on the business region.",
     },
   ];
 
@@ -140,22 +238,15 @@ export default function Home() {
               Unify HR modules, financial ledgers, sprint project tracking, and live warehouses into one beautifully aligned software ecosystem.
             </motion.p>
 
-            <motion.div variants={itemVariants} className="flex flex-wrap gap-4">
-              <button
-                onClick={() => navigate("/login")}
-                className="flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 text-base font-bold shadow-lg shadow-indigo-600/10 hover:scale-[1.03] active:scale-95 transition-all duration-200"
-              >
+            <div className="flex flex-wrap gap-4">
+              <button onClick={() => navigate("/login")} className="flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 text-base font-bold shadow-lg shadow-indigo-600/10 hover:scale-[1.03] active:scale-95 transition-all duration-200">
                 Access Workspace
                 <ArrowRight size={18} />
               </button>
-
-              <button
-                onClick={() => navigate("/register")}
-                className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-6 py-4 text-base font-semibold transition-all active:scale-95"
-              >
+              <button onClick={() => navigate("/register")} className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-6 py-4 text-base font-semibold transition-all active:scale-95">
                 Create Account
               </button>
-            </motion.div>
+            </div>
           </motion.div>
 
           {/* Hero Right Card */}
@@ -210,6 +301,73 @@ export default function Home() {
               {partner}
             </span>
           ))}
+        </div>
+      </section>
+
+      {/* ================= 🔹 NEW LIVE PRODUCTS SECTION (PRODUCTION GRADE) ================= */}
+      <section className="px-6 py-24 bg-slate-50 border-b border-slate-200/50">
+        <div className="max-w-7xl mx-auto space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <span className="text-xs uppercase tracking-widest text-indigo-600 font-bold flex items-center justify-center gap-1">
+              <Sparkles size={14} /> Global Shop
+            </span>
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Enterprise Tools & Products</h2>
+            <p className="text-slate-500 text-sm">Purchase modern systems seamlessly with secure Razorpay test gates.</p>
+          </div>
+
+          {loadingProducts ? (
+            <div className="py-20 text-center">
+              <Loader2 className="animate-spin h-10 w-10 text-indigo-600 mx-auto" />
+              <p className="mt-4 text-slate-500 font-semibold text-sm">Synchronizing live catalog...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {products.map((product) => {
+                const currentPath = product.image || product.imageUrl;
+                const cleanPath = currentPath ? currentPath.replace(/^\//, "") : "";
+                const imgUrl = currentPath
+                  ? (currentPath.startsWith("http")
+                      ? currentPath
+                      : (cleanPath.startsWith("uploads/")
+                          ? `http://localhost:5000/${cleanPath}`
+                          : `http://localhost:5000/uploads/${cleanPath}`))
+                  : "";
+
+                return (
+                  <div key={product._id} className="bg-white rounded-3xl border border-slate-200/80 p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-300">
+                    <div>
+                      {imgUrl ? (
+                        <img src={imgUrl} alt={product.name} crossOrigin="anonymous" className="h-48 w-full rounded-2xl object-cover border bg-white" />
+                      ) : (
+                        <div className="h-48 w-full rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 border"><Package size={48} /></div>
+                      )}
+
+                      <div className="mt-6 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-extrabold text-slate-800 text-lg">{product.name}</h4>
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${product.quantity > 0 ? "bg-green-50 text-green-700 border-green-100" : "bg-red-50 text-red-700 border-red-100"}`}>
+                            {product.quantity > 0 ? "In Stock" : "Out of Stock"}
+                          </span>
+                        </div>
+                        <p className="text-slate-500 text-xs">Stock Remaining: {product.quantity || 0} units</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 pt-4 border-t border-slate-200/60 flex items-center justify-between">
+                      <span className="text-xl font-black text-slate-900">₹{product.price?.toLocaleString()}</span>
+                      <button
+                        onClick={() => handlePurchase(product)}
+                        disabled={product.quantity < 1}
+                        className="h-11 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 text-white disabled:text-slate-400 font-bold text-xs flex items-center gap-1.5 transition-all shadow-md"
+                      >
+                        <ShoppingCart size={14} /> Buy Now
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 

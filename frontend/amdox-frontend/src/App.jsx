@@ -50,12 +50,23 @@ import CreateInvoice from "./pages/CreateInvoice";
 import Invoices from "./pages/Invoices";
 import ProfitLoss from "./pages/ProfitLoss";
 
-
-// ================= INVENTORY =================
+// ================= 📦 INVENTORY SUB-PAGES IMPORTS =================
 import InventoryDashboard from "./pages/InventoryDashboard";
 import Products from "./pages/Products";
 import PurchaseOrders from "./pages/PurchaseOrders";
 import StockHistory from "./pages/StockHistory";
+
+// તમારા ફોલ્ડર સ્ટ્રક્ચર મુજબના તમામ પેજીસ ઇમ્પોર્ટ કર્યા છે:
+import BarcodeScanner from "./pages/inventory/BarcodeScanner";
+import CreatePO from "./pages/inventory/CreatePO";
+import InventoryAnalytics from "./pages/inventory/InventoryAnalytics";
+import InventoryForecast from "./pages/inventory/InventoryForecast";
+import LowStock from "./pages/inventory/LowStock";
+import ProductDetail from "./pages/inventory/ProductDetail";
+import StockCharts from "./pages/inventory/StockCharts";
+import Vendors from "./pages/inventory/Vendors";
+import WarehouseHeatmap from "./pages/inventory/WarehouseHeatmap";
+import DemandForecasting from "./pages/inventory/DemandForecasting";
 
 // ================= PROJECTS =================
 import ProjectDashboard from "./pages/ProjectDashboard";
@@ -104,7 +115,7 @@ function App() {
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/login-success" element={<LoginSuccess />} />
 
-          {/* PROTECTED */}
+          {/* PROTECTED ROUTES */}
           <Route
             element={
               <ProtectedRoute
@@ -148,7 +159,7 @@ function App() {
 
             {/* FINANCE */}
             <Route path="/gl" element={<GL />} />
-            <Route path="/bills" element={<Bills />} />
+            <Route path="/bills" border element={<Bills />} />
             <Route path="/receivables" element={<Receivables />} />
             <Route path="/reconciliation" element={<Reconciliation />} />
             <Route path="/trial-balance" element={<TrialBalance />} />
@@ -157,11 +168,23 @@ function App() {
             <Route path="/invoices" element={<Invoices />} />
             <Route path="/profit-loss" element={<ProfitLoss />} />
 
-            {/* INVENTORY */}
+            {/* 📦 INVENTORY SUB-PAGES ROUTES REGISTERED */}
             <Route path="/inventory" element={<InventoryDashboard />} />
             <Route path="/products" element={<Products />} />
             <Route path="/purchase-orders" element={<PurchaseOrders />} />
             <Route path="/stock-history" element={<StockHistory />} />
+            
+            {/* તમારા ફોલ્ડર ટ્રી ના તમામ નવા પેજીસ અહીં રજીસ્ટર કર્યા છે: */}
+            <Route path="/inventory/create-po" element={<CreatePO />} />
+            <Route path="/inventory/low-stock" element={<LowStock />} />
+            <Route path="/inventory/scanner" element={<BarcodeScanner />} />
+            <Route path="/inventory/heatmap" element={<WarehouseHeatmap />} />
+            <Route path="/inventory/forecast" element={<DemandForecasting />} />
+            <Route path="/inventory/forecast-analysis" element={<InventoryForecast />} />
+            <Route path="/inventory/charts" element={<StockCharts />} />
+            <Route path="/inventory/analytics" element={<InventoryAnalytics />} />
+            <Route path="/inventory/vendors" element={<Vendors />} />
+            <Route path="/inventory/product/:id" element={<ProductDetail />} />
 
             {/* PROJECTS */}
             <Route path="/projects" element={<ProjectDashboard />} />

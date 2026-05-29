@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Package, AlertTriangle, Coins, RefreshCw } from "lucide-react";
+import { Package, AlertTriangle, Coins, RefreshCw, Loader2 } from "lucide-react";
 import API from "../services/api";
 
 export default function InventoryDashboard() {
@@ -18,13 +18,22 @@ export default function InventoryDashboard() {
     try {
       setLoading(true);
       const res = await API.get("/inventory/dashboard");
-      setStats(res.data || {});
+      setStats(res.data || { totalProducts: 0, lowStock: 0, totalValue: 0 });
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-20 text-center">
+        <Loader2 className="animate-spin h-10 w-10 text-teal-600 mx-auto" />
+        <p className="mt-4 text-slate-500 font-semibold text-sm">Aggregating live stock analytics...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -38,13 +47,12 @@ export default function InventoryDashboard() {
           onClick={fetchDashboard}
           className="h-11 px-5 rounded-xl bg-white hover:bg-slate-50 text-teal-600 text-sm font-bold flex items-center justify-center gap-2 transition shadow-sm"
         >
-          <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Refresh
+          <RefreshCw size={16} /> Refresh
         </button>
       </div>
 
       {/* 📊 KPI CARDS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
         {/* Total Products */}
         <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex items-center justify-between">
           <div>
@@ -77,7 +85,6 @@ export default function InventoryDashboard() {
             <Coins size={22} />
           </div>
         </div>
-
       </div>
     </div>
   );

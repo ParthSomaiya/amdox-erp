@@ -20,10 +20,9 @@ export default function Sidebar() {
     text-sm
     font-semibold
 
-    ${
-      location.pathname === path
-        ? "bg-indigo-50 text-indigo-600 shadow-inner"
-        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+    ${location.pathname === path
+      ? "bg-indigo-50 text-indigo-600 shadow-inner"
+      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
     }
   `;
 
@@ -72,7 +71,7 @@ export default function Sidebar() {
 
         {/* Menu Items */}
         <div className="px-4 py-4">
-          
+
           {/* ======================================================
              💼 JOB SEEKER / CANDIDATE MENU
           ====================================================== */}
@@ -88,7 +87,7 @@ export default function Sidebar() {
             </>
           ) : (
             /* ======================================================
-               🏢 STANDARD ERP WORKSPACE MENU (ADMIN, HR, FINANCE, EMPLOYEE)
+               🏢 STANDARD ERP WORKSPACE MENU
             ====================================================== */
             <>
               <SectionHeader title="Overview" />
@@ -171,7 +170,7 @@ export default function Sidebar() {
                 </>
               )}
 
-              {/* 🔹 ઉમેરેલ: SUPPLY CHAIN & INVENTORY SECTION (ચારેય ફાઇલો અહીં સાઇડબારમાં રજીસ્ટર કરેલ છે) */}
+              {/* 🔹 SUPPLY CHAIN & INVENTORY SECTION (બધા જ રૂટ્સ અને સબ-પેજીસ અહીં સાઇડબારમાં છે) */}
               {(role === "ADMIN" || role === "HR" || role === "FINANCE") && (
                 <>
                   <SectionHeader title="Inventory Control" />
@@ -184,8 +183,35 @@ export default function Sidebar() {
                   <Link to="/purchase-orders" className={menuClass("/purchase-orders")}>
                     🧾 Purchase Orders
                   </Link>
+                  <Link to="/inventory/create-po" className={menuClass("/inventory/create-po")}>
+                    🧾 Create Purchase Order
+                  </Link>
                   <Link to="/stock-history" className={menuClass("/stock-history")}>
                     🕒 Stock History
+                  </Link>
+                  <Link to="/inventory/low-stock" className={menuClass("/inventory/low-stock")}>
+                    ⚠️ Low Stock Alerts
+                  </Link>
+                  <Link to="/inventory/scanner" className={menuClass("/inventory/scanner")}>
+                    📷 Barcode Scanner
+                  </Link>
+                  <Link to="/inventory/heatmap" className={menuClass("/inventory/heatmap")}>
+                    🔥 Warehouse Heatmap
+                  </Link>
+                  <Link to="/inventory/forecast" className={menuClass("/inventory/forecast")}>
+                    🤖 AI Demand Forecasting
+                  </Link>
+                  <Link to="/inventory/forecast-analysis" className={menuClass("/inventory/forecast-analysis")}>
+                    📈 Reorder Forecasting
+                  </Link>
+                  <Link to="/inventory/charts" className={menuClass("/inventory/charts")}>
+                    📊 Stock Charts
+                  </Link>
+                  <Link to="/inventory/analytics" className={menuClass("/inventory/analytics")}>
+                    📉 Inventory Analytics
+                  </Link>
+                  <Link to="/inventory/vendors" className={menuClass("/inventory/vendors")}>
+                    👥 Vendors Registry
                   </Link>
                 </>
               )}
