@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 import Invite from "../models/Invite.js";
 import User from "../models/User.js";
@@ -290,46 +291,76 @@ export const registerAdmin = async (req, res) => {
   }
 };
 
-// ================= FORGOT PASSWORD =================
 
+// ======================================
+// 📩 FORGOT PASSWORD (OTP SENDER VIA GMAIL)
+// ======================================
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-
-    const user = await User.findOne({
-      email: email.toLowerCase(),
-    });
-
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    
     if (!user) {
-      return res.status(404).json({
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // ૧. ૬-આંકડાનો યુનિક ઓટીપી બનાવો
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    user.otp = otpCode;
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // ૧૦ મિનિટની વેલિડિટી
+    await user.save();
+
+    // ૨. લોકલ હોસ્ટ કોન્સોલ લોગીંગ
+    console.log("-----------------------------------------");
+    console.log(`🔑 SECURE PASSWORD RESET OTP FOR ${email}: ${otpCode}`);
+    console.log("-----------------------------------------");
+
+    // ૩. 100% Real Gmail SMTP Transporter સેટઅપ
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true, // true for port 465
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      await transporter.sendMail({
+        from: `"AMDOX Technologies" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: "Secure Password Reset OTP Code",
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
+            <h2 style="color: #1e3a8a;">AMDOX ERP - Password Reset</h2>
+            <p>Hello,</p>
+            <p>You requested a password reset verification code. Please find your 6-digit OTP code below:</p>
+            <div style="background-color: #f1f5f9; padding: 15px; border-radius: 10px; display: inline-block; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #1e3a8a;">
+              ${otpCode}
+            </div>
+            <p style="margin-top: 15px; font-size: 11px; color: #64748b;">This OTP is valid for 10 minutes. Please do not share this code with anyone.</p>
+          </div>
+        `,
+      });
+    } else {
+      return res.status(400).json({
         success: false,
-        message: "User not found",
+        message: "Email SMTP credentials are missing in backend .env file.",
       });
     }
 
-    const token = crypto.randomBytes(32).toString("hex");
-
-    await User.updateOne(
-      { _id: user._id },
-      {
-        $set: {
-          resetToken: token,
-          resetTokenExpiry: Date.now() + 3600000,
-        },
-      }
-    );
-
     return res.json({
       success: true,
-      resetLink: `http://localhost:5173/reset-password/${token}`,
+      message: "An OTP has been successfully sent to your verified email address.",
     });
   } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    console.error("Forgot password error:", err);
+    return res.status(500).json({ success: false, message: "Failed to send email: " + err.message });
   }
 };
+
 
 // ================= RESET PASSWORD =================
 

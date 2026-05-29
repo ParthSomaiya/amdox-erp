@@ -75,7 +75,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
 // ================= STATIC FILES =================
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.resolve("uploads")));
 
 // ================= HEALTH CHECK =================
 app.get("/", (req, res) => {

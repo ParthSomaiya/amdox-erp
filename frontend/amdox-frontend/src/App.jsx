@@ -87,6 +87,7 @@ import TeamChat from "./pages/TeamChat";
 import Notifications from "./pages/notifications/Notifications";
 import PushSetup from "./components/PushSetup";
 import AIAssistant from "./pages/ai/AIAssistant";
+import MyProfile from "./pages/MyProfile";
 
 function App() {
   return (
@@ -191,6 +192,7 @@ function App() {
             <Route path="/team-chat" element={<TeamChat />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/ai" element={<AIAssistant />} />
+            <Route path="/profile" element={<MyProfile />} />
           </Route>
         </Routes>
       </Suspense>

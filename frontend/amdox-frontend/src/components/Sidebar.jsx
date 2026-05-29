@@ -109,6 +109,12 @@ export default function Sidebar() {
                   <Link to="/employees" className={menuClass("/employees")}>
                     👥 Employees List
                   </Link>
+                  <Link to="/admin/applicants" className={menuClass("/admin/applicants")}>
+                    👥 Job Applicants
+                  </Link>
+                  <Link to="/jobs" className={menuClass("/jobs")}>
+                    📌 Manage Vacancies
+                  </Link>
                   <Link to="/attendance" className={menuClass("/attendance")}>
                     📅 Attendance Log
                   </Link>
@@ -165,6 +171,25 @@ export default function Sidebar() {
                 </>
               )}
 
+              {/* 🔹 ઉમેરેલ: SUPPLY CHAIN & INVENTORY SECTION (ચારેય ફાઇલો અહીં સાઇડબારમાં રજીસ્ટર કરેલ છે) */}
+              {(role === "ADMIN" || role === "HR" || role === "FINANCE") && (
+                <>
+                  <SectionHeader title="Inventory Control" />
+                  <Link to="/inventory" className={menuClass("/inventory")}>
+                    📦 Inventory Dashboard
+                  </Link>
+                  <Link to="/products" className={menuClass("/products")}>
+                    📦 Products Registry
+                  </Link>
+                  <Link to="/purchase-orders" className={menuClass("/purchase-orders")}>
+                    🧾 Purchase Orders
+                  </Link>
+                  <Link to="/stock-history" className={menuClass("/stock-history")}>
+                    🕒 Stock History
+                  </Link>
+                </>
+              )}
+
               {/* PROJECTS SECTION */}
               {(role === "ADMIN" || role === "HR") && (
                 <>
@@ -175,11 +200,9 @@ export default function Sidebar() {
                   <Link to="/tasks-board" className={menuClass("/tasks-board")}>
                     🧩 Kanban Board
                   </Link>
-                  {/* 🔹 ઉમેરેલ: Gantt Timeline */}
                   <Link to="/projects/gantt" className={menuClass("/projects/gantt")}>
                     📅 Gantt Timeline
                   </Link>
-                  {/* 🔹 ઉમેરેલ: Burndown Chart */}
                   <Link to="/projects/burndown" className={menuClass("/projects/burndown")}>
                     🔥 Burndown Chart
                   </Link>
