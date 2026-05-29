@@ -13,10 +13,13 @@ export default function Employees() {
     fetchEmployees();
   }, []);
 
+  // Employees.jsx ની અંદર fetchEmployees ફંક્શન સુધારો:
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const res = await API.get("/hr");
+
+      const res = await API.get("/hr/employees");
+
       setEmployees(res.data || []);
       setFilteredEmployees(res.data || []);
     } catch (err) {

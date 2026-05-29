@@ -144,6 +144,24 @@ export default function Sidebar() {
                   <Link to="/receivables" className={menuClass("/receivables")}>
                     💳 Receivables
                   </Link>
+                  <Link to="/reconciliation" className={menuClass("/reconciliation")}>
+                    🔄 Bank Reconciliation
+                  </Link>
+                  <Link to="/create-invoice" className={menuClass("/create-invoice")}>
+                    ➕ Create Invoice
+                  </Link>
+                  <Link to="/invoices" className={menuClass("/invoices")}>
+                    🧾 Invoice History
+                  </Link>
+                  <Link to="/profit-loss" className={menuClass("/profit-loss")}>
+                    📈 Profit & Loss
+                  </Link>
+                  <Link to="/trial-balance" className={menuClass("/trial-balance")}>
+                    📊 Trial Balance
+                  </Link>
+                  <Link to="/balance-sheet" className={menuClass("/balance-sheet")}>
+                    📁 Balance Sheet
+                  </Link>
                 </>
               )}
 
@@ -156,6 +174,14 @@ export default function Sidebar() {
                   </Link>
                   <Link to="/tasks-board" className={menuClass("/tasks-board")}>
                     🧩 Kanban Board
+                  </Link>
+                  {/* 🔹 ઉમેરેલ: Gantt Timeline */}
+                  <Link to="/projects/gantt" className={menuClass("/projects/gantt")}>
+                    📅 Gantt Timeline
+                  </Link>
+                  {/* 🔹 ઉમેરેલ: Burndown Chart */}
+                  <Link to="/projects/burndown" className={menuClass("/projects/burndown")}>
+                    🔥 Burndown Chart
                   </Link>
                 </>
               )}
@@ -185,6 +211,9 @@ export default function Sidebar() {
               </Link>
               <Link to="/team-chat" className={menuClass("/team-chat")}>
                 💬 Team Workspace Chat
+              </Link>
+              <Link to="/timeline" className={menuClass("/timeline")}>
+                🕒 Employee Timeline
               </Link>
               <Link to="/notifications" className={menuClass("/notifications")}>
                 🔔 Activity Stream

@@ -19,6 +19,7 @@ import {
   leavePrediction,
   getTimeline,
   searchEmployees,
+  createEmployee,
 } from "../controllers/hrController.js";
 
 import {
@@ -167,6 +168,7 @@ router.post("/register-invite", async (req, res) => {
    👨‍💼 EMPLOYEE MANAGEMENT
 ========================================================= */
 
+router.post("/add", protect, authorizeRoles("ADMIN", "HR"), createEmployee);
 router.post("/employees", protect, authorizeRoles("ADMIN", "HR"), addEmployee);
 router.get("/employees", protect, authorizeRoles("ADMIN", "HR"), getEmployees);
 router.get("/employees/search", protect, authorizeRoles("ADMIN", "HR"), searchEmployees);

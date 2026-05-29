@@ -7,8 +7,12 @@ export default function TrialBalance() {
   const [to, setTo] = useState("2026-12-31");
 
   const fetchData = async () => {
-    const res = await API.get(`/reports/trial-balance?from=${from}&to=${to}`);
-    setData(res.data);
+    try {
+      const res = await API.get(`/reports/trial-balance?from=${from}&to=${to}`);
+      setData(res.data || {});
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
@@ -16,35 +20,45 @@ export default function TrialBalance() {
   }, []);
 
   return (
-    <MainLayout>
-      <h2 className="text-xl font-bold mb-4">Trial Balance</h2>
+    <div className="space-y-6">
+      <div className="bg-white p-8 rounded-3xl border border-slate-200/80 shadow-sm">
+        <h2 className="text-2xl font-black text-slate-800 mb-4">Trial Balance</h2>
 
-      <div className="flex gap-4 mb-4">
-        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        <button onClick={fetchData} className="bg-blue-600 text-white px-4 rounded">
-          Apply
-        </button>
+        <div className="flex gap-4 mb-6">
+          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border p-2 rounded-xl text-sm" />
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border p-2 rounded-xl text-sm" />
+          <button onClick={fetchData} className="bg-indigo-600 text-white px-4 rounded-xl text-sm font-bold">
+            Apply
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-slate-600">
+            <thead className="bg-slate-50 border-b">
+              <tr>
+                <th className="p-4 text-left font-semibold">Account</th>
+                <th className="p-4 text-left font-semibold">Debit</th>
+                <th className="p-4 text-left font-semibold">Credit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.keys(data).length === 0 ? (
+                <tr>
+                  <td colSpan="3" className="text-center p-8 text-slate-400">No balance records found.</td>
+                </tr>
+              ) : (
+                Object.keys(data).map((acc) => (
+                  <tr key={acc} className="border-b hover:bg-slate-50/50 transition">
+                    <td className="p-4 font-bold text-slate-800">{acc}</td>
+                    <td className="p-4 text-green-600 font-bold">₹{data[acc].debit}</td>
+                    <td className="p-4 text-rose-500 font-bold">₹{data[acc].credit}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-
-      <table className="w-full bg-white shadow rounded">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="p-2">Account</th>
-            <th className="p-2">Debit</th>
-            <th className="p-2">Credit</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(data).map((acc) => (
-            <tr key={acc}>
-              <td className="p-2">{acc}</td>
-              <td className="p-2 text-green-600">{data[acc].debit}</td>
-              <td className="p-2 text-red-500">{data[acc].credit}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </MainLayout>
+    </div>
   );
 }

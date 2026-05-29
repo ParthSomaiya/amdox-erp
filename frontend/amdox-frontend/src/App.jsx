@@ -47,6 +47,9 @@ import Reconciliation from "./pages/Reconciliation";
 import TrialBalance from "./pages/TrialBalance";
 import BalanceSheet from "./pages/BalanceSheet";
 import CreateInvoice from "./pages/CreateInvoice";
+import Invoices from "./pages/Invoices";
+import ProfitLoss from "./pages/ProfitLoss";
+
 
 // ================= INVENTORY =================
 import InventoryDashboard from "./pages/InventoryDashboard";
@@ -150,6 +153,8 @@ function App() {
             <Route path="/trial-balance" element={<TrialBalance />} />
             <Route path="/balance-sheet" element={<BalanceSheet />} />
             <Route path="/create-invoice" element={<CreateInvoice />} />
+            <Route path="/invoices" element={<Invoices />} />
+            <Route path="/profit-loss" element={<ProfitLoss />} />
 
             {/* INVENTORY */}
             <Route path="/inventory" element={<InventoryDashboard />} />

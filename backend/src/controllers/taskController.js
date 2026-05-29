@@ -27,12 +27,45 @@ export const createTask = async (req, res) => {
   }
 };
 
-// Get Tasks
+// Get Tasks (Upgraded with Auto-Seeding)
 export const getTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({
+    let tasks = await Task.find({
       companyId: req.user.companyId,
     }).sort({ createdAt: -1 });
+
+    if (tasks.length === 0) {
+      const today = new Date();
+      tasks = await Task.create([
+        {
+          title: "Setup Monorepo Structure",
+          description: "Configure Turborepo and pnpm workspaces inside the root folder",
+          priority: "HIGH",
+          status: "DONE",
+          startDate: new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000),
+          endDate: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000),
+          companyId: req.user.companyId
+        },
+        {
+          title: "Integrate Plaid Balance API",
+          description: "Connect finance modules to bank transfer endpoints for reconciliation",
+          priority: "MEDIUM",
+          status: "IN_PROGRESS",
+          startDate: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000),
+          endDate: new Date(today.getTime() + 4 * 24 * 60 * 60 * 1000),
+          companyId: req.user.companyId
+        },
+        {
+          title: "Deploy Helm Charts",
+          description: "Verify Kubernetes manifests and Ingress rules on AWS EKS",
+          priority: "LOW",
+          status: "TODO",
+          startDate: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000),
+          endDate: new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000),
+          companyId: req.user.companyId
+        }
+      ]);
+    }
 
     res.json(tasks);
   } catch (err) {
@@ -76,44 +109,24 @@ export const updateTaskStatus = async (req, res) => {
 // ==============================
 // ⏱ LOG HOURS
 // ==============================
+export const logHours = async (req, res) => {
+  try {
+    const { taskId, hours } = req.body;
+    const task = await Task.findById(taskId);
 
-export const logHours =
-  async (req, res) => {
-
-    try {
-
-      const {
-        taskId,
-        hours,
-      } = req.body;
-
-      const task =
-        await Task.findById(taskId);
-
-      if (!task) {
-
-        return res.status(404).json({
-          message:
-            "Task not found",
-        });
-
-      }
-
-      task.loggedHours =
-        (task.loggedHours || 0)
-        + Number(hours);
-
-      await task.save();
-
-      res.json(task);
-
-    } catch (err) {
-
-      res.status(500).json({
-        message:
-          err.message,
+    if (!task) {
+      return res.status(404).json({
+        message: "Task not found",
       });
-
     }
 
-  };
+    task.loggedHours = (task.loggedHours || 0) + Number(hours);
+    await task.save();
+
+    res.json(task);
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};

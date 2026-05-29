@@ -3,15 +3,11 @@ import {
   createProject,
   getProjects,
   getProjectDetails,
-
   createTask,
   getTasks,
-
   updateTaskStatus,
-
   projectAnalytics,
   getGanttTasks,
-
 } from "../controllers/projectController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -25,41 +21,14 @@ router.get("/:id", protect, getProjectDetails);
 // =========================
 // TASK
 // =========================
-
-router.post(
-  "/task",
-  protect,
-  createTask
-);
-
-router.get(
-  "/task/:projectId",
-  protect,
-  getTasks
-);
-
-router.put(
-  "/task/:id",
-  protect,
-  updateTaskStatus
-);
-
+router.post("/task", protect, createTask);
+router.get("/task/:projectId", protect, getTasks);
+router.put("/task/:id", protect, updateTaskStatus);
 
 // =========================
 // ANALYTICS
 // =========================
-
-router.get(
-  "/analytics/dashboard",
-  protect,
-  projectAnalytics
-);
-
-
-router.get(
-  "/gantt",
-  getGanttTasks
-);
-
+router.get("/analytics/dashboard", protect, projectAnalytics);
+router.get("/gantt", getGanttTasks);
 
 export default router;

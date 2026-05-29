@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, Loader2, ClipboardList, Clock, ShieldCheck } from "lucide-react";
+import { Plus, Search, Loader2, ClipboardList } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import API from "../services/api";
 
 export default function TaskBoard() {
@@ -7,6 +8,10 @@ export default function TaskBoard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
+  
+  // 🔹 React 18 Compatibility માટે સ્ટેટ
+  const [enabled, setEnabled] = useState(false);
+
   const [newTask, setNewTask] = useState({
     title: "",
     description: "",
@@ -14,6 +19,15 @@ export default function TaskBoard() {
   });
 
   const columns = ["TODO", "IN_PROGRESS", "DONE"];
+
+  // 🔹 React 18 Lifecycle ફિક્સ (આનાથી ડ્રેગ-એન્ડ-ડ્રોપ ૧૦૦% એક્ટિવ થશે!)
+  useEffect(() => {
+    const animation = requestAnimationFrame(() => setEnabled(true));
+    return () => {
+      cancelAnimationFrame(animation);
+      setEnabled(false);
+    };
+  }, []);
 
   useEffect(() => {
     fetchTasks();
@@ -48,15 +62,23 @@ export default function TaskBoard() {
     }
   };
 
-  const updateStatus = async (taskId, status) => {
+  const onDragEnd = async (result) => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId) return;
+
+    const updatedTasks = tasks.map((task) =>
+      String(task._id) === String(draggableId) 
+        ? { ...task, status: destination.droppableId } 
+        : task
+    );
+    setTasks(updatedTasks);
+
     try {
-      await API.put(`/tasks/${taskId}`, { status });
-      setTasks((prev) =>
-        prev.map((task) => (task._id === taskId ? { ...task, status } : task))
-      );
+      await API.put(`/tasks/${draggableId}`, { status: destination.droppableId });
     } catch (err) {
-      console.error(err);
-      alert("Failed to update task");
+      console.error("Failed to update task status:", err);
+      fetchTasks(); 
     }
   };
 
@@ -79,13 +101,24 @@ export default function TaskBoard() {
     }
   };
 
+  if (loading || !enabled) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="text-center">
+          <div className="h-12 w-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <h2 className="mt-4 text-slate-600 font-semibold">Loading task boards...</h2>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-violet-600 via-indigo-600 to-indigo-700 rounded-3xl p-8 text-white shadow-sm flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Task Board</h1>
-          <p className="mt-2 text-indigo-100 text-sm">Organize, monitor, and update your workspace objectives.</p>
+          <p className="mt-2 text-indigo-100 text-sm">Organize and drag-drop your workspace objectives.</p>
         </div>
         <div className="hidden sm:flex h-16 w-16 rounded-2xl bg-white/10 backdrop-blur-md items-center justify-center">
           <ClipboardList size={28} />
@@ -147,68 +180,60 @@ export default function TaskBoard() {
         </div>
       </div>
 
-      {/* Kanban Board columns */}
-      {loading ? (
-        <div className="p-20 text-center">
-          <Loader2 className="animate-spin h-10 w-10 text-indigo-600 mx-auto" />
-          <p className="mt-4 text-slate-500 font-semibold text-sm">Loading task boards...</p>
-        </div>
-      ) : (
+      {/* DRAG DROP CONTEXT */}
+      <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {columns.map((column) => {
             const columnTasks = filteredTasks.filter((task) => task.status === column);
             return (
-              <div key={column} className="bg-slate-50 border border-slate-200/80 rounded-3xl p-5 space-y-4 min-h-[400px]">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-                  <h3 className="font-bold text-slate-700 text-sm tracking-wide uppercase">
-                    {column.replace("_", " ")}
-                  </h3>
-                  <span className="h-6 px-2.5 rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center shadow-sm">
-                    {columnTasks.length}
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {columnTasks.length === 0 ? (
-                    <div className="p-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-2xl bg-white/50">
-                      No tasks in this stage
+              <Droppable droppableId={column} key={column}>
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="bg-slate-50 border border-slate-200/80 rounded-3xl p-5 space-y-4 min-h-[400px]"
+                  >
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                      <h3 className="font-bold text-slate-700 text-sm tracking-wide uppercase">
+                        {column.replace("_", " ")}
+                      </h3>
+                      <span className="h-6 px-2.5 rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center shadow-sm">
+                        {columnTasks.length}
+                      </span>
                     </div>
-                  ) : (
-                    columnTasks.map((task) => (
-                      <div key={task._id} className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <h4 className="font-bold text-slate-800 text-sm">{task.title}</h4>
-                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase ${priorityStyle(task.priority)}`}>
-                            {task.priority || "MEDIUM"}
-                          </span>
-                        </div>
-                        {task.description && (
-                          <p className="text-xs text-slate-500 leading-normal line-clamp-3">{task.description}</p>
-                        )}
-                        <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-100">
-                          {columns.map((status) => (
-                            <button
-                              key={status}
-                              onClick={() => updateStatus(task._id, status)}
-                              className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all ${
-                                task.status === status
-                                  ? "bg-indigo-600 text-white"
-                                  : "bg-slate-100 text-slate-500 hover:bg-indigo-50"
-                              }`}
+
+                    <div className="space-y-3 min-h-[300px]">
+                      {columnTasks.map((task, index) => (
+                        <Draggable draggableId={String(task._id)} index={index} key={task._id}>
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4 cursor-grab active:cursor-grabbing"
                             >
-                              {status.replace("_", " ")}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+                              <div className="flex items-start justify-between gap-3">
+                                <h4 className="font-bold text-slate-800 text-sm">{task.title}</h4>
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase ${priorityStyle(task.priority)}`}>
+                                  {task.priority || "MEDIUM"}
+                                </span>
+                              </div>
+                              {task.description && (
+                                <p className="text-xs text-slate-500 leading-normal line-clamp-3">{task.description}</p>
+                              )}
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  </div>
+                )}
+              </Droppable>
             );
           })}
         </div>
-      )}
+      </DragDropContext>
     </div>
   );
 }

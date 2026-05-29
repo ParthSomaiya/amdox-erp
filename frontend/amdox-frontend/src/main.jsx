@@ -7,12 +7,11 @@ import ToastContainer from "./components/notifications/ToastContainer";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <App />
-        <ToastContainer />
-      </BrowserRouter>
-    </ErrorBoundary>
-  </React.StrictMode>
+  // 🔹 સુધારેલ: React.StrictMode નો ટેગ હટાવ્યો જેથી react-beautiful-dnd બરાબર કામ કરી શકે
+  <ErrorBoundary>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <App />
+      <ToastContainer />
+    </BrowserRouter>
+  </ErrorBoundary>
 );

@@ -33,10 +33,15 @@ export default function LeaveManagement() {
   const updateStatus = async (leaveId, status) => {
     try {
       setUpdatingId(leaveId);
-      await API.post("/leave/update", { leaveId, status });
+      
+      // ફેરફાર: "/leave/update" ની જગ્યાએ સાચો એન્ડપોઇન્ટ "/hr/leave/status" (PUT) કર્યો
+      await API.put("/hr/leave/status", { leaveId, status });
+      
       setLeaves((prev) =>
         prev.map((leave) => (leave._id === leaveId ? { ...leave, status } : leave))
       );
+      
+      alert(`Leave request ${status.toLowerCase()} successfully.`);
     } catch (err) {
       console.error(err);
       alert("Failed to update leave status.");
@@ -116,8 +121,9 @@ export default function LeaveManagement() {
                   <tr key={leave._id} className="border-b hover:bg-slate-50/50 transition">
                     <td className="p-4 font-bold text-slate-800">{leave?.employeeId?.name || "Employee"}</td>
                     <td className="p-4">
+                      {/* 🔹 FIXED: Added Fallback for leaveType */}
                       <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                        {leave.leaveType}
+                        {leave.leaveType || "CASUAL"}
                       </span>
                     </td>
                     <td className="p-4 text-slate-500 text-xs">

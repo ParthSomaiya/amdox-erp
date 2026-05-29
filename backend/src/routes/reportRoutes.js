@@ -3,10 +3,11 @@ import {
     getProfitLoss, 
     getMonthlyPL, 
     exportPLPDF,
-    getBalanceSheet  } from "../controllers/reportController.js";
+    getBalanceSheet, 
+    getTrialBalance
+  } from "../controllers/reportController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { allowRoles } from "../middleware/roleMiddleware.js";
-
 
 const router = express.Router();
 
@@ -24,18 +25,21 @@ router.get(
   getMonthlyPL
 );
 
-router.get(
-  "/pl-pdf",
-  authMiddleware,
-  allowRoles("ADMIN", "FINANCE"),
-  exportPLPDF
-);
+router.get("/pl-pdf", exportPLPDF);
+
 
 router.get(
   "/balance-sheet",
   authMiddleware,
   allowRoles("ADMIN", "FINANCE"),
   getBalanceSheet
+);
+
+router.get(
+  "/trial-balance",
+  authMiddleware,
+  allowRoles("ADMIN", "FINANCE"),
+  getTrialBalance
 );
 
 export default router;

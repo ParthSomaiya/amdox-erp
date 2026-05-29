@@ -14,7 +14,6 @@ export default function AuditLogs() {
       setLoading(true);
       setError("");
 
-      // FIXED: Removed the duplicate /api prefix
       const res = await API.get(
         `/admin/audit?page=${pageNumber}&limit=${limit}`
       );
@@ -33,6 +32,33 @@ export default function AuditLogs() {
   useEffect(() => {
     fetchLogs(1);
   }, []);
+
+  // 🔹 કલરફુલ અને ટૂંકા એક્શન બેજીસ રેન્ડર કરવા માટેનું હેલ્પર ફંક્શન
+  const renderActionBadge = (actionText = "") => {
+    const text = actionText.toUpperCase();
+    let label = "SYSTEM";
+    let style = "bg-slate-50 text-slate-600 border-slate-200";
+
+    if (text.includes("ONBOARD") || text.includes("EMPLOYEE ADDED")) {
+      label = "ONBOARD";
+      style = "bg-emerald-50 text-emerald-700 border-emerald-100";
+    } else if (text.includes("LEAVE")) {
+      label = "LEAVE";
+      style = "bg-amber-50 text-amber-700 border-amber-100";
+    } else if (text.includes("CHECK") || text.includes("ATTENDANCE")) {
+      label = "ATTENDANCE";
+      style = "bg-sky-50 text-sky-700 border-sky-100";
+    } else if (text.includes("PAYROLL")) {
+      label = "PAYROLL";
+      style = "bg-violet-50 text-violet-700 border-violet-100";
+    }
+
+    return (
+      <span className={`px-3 py-1 rounded-full text-xs font-bold border ${style}`}>
+        {label}
+      </span>
+    );
+  };
 
   if (loading) {
     return (
@@ -93,13 +119,14 @@ export default function AuditLogs() {
                     <td className="p-4 font-semibold text-slate-700">
                       {log.userId?.email || "System"}
                     </td>
+                    {/* 🔹 FIXED: લાંબા લખાણને બદલે સુંદર શોર્ટ કલર બેજ બતાવવા માટે */}
                     <td className="p-4">
-                      <span className="px-2.5 py-1 rounded bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200">
-                        {log.action}
-                      </span>
+                      {renderActionBadge(log.action)}
                     </td>
                     <td className="p-4 font-medium">{log.module}</td>
-                    <td className="p-4 text-slate-500">{log.description}</td>
+                    <td className="p-4 text-slate-500 max-w-xs truncate" title={log.description}>
+                      {log.description}
+                    </td>
                     <td className="p-4 text-slate-400">
                       {log.createdAt ? new Date(log.createdAt).toLocaleString() : "N/A"}
                     </td>

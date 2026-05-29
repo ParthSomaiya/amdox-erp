@@ -8,11 +8,14 @@ import {
 
   updateLeaveStatus,
 
-  getMyLeaves,
-
   getLeavePrediction,
 
+  getMyLeaves, 
+
+  getLeaveBalance 
+
 } from "../controllers/leaveController.js";
+ 
 
 import {
 
@@ -71,6 +74,7 @@ router.get(
 
 );
 
+router.get("/balance", authMiddleware, getLeaveBalance);
 
 // ========================================
 // HR / ADMIN VIEW ALL LEAVES

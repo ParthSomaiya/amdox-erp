@@ -1,4 +1,5 @@
 import express from "express";
+import Timeline from "../models/Timeline.js"; 
 
 import {
   getAllUsers,
@@ -203,13 +204,49 @@ router.put(
 
 // ================= AUDIT =================
 
-// AUDIT LOGS
 router.get(
-  "/audit-logs",
-  protect,
-  authorize("ADMIN"),
-  getAuditLogs
+  "/audit",
+  authMiddleware,
+  allowRoles("ADMIN"),
+  async (req, res) => {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
+
+      const totalLogs = await Timeline.countDocuments();
+      const logs = await Timeline.find()
+        .populate("employee", "name email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+      const formattedLogs = logs.map((log) => ({
+        _id: log._id,
+        userId: {
+          email: log.employee?.email || "system@amdox.com",
+          name: log.employee?.name || "System",
+        },
+        action: log.action || "ACTIVITY_LOGGED",
+        module: "HR / ERP",
+        description: log.action,
+        createdAt: log.createdAt,
+      }));
+
+      return res.json({
+        success: true,
+        logs: formattedLogs,
+        page,
+        totalPages: Math.ceil(totalLogs / limit),
+        total: totalLogs,
+      });
+    } catch (err) {
+      console.error("Audit log fetch error:", err);
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  }
 );
+
 
 
 // ================= TENANT =================

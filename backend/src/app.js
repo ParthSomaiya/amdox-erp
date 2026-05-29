@@ -113,7 +113,7 @@ app.use("/api/time", timeRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/lifecycle", lifecycleRoutes);
-app.use("/api/pdf", pdfRoutes);
+app.use("/api/invoice", pdfRoutes);
 app.use("/api/export", exportRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
