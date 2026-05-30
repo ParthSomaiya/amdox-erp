@@ -1,10 +1,11 @@
-import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import hpp from "hpp";
 import rateLimit from "express-rate-limit";
 import morgan from "morgan";
 import path from "path";
+import mongoose from "mongoose"; 
+import express from "express";
 
 import errorMiddleware from "./middleware/errorMiddleware.js";
 
@@ -44,12 +45,62 @@ import stockRoutes from "./routes/stockRoutes.js";
 import apRoutes from "./routes/apRoutes.js";
 import arRoutes from "./routes/arRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
-import calendarRoutes from "./routes/calendarRoutes.js"; // IMPORT NEW CALENDAR ROUTES
+import calendarRoutes from "./routes/calendarRoutes.js"; 
 import { getPurchaseOrders } from "./controllers/inventoryController.js";
 import { receivePurchaseOrder } from "./controllers/inventoryController.js";
 
 // ================= APP INIT =================
 const app = express();
+
+
+
+// =====================================
+// 👥 VENDORS REGISTRY PUBLIC ROUTES (FINAL AND RESOLVED)
+// =====================================
+app.get("/api/vendor", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  try {
+    const Vendor = mongoose.models.Vendor || mongoose.model("Vendor", new mongoose.Schema({
+      name: { type: String, required: true },
+      email: { type: String, required: true },
+      phone: { type: String }
+    }, { timestamps: true }));
+
+    const list = await Vendor.find({}).sort({ createdAt: -1 });
+    res.status(200).json(list);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 🔹 અહીં આપણે 'express.json()' ને લોકલ મિડલવેર તરીકે પાસ કરેલ છે જેથી બોડી ક્યારેય 'undefined' ન થાય!
+app.post("/api/vendor", express.json(), async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  try {
+    const { name, email, phone } = req.body;
+    if (!name || !email) {
+      return res.status(400).json({ success: false, message: "Name and email are required" });
+    }
+
+    const Vendor = mongoose.models.Vendor || mongoose.model("Vendor", new mongoose.Schema({
+      name: { type: String, required: true },
+      email: { type: String, required: true },
+      phone: { type: String }
+    }, { timestamps: true }));
+
+    const newVendor = new Vendor({ name, email, phone });
+    await newVendor.save();
+    res.status(201).json({ success: true, vendor: newVendor });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 // ================= SECURITY =================
 app.use(

@@ -153,27 +153,49 @@ export const deleteProduct = async (req, res) => {
 // =====================================
 // 📝 CREATE PURCHASE ORDER
 // =====================================
+
 export const createPurchaseOrder = async (req, res) => {
   try {
-    const { vendor, product, quantity } = req.body;
+    // ફ્રન્ટએન્ડ અને ડેટાબેઝ મોડેલ બંનેના સપોર્ટ માટે બધી કી રીડ કરો
+    const { vendor, product, vendorId, productId, quantity } = req.body;
+
+    const finalVendorId = vendorId || vendor;
+    const finalProductId = productId || product;
+
+    if (!finalVendorId) {
+      return res.status(400).json({ success: false, message: "vendorId is required" });
+    }
+
+    const [vendorObj, productObj] = await Promise.all([
+      User.findById(finalVendorId).lean(),
+      Product.findById(finalProductId).lean()
+    ]);
+
+    const vendorName = vendorObj?.name || "Unknown Vendor";
+    const vendorEmail = vendorObj?.email || "vendor@supplychain.com";
+    const productName = productObj?.name || "Unknown Product";
+    const unitPrice = productObj?.price || 5000;
 
     const po = await PurchaseOrder.create({
-      vendorName: vendor,
-      vendorEmail: "vendor@supplychain.com",
-      productName: product,
+      vendorId: finalVendorId,          
+      vendorName: vendorName,
+      vendorEmail: vendorEmail,
+      productId: finalProductId,        
+      productName: productName,
       quantity: Number(quantity),
-      total: Number(quantity) * 5000,
+      total: Number(quantity) * unitPrice,
       companyId: req.user?.companyId || null
     });
 
     await Timeline.create({
-      employee: req.user.id,
-      action: `New Purchase Order Created: ${quantity} units of ${product} ordered to ${vendor} by Admin`,
-      companyId: req.user.companyId
+      employee: req.user.id || req.user._id,
+      action: `New Purchase Order Created: ${quantity} units of ${productName} ordered to ${vendorName} by Admin`,
+      companyId: req.user.companyId || null
     });
 
     res.status(201).json({ success: true, message: "Purchase Order Created", po });
   } catch (err) {
+    console.error("Create Purchase Order Error:", err);
     res.status(500).json({ message: err.message });
   }
 };

@@ -114,8 +114,17 @@ export default function Sidebar() {
                   <Link to="/jobs" className={menuClass("/jobs")}>
                     📌 Manage Vacancies
                   </Link>
+                  <Link to="/hr/documents" className={menuClass("/hr/documents")}>
+                    📂 Employee Documents
+                  </Link>
                   <Link to="/attendance" className={menuClass("/attendance")}>
                     📅 Attendance Log
+                  </Link>
+                  <Link to="/hr/attendance-calendar" className={menuClass("/hr/attendance-calendar")}>
+                    📅 Attendance Calendar
+                  </Link>
+                  <Link to="/hr/attendance-heatmap" className={menuClass("/hr/attendance-heatmap")}>
+                    🔥 Attendance Heatmap
                   </Link>
                   <Link to="/manage-leave" className={menuClass("/manage-leave")}>
                     ✅ Leave Approval

@@ -26,6 +26,9 @@ import ApplyLeave from "./pages/ApplyLeave";
 import LeaveManagement from "./pages/LeaveManagement";
 import Attendance from "./pages/Attendance";
 import AttendanceReport from "./pages/AttendanceReport";
+import AttendanceCalendar from "./pages/hr/AttendanceCalendar";
+import AttendanceHeatmap from "./pages/hr/AttendanceHeatmap";
+import Documents from "./pages/hr/Documents";
 
 // ================= PAYROLL =================
 import GeneratePayroll from "./pages/GeneratePayroll";
@@ -144,6 +147,9 @@ function App() {
             <Route path="/manage-leave" element={<LeaveManagement />} />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/attendance-report" element={<AttendanceReport />} />
+            <Route path="/hr/documents" element={<Documents />} />
+            <Route path="/hr/attendance-calendar" element={<AttendanceCalendar />} />
+            <Route path="/hr/attendance-heatmap" element={<AttendanceHeatmap />} />
 
             {/* PAYROLL */}
             <Route path="/generate-payroll" element={<GeneratePayroll />} />
@@ -173,7 +179,7 @@ function App() {
             <Route path="/products" element={<Products />} />
             <Route path="/purchase-orders" element={<PurchaseOrders />} />
             <Route path="/stock-history" element={<StockHistory />} />
-            
+
             {/* તમારા ફોલ્ડર ટ્રી ના તમામ નવા પેજીસ અહીં રજીસ્ટર કર્યા છે: */}
             <Route path="/inventory/create-po" element={<CreatePO />} />
             <Route path="/inventory/low-stock" element={<LowStock />} />
