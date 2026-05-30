@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 
 import Employee from "../models/Employee.js";
 import Leave from "../models/Leave.js";
@@ -24,7 +25,7 @@ export const getTimeline = async (req, res) => {
 };
 
 // =====================================
-// 👨‍💼 EMPLOYEES
+// 👨‍💼 ADD EMPLOYEE (મોજુદ યુઝર આઈડી સાથે)
 // =====================================
 export const addEmployee = async (req, res) => {
   try {
@@ -33,7 +34,7 @@ export const addEmployee = async (req, res) => {
     const employee = await Employee.create({
       userId,
       position,
-      salary,
+      salary: Number(salary || 0),
       companyId: req.user.companyId,
       joiningDate: new Date(),
     });
@@ -44,6 +45,181 @@ export const addEmployee = async (req, res) => {
   }
 };
 
+// =====================================
+// ➕ CREATE EMPLOYEE (ADMIN/HR) - સંપૂર્ણ ડાયનેમિક ઓનબોર્ડિંગ
+// =====================================
+export const createEmployee = async (req, res) => {
+  try {
+    const { name, email, position, password, salary } = req.body;
+
+    if (!name || !email || !position || !password || !salary) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+
+    const existingUser = await User.findOne({ email: cleanEmail });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "An employee with this email already exists.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await User.create({
+      name,
+      email: cleanEmail,
+      password: hashedPassword,
+      role: "EMPLOYEE",
+      companyId: req.user?.companyId || null,
+      isVerified: true,
+    });
+
+    const newEmployee = await Employee.create({
+      userId: newUser._id,
+      position,
+      salary: Number(salary),
+      companyId: req.user?.companyId || null,
+      joiningDate: new Date(),
+    });
+
+    await Timeline.create({
+      employee: newUser._id,
+      action: `New Employee Onboarded: ${newUser.name} was added as ${position} by ${req.user.name}`,
+      companyId: req.user.companyId,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Employee added successfully",
+      data: newEmployee,
+    });
+
+  } catch (error) {
+    console.error("Error creating employee:", error);
+    return res.status(500).json({ message: "Server error while adding employee" });
+  }
+};
+
+// =====================================
+// ✏️ UPDATE EMPLOYEE (ALL FIELDS)
+// =====================================
+export const updateEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, position, password, salary } = req.body;
+
+    const emp = await Employee.findById(id);
+    if (!emp) {
+      return res.status(404).json({ success: false, message: "Employee not found" });
+    }
+
+    emp.position = position || emp.position;
+    if (salary !== undefined) {
+      emp.salary = Number(salary);
+    }
+    await emp.save();
+
+    const userUpdate = {};
+    if (name) userUpdate.name = name;
+    if (email) userUpdate.email = email.toLowerCase().trim();
+    if (password) {
+      userUpdate.password = await bcrypt.hash(password, 10);
+    }
+
+    if (Object.keys(userUpdate).length > 0) {
+      await User.findByIdAndUpdate(emp.userId, { $set: userUpdate });
+    }
+
+    res.json({ success: true, message: "Employee updated successfully!" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// =====================================
+// ❌ DELETE EMPLOYEE & USER ACCOUNT
+// =====================================
+export const deleteEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const emp = await Employee.findById(id);
+    if (!emp) {
+      return res.status(404).json({ success: false, message: "Employee not found" });
+    }
+
+    await Employee.findByIdAndDelete(id);
+    await User.findByIdAndDelete(emp.userId);
+
+    res.json({ success: true, message: "Employee deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// =====================================
+// 📂 UPLOAD EMPLOYEE DOCUMENTS (Aadhaar & PAN)
+// =====================================
+export const uploadEmployeeDocs = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = {};
+
+    if (req.files) {
+      if (req.files.resume) updateData.resume = `uploads/${req.files.resume[0].filename}`;
+      if (req.files.aadhaar) updateData.aadhaar = `uploads/${req.files.aadhaar[0].filename}`;
+      if (req.files.pan) updateData.pan = `uploads/${req.files.pan[0].filename}`;
+    }
+
+    const updated = await Employee.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, strict: false }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "Employee not found" });
+    }
+
+    res.json({ success: true, message: "Documents uploaded successfully", data: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// =====================================
+// 📂 UPDATE USER RESUME (PROFILE - JOB SEEKER)
+// =====================================
+export const updateUserResume = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "Please upload a resume file" });
+    }
+
+    const resumePath = `uploads/${req.file.filename}`;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id || req.user._id,
+      { $set: { resume: resumePath } },
+      { new: true, strict: false }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({ success: true, message: "Resume uploaded successfully", user: updatedUser });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// =====================================
+// 👥 GET ALL EMPLOYEES
+// =====================================
 export const getEmployees = async (req, res) => {
   try {
     const employees = await Employee.find({
@@ -79,7 +255,6 @@ export const applyLeave = async (req, res) => {
   }
 };
 
-// 🔹 GET LEAVES (This was causing the SyntaxError!)
 export const getLeaves = async (req, res) => {
   try {
     const leaves = await Leave.find({
@@ -92,9 +267,6 @@ export const getLeaves = async (req, res) => {
   }
 };
 
-// =====================================
-// 👤 GET MY LEAVES (EMPLOYEE PORTAL)
-// =====================================
 export const getMyLeaves = async (req, res) => {
   try {
     const leaves = await Leave.find({
@@ -107,16 +279,12 @@ export const getMyLeaves = async (req, res) => {
   }
 };
 
-// =====================================
-// 📊 GET MY LEAVE BALANCE (DYNAMIC DOCK)
-// =====================================
 export const getLeaveBalance = async (req, res) => {
   try {
     let balance = await LeaveBalance.findOne({
       employeeId: req.user.id,
     });
 
-    // જો કોઈ કર્મચારીનું બેલેન્સ રેકોર્ડ હજુ સુધી ન બન્યું હોય, તો ડિફોલ્ટ ક્રિએટ કરો
     if (!balance) {
       balance = await LeaveBalance.create({
         employeeId: req.user.id,
@@ -242,69 +410,101 @@ export const searchEmployees = async (req, res) => {
 };
 
 // =====================================
-// 💰 AUTO PAYROLL GENERATION
+// 💰 AUTO PAYROLL GENERATION 
 // =====================================
 export const generatePayroll = async (req, res) => {
   try {
-    const { employeeId, month, basicSalary, bonus, deduction, deductions } = req.body;
+    const { employeeId, month, basicSalary, bonus, deduction, deductions, companyId } = req.body;
 
-    const cleanDeduction = Number(deduction || deductions || 0);
     const cleanBonus = Number(bonus || 0);
     const cleanBasic = Number(basicSalary || 0);
+    const manualDeduction = Number(deduction || deductions || 0);
 
-    if (employeeId) {
-      const netSalary = cleanBasic + cleanBonus - cleanDeduction;
-
-      const payroll = await Payroll.create({
-        employeeId,
-        companyId: req.user.companyId,
-        basicSalary: cleanBasic,
-        bonus: cleanBonus,
-        deductions: cleanDeduction,
-        deduction: cleanDeduction,
-        netSalary,
-        month,
-        status: "PAID",
-      });
-
-      return res.json({
-        success: true,
-        message: "Payroll generated successfully for employee",
-        payroll,
-      });
+    if (!employeeId || !month) {
+      return res.status(400).json({ success: false, message: "Employee and Month are required" });
     }
 
-    const employees = await Employee.find({
-      companyId: req.user.companyId,
+    // રજિસ્ટર થયેલા કર્મચારીના રેકોર્ડ મેળવો
+    const employee = await Employee.findById(employeeId);
+    if (!employee) {
+      return res.status(404).json({ success: false, message: "Employee record not found" });
+    }
+
+    // companyId સેનિટાઈઝેશન
+    let finalCompanyId = companyId || employee.companyId || req.user?.companyId;
+    if (!finalCompanyId || finalCompanyId === null || String(finalCompanyId) === "null" || String(finalCompanyId) === "undefined") {
+      const userObj = await User.findById(req.user?.id || req.user?._id);
+      finalCompanyId = userObj?.companyId;
+    }
+    if (!finalCompanyId || finalCompanyId === null || String(finalCompanyId) === "null" || String(finalCompanyId) === "undefined") {
+      const fallbackAdmin = await User.findOne({ role: "ADMIN" });
+      finalCompanyId = fallbackAdmin?.companyId || new mongoose.Types.ObjectId();
+    }
+
+    // ૧. તે મહિનાની મંજૂર થયેલી રજાઓ (Approved Leaves) ગણો
+    const approvedLeaves = await Leave.find({
+      employeeId,
+      status: "APPROVED"
     });
 
-    const payrolls = [];
+    let unpaidLeaveDays = 0;
+    approvedLeaves.forEach(leave => {
+      const leaveMonth = new Date(leave.fromDate).toISOString().slice(0, 7);
+      if (leaveMonth === month) {
+        const days = Math.ceil(
+          (new Date(leave.toDate) - new Date(leave.fromDate)) / (1000 * 60 * 60 * 24)
+        ) || 1;
+        unpaidLeaveDays += days;
+      }
+    });
 
-    for (const emp of employees) {
-      const empBasic = emp.salary || 30000;
-      const empBonus = 2000;
-      const empDeductions = 1000;
-      const netSalary = empBasic + empBonus - empDeductions;
+    // ૨. ઓટોમેટિક દિવસ મુજબનો લીવ પગાર કાપ (Leave Deduction)
+    const leaveDeduction = Math.round((cleanBasic / 30) * unpaidLeaveDays);
 
-      const payroll = await Payroll.create({
-        employeeId: emp.userId,
-        companyId: req.user.companyId,
-        basicSalary: empBasic,
-        bonus: empBonus,
-        deductions: empDeductions,
-        deduction: empDeductions,
-        netSalary,
-        month: month || new Date().toISOString().slice(0, 7),
-        status: "PAID",
-      });
+    // ➡️ ૩. સરકારી નિયમો મુજબ કપાતો (Statutory Compliances)
+    const pfDeduction = Math.round(cleanBasic * 0.12); // EPF = 12% of Basic
+    const ptDeduction = cleanBasic > 10000 ? 200 : 0; // PT = Flat ₹200 if basic > 10k
 
-      payrolls.push(payroll);
+    // ➡️ ૪. ડાયનેમિક ટેક્સ સ્લેબ્સ ગણતરી (TDS)
+    let tdsDeduction = 0;
+    if (cleanBasic > 100000) {
+      tdsDeduction = Math.round(cleanBasic * 0.20); // 20% Tax
+    } else if (cleanBasic > 50000) {
+      tdsDeduction = Math.round(cleanBasic * 0.10); // 10% Tax
+    } else if (cleanBasic > 30000) {
+      tdsDeduction = Math.round(cleanBasic * 0.05); // 5% Tax
     }
+
+    // ૫. કુલ કપાત (Total Deductions)
+    const totalDeductions = manualDeduction + pfDeduction + ptDeduction + tdsDeduction + leaveDeduction;
+    const netSalary = Math.max(0, cleanBasic + cleanBonus - totalDeductions);
+
+    // ૬. નવો પેરોલ ઓબ્જેક્ટ બનાવો
+    const payroll = new Payroll({
+      employeeId,
+      companyId: finalCompanyId,
+      basicSalary: cleanBasic,
+      bonus: cleanBonus,
+      deductions: totalDeductions,
+      deduction: totalDeductions,
+      netSalary,
+      month,
+      status: "PAID",
+    });
+
+    // ૭. સરકારી કપાતોનો રેકોર્ડ ડાયનેમિકલી સેવ કરો
+    payroll.set("pf", pfDeduction, { strict: false });
+    payroll.set("pt", ptDeduction, { strict: false });
+    payroll.set("tds", tdsDeduction, { strict: false });
+    payroll.set("leaveDeduction", leaveDeduction, { strict: false });
+    payroll.set("leaveDays", unpaidLeaveDays, { strict: false });
+
+    await payroll.save({ validateBeforeSave: false });
 
     return res.json({
       success: true,
-      message: "Batch payroll generated successfully for all employees",
-      payrolls,
+      message: `Payroll generated! PF: ₹${pfDeduction}, Tax: ₹${tdsDeduction}, Leave Cut: ₹${leaveDeduction}.`,
+      payroll,
     });
   } catch (err) {
     console.error("Payroll generation error:", err);
@@ -378,74 +578,14 @@ export const updateLeaveStatus = async (req, res) => {
       return res.status(404).json({ message: "Leave not found" });
     }
 
+    await Timeline.create({
+      employee: leave.employeeId,
+      action: `Leave request updated to ${status} by Admin`,
+      companyId: req.user.companyId || null,
+    });
+
     res.json(leave);
   } catch (err) {
     res.status(500).json({ message: err.message });
-  }
-
-  await Timeline.create({
-    employee: leave.employeeId,
-    action: `Leave request updated to ${status} by Admin`,
-    companyId: req.user.companyId,
-  });
-};
-
-// =====================================
-// ➕ CREATE EMPLOYEE (ADMIN/HR)
-// =====================================
-export const createEmployee = async (req, res) => {
-  try {
-    const { name, email, position } = req.body;
-
-    if (!name || !email || !position) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    const cleanEmail = email.toLowerCase().trim();
-
-    // ૧. ડુપ્લીકેટ યુઝર ચેક
-    const existingUser = await User.findOne({ email: cleanEmail });
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: "An employee with this email already exists.",
-      });
-    }
-
-    // ૨. પાસવર્ડને Bcrypt દ્વારા સેફ હેશ (Encrypt) કરો (આનાથી લોગિન પ્રોબ્લેમ સોલ્વ થશે!)
-    const hashedPassword = await bcrypt.hash("password123", 10);
-
-    // ૩. User મોડેલમાં હેશ કરેલા પાસવર્ડ સાથે રેકોર્ડ બનાવો
-    const newUser = await User.create({
-      name,
-      email: cleanEmail,
-      password: hashedPassword, // અહિયાં હેશ પાસવર્ડ સેવ થશે
-      role: "EMPLOYEE",
-      companyId: req.user?.companyId || null,
-      isVerified: true,
-    });
-
-    // ૪. Employee મોડેલમાં રેકોર્ડ બનાવો
-    const newEmployee = await Employee.create({
-      userId: newUser._id,
-      position,
-      companyId: req.user?.companyId || null,
-    });
-
-    await Timeline.create({
-      employee: newUser._id,
-      action: `New Employee Onboarded: ${newUser.name} was added as ${position} by ${req.user.name}`,
-      companyId: req.user.companyId,
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: "Employee added successfully",
-      data: newEmployee,
-    });
-
-  } catch (error) {
-    console.error("Error creating employee:", error);
-    return res.status(500).json({ message: "Server error while adding employee" });
   }
 };

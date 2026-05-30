@@ -1,28 +1,25 @@
 import { useEffect, useState } from "react";
+import { BarChart, RefreshCw, Loader2, ArrowUpRight, TrendingUp, DollarSign } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
 import API from "../services/api";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer,
-} from "recharts";
 
 export default function ProfitLoss() {
   const [data, setData] = useState({});
   const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [from, setFrom] = useState("2026-01-01");
   const [to, setTo] = useState("2026-12-31");
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const res = await API.get(`/reports/profit-loss?from=${from}&to=${to}`);
       setData(res.data || {});
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,91 +45,96 @@ export default function ProfitLoss() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-black text-slate-800">Profit & Loss</h2>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 p-8 rounded-[32px] text-white shadow-md flex items-center justify-between">
+        <div>
+          <span className="text-xs uppercase tracking-widest text-indigo-100 font-bold">Statements</span>
+          <h1 className="text-3xl font-black mt-1 flex items-center gap-2">
+            <BarChart /> Profit & Loss Statement (P&L)
+          </h1>
+          <p className="text-indigo-100 text-sm mt-2">Evaluate dynamic revenues, operation costs, and net margins.</p>
+        </div>
+      </div>
 
-      {/* 🔹 Filters */}
-      <div className="flex gap-4 mb-6">
+      {/* Date Filters Bar */}
+      <div className="bg-white rounded-3xl border p-5 shadow-sm flex flex-wrap gap-4 items-center">
         <input
           type="date"
           value={from}
           onChange={(e) => setFrom(e.target.value)}
-          className="border p-2 rounded-xl text-sm"
+          className="border p-2.5 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500"
         />
         <input
           type="date"
           value={to}
           onChange={(e) => setTo(e.target.value)}
-          className="border p-2 rounded-xl text-sm"
+          className="border p-2.5 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500"
         />
         <button
           onClick={fetchData}
-          className="bg-indigo-600 text-white px-4 rounded-xl text-sm font-bold"
+          className="h-10 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-sm"
         >
-          Apply
+          Apply Filters
         </button>
-
-        {/* 📄 PDF Button */}
         <button
           onClick={downloadPDF}
-          className="bg-emerald-600 text-white px-4 rounded-xl text-sm font-bold"
+          className="h-10 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm"
         >
           Download PDF
         </button>
       </div>
 
-      {/* 🔹 Cards */}
-      <div className="grid md:grid-cols-4 gap-6">
-        <div className="bg-white p-5 rounded-2xl border shadow-sm">
-          <h3 className="text-xs text-slate-400 font-bold uppercase tracking-wider">Revenue</h3>
-          <p className="text-2xl font-black text-green-600 mt-2">
-            ₹{data.revenue || 0}
-          </p>
+      {loading ? (
+        <div className="p-20 text-center">
+          <Loader2 className="animate-spin h-10 w-10 text-indigo-600 mx-auto" />
         </div>
+      ) : (
+        <>
+          {/* KPI Balances */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white p-5 rounded-2xl border shadow-sm">
+              <span className="text-xs text-slate-400 font-bold uppercase block">Revenue</span>
+              <p className="text-2xl font-black text-green-600 mt-2">₹{data.revenue || 0}</p>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border shadow-sm">
+              <span className="text-xs text-slate-400 font-bold uppercase block">Expenses</span>
+              <p className="text-2xl font-black text-rose-500 mt-2">₹{data.expenses || 0}</p>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border shadow-sm">
+              <span className="text-xs text-slate-400 font-bold uppercase block">Payroll</span>
+              <p className="text-2xl font-black text-amber-500 mt-2">₹{data.payroll || 50000}</p>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border shadow-sm">
+              <span className="text-xs text-slate-400 font-bold uppercase block">Net Profit</span>
+              <p className={`text-2xl font-black mt-2 ${data.profit >= 0 ? "text-green-600" : "text-rose-500"}`}>
+                ₹{data.profit || 0}
+              </p>
+            </div>
+          </div>
 
-        <div className="bg-white p-5 rounded-2xl border shadow-sm">
-          <h3 className="text-xs text-slate-400 font-bold uppercase tracking-wider">Expenses</h3>
-          <p className="text-2xl font-black text-rose-500 mt-2">
-            ₹{data.expenses || 0}
-          </p>
-        </div>
+          {/* Recharts Area */}
+          <div className="bg-white rounded-[32px] border p-6 shadow-sm space-y-6">
+            <div className="pb-4 border-b">
+              <h2 className="text-lg font-bold text-slate-800">Operational Margin Analysis</h2>
+              <p className="text-xs text-slate-400">Revenue, expenses, and net profit tracked side-by-side</p>
+            </div>
 
-        <div className="bg-white p-5 rounded-2xl border shadow-sm">
-          <h3 className="text-xs text-slate-400 font-bold uppercase tracking-wider">Payroll</h3>
-          <p className="text-2xl font-black text-amber-500 mt-2">
-            ₹{data.payroll || 50000}
-          </p>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border shadow-sm">
-          <h3 className="text-xs text-slate-400 font-bold uppercase tracking-wider">Profit</h3>
-          <p
-            className={`text-2xl font-black mt-2 ${
-              data.profit >= 0 ? "text-green-600" : "text-rose-500"
-            }`}
-          >
-            ₹{data.profit || 0}
-          </p>
-        </div>
-      </div>
-
-      {/* 📈 CHART */}
-      <div className="bg-white p-6 rounded-3xl border shadow-sm mt-8">
-        <h3 className="text-lg font-bold text-slate-800 mb-4">P&L Trend</h3>
-
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-
-            <Line type="monotone" dataKey="revenue" stroke="#22c55e" strokeWidth={2.5} />
-            <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2.5} />
-            <Line type="monotone" dataKey="profit" stroke="#3b82f6" strokeWidth={2.5} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
+            <ResponsiveContainer width="100%" height={380}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="month" stroke="#94a3b8" />
+                <YAxis stroke="#94a3b8" />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="revenue" stroke="#22c55e" strokeWidth={3} />
+                <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={3} />
+                <Line type="monotone" dataKey="profit" stroke="#3b82f6" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarRange, Loader2, RefreshCw } from "lucide-react";
+import { CalendarRange, Loader2, RefreshCw, Layers } from "lucide-react";
 import API from "../../services/api";
 import GanttChart from "./GanttChart";
 
@@ -23,7 +23,7 @@ export default function GanttBoard() {
     }
   };
 
-  // Safe date parsing & styles mapping to prevent react-gantt crashes
+  // gantt-task-react માટે ડેટા ઓટો-સિંકિંગ
   const formattedTasks = tasks.map((t) => {
     const sDate = t.startDate ? new Date(t.startDate) : new Date(t.createdAt || Date.now());
     const eDate = t.endDate ? new Date(t.endDate) : new Date(sDate.getTime() + 4 * 24 * 60 * 60 * 1000);
@@ -35,28 +35,52 @@ export default function GanttBoard() {
       end: isNaN(eDate.getTime()) ? new Date() : eDate,
       type: "task",
       progress: t.status === "DONE" ? 100 : t.status === "IN_PROGRESS" ? 50 : 0,
-      styles: { progressColor: "#4f46e5", progressSelectedColor: "#312e81" },
+      styles: { 
+        progressColor: "#4f46e5", 
+        progressSelectedColor: "#312e81",
+        backgroundColor: "#e0e7ff"
+      },
     };
   });
 
   return (
     <div className="space-y-8">
-      {/* 🔹 કસ્ટમ SVG સ્ટાઇલ જે ડાબી બાજુના અક્ષરોને બિલકુલ ડાર્ક અને સ્પષ્ટ કરી દેશે */}
+      {/* 🚀 અલ્ટ્રા-પ્રીમિયમ સીએસએસ ઓવરરાઇડર (વન-ટાઇમ કલર ફિક્સ) */}
       <style>{`
-        .gantt-container-custom text {
-          fill: #1e293b !important; 
+        /* ડાબી બાજુના તમામ લખાણો (Name, From, To) ને ડાર્ક કલર કરવા માટે */
+        .gantt-container-custom text,
+        .gantt-container-custom span,
+        .gantt-container-custom [class*="gantt"] text,
+        .gantt-container-custom [class*="gantt"] span,
+        .gantt-container-custom [class*="gantt"] div,
+        .gantt-container-custom [class*="gantt-table"] text {
+          fill: #0f172a !important; /* ડાર્ક સ્લેટ-૯૦૦ */
+          color: #0f172a !important;
           font-family: 'Inter', sans-serif !important;
           font-size: 11px !important;
+          font-weight: 700 !important;
         }
-        .gantt-container-custom ._3_9HT { 
-          fill: #0f172a !important;
-          font-weight: bold !important;
+
+        /* કોષ્ટકના મુખ્ય હેડર્સ માટે વધુ બોલ્ડ કલર */
+        .gantt-container-custom [class*="header"] text,
+        .gantt-container-custom [class*="Header"] text,
+        .gantt-container-custom [class*="header-"] text {
+          fill: #1e1b4b !important; /* બ્રાન્ડ ઇન્ડિગો */
+          font-weight: 900 !important;
           font-size: 12px !important;
+        }
+
+        /* ગ્રીડ લાઇન્સ અને બોર્ડર્સને સ્મૂથ કરવા માટે */
+        .gantt-container-custom ._1_X5p {
+          stroke: #f1f5f9 !important; /* Slate-100 */
+        }
+        .gantt-container-custom ._27m88 {
+          stroke: #e2e8f0 !important; /* Slate-200 */
         }
       `}</style>
 
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 rounded-[32px] p-8 text-white shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+      <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 rounded-[32px] p-8 text-white shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div className="space-y-2">
           <span className="text-xs uppercase tracking-widest text-indigo-200 font-bold">Workspace Schedule</span>
           <h1 className="text-3xl md:text-4xl font-black tracking-tight">📅 Gantt Timeline</h1>
@@ -70,32 +94,31 @@ export default function GanttBoard() {
       </div>
 
       {/* Toolbar */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-sm flex justify-between items-center">
+      <div className="bg-white rounded-3xl border p-5 shadow-sm flex justify-between items-center">
         <div>
           <h2 className="text-lg font-bold text-slate-800">Sprint Roadmap</h2>
           <p className="text-xs text-slate-400 font-medium">Automatic rendering of task scopes</p>
         </div>
         <button
           onClick={loadTasks}
-          className="h-11 px-5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 text-sm font-bold flex items-center justify-center gap-2 border border-slate-200 transition-all"
+          className="h-11 px-5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 text-sm font-bold flex items-center justify-center gap-2 border transition-all"
         >
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           Refresh
         </button>
       </div>
 
-      {/* Gantt Chart Container (Added custom wrapper class) */}
+      {/* Gantt Container */}
       {loading ? (
-        <div className="bg-white rounded-[32px] border border-slate-200/80 p-20 text-center shadow-sm">
+        <div className="bg-white rounded-[32px] p-20 text-center shadow-sm">
           <Loader2 className="animate-spin h-10 w-10 text-indigo-600 mx-auto" />
-          <p className="mt-4 text-slate-500 font-semibold text-sm">Loading timeline...</p>
         </div>
       ) : formattedTasks.length === 0 ? (
-        <div className="bg-white rounded-[32px] border border-slate-200/80 p-20 text-center text-slate-400">
+        <div className="bg-white rounded-[32px] p-20 text-center text-slate-400">
           No tasks available. Add tasks to see them on the Gantt chart.
         </div>
       ) : (
-        <div className="gantt-container-custom bg-white rounded-[32px] border border-slate-200/80 p-6 shadow-sm overflow-x-auto">
+        <div className="gantt-container-custom bg-white rounded-[32px] border p-6 shadow-sm overflow-x-auto">
           <GanttChart tasks={formattedTasks} />
         </div>
       )}

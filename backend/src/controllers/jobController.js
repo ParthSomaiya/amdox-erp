@@ -1,39 +1,56 @@
+import mongoose from "mongoose";
 import Job from "../models/Job.js";
-import Applicant from "../models/Applicant.js"; // 🔹 તમારા મોડેલ મુજબ 'Applicant' ઉપયોગ કર્યો
+import Applicant from "../models/Applicant.js"; 
+import User from "../models/User.js"; // 🔹 ફિક્સ: મિસિંગ 'User' મોડેલ ઈમ્પોર્ટ કર્યું
 import { parseResume } from "../utils/resumeParser.js";
 import { sendInterviewMail } from "../utils/sendInterviewMail.js";
 
-// =========================
-// CREATE JOB (HR/ADMIN)
-// =========================
+// =====================================
+// ➕ CREATE JOB (HR/ADMIN)
+// =====================================
 export const createJob = async (req, res) => {
   try {
+    const { title, description, location, salary, type, status } = req.body;
+
+    if (!title || !description || !location || !salary) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    // companyId માટે પ્રોફેશનલ ફોલબેક સેટઅપ
+    let companyId = req.user?.companyId;
+    if (!companyId) {
+      const userObj = await User.findById(req.user?.id || req.user?._id);
+      companyId = userObj?.companyId;
+    }
+    if (!companyId) {
+      const fallbackAdmin = await User.findOne({ role: "ADMIN" });
+      companyId = fallbackAdmin?.companyId || new mongoose.Types.ObjectId(); // 🔹 ફિક્સ: mongoose નો સક્સેસફુલ ઉપયોગ
+    }
+
     const job = await Job.create({
-      title: req.body.title,
-      description: req.body.description,
-      location: req.body.location,
-      salary: req.body.salary,
-      type: req.body.type,
-      status: req.body.status || "OPEN",
-      companyId: req.user?.companyId || null, // એડમિન કંપની આઈડી મેપિંગ
+      title,
+      description,
+      location,
+      salary: Number(salary),
+      type: type || "FULL_TIME",
+      status: status || "OPEN",
+      companyId,
     });
 
     res.status(201).json(job);
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    console.error("Create Job Error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// =========================
-// GET ALL JOBS (PUBLIC / CAREER PORTAL)
-// =========================
+// =====================================
+// 📋 GET ALL JOBS (PUBLIC / CAREER PORTAL)
+// =====================================
 export const getJobs = async (req, res) => {
   try {
     let jobs = await Job.find().sort({ createdAt: -1 });
 
-    // જો ડેટાબેઝ ખાલી હોય તો આપમેળે રિયલ-ટાઇમ રિક્રુટમેન્ટ જોબ્સ સીડ કરો
     if (jobs.length === 0) {
       jobs = await Job.create([
         {
@@ -68,9 +85,9 @@ export const getJobs = async (req, res) => {
   }
 };
 
-// =========================
-// GET SINGLE JOB
-// =========================
+// =====================================
+// 🔍 GET SINGLE JOB
+// =====================================
 export const getSingleJob = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
@@ -87,23 +104,31 @@ export const getSingleJob = async (req, res) => {
   }
 };
 
-// =========================
-// UPDATE JOB
-// =========================
+// =====================================
+// ✏️ UPDATE JOB (ALL FIELDS)
+// =====================================
 export const updateJob = async (req, res) => {
   try {
+    const { id } = req.params;
+    const { title, description, location, salary, type, status } = req.body;
+
     const job = await Job.findByIdAndUpdate(
-      req.params.id,
+      id,
       {
-        title: req.body.title,
-        description: req.body.description,
-        location: req.body.location,
-        salary: req.body.salary,
-        type: req.body.type,
-        status: req.body.status,
+        title,
+        description,
+        location,
+        salary: Number(salary || 0),
+        type,
+        status: status || "OPEN",
       },
       { new: true }
     );
+
+    if (!job) {
+      return res.status(404).json({ success: false, message: "Job vacancy not found" });
+    }
+
     res.json(job);
   } catch (err) {
     res.status(500).json({
@@ -112,15 +137,19 @@ export const updateJob = async (req, res) => {
   }
 };
 
-// =========================
-// DELETE JOB
-// =========================
+// =====================================
+// ❌ DELETE JOB (ADMIN/HR)
+// =====================================
 export const deleteJob = async (req, res) => {
   try {
-    await Job.findByIdAndDelete(req.params.id);
-    res.json({
-      message: "Job deleted",
-    });
+    const { id } = req.params;
+    const deleted = await Job.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "Job not found" });
+    }
+
+    res.json({ success: true, message: "Job vacancy deleted successfully" });
   } catch (err) {
     res.status(500).json({
       message: err.message,
@@ -128,10 +157,9 @@ export const deleteJob = async (req, res) => {
   }
 };
 
-// =========================
-// APPLY JOB (CANDIDATE WITH RESUME PARSER)
-// =========================
-
+// =====================================
+// 📩 APPLY JOB (CANDIDATE WITH RESUME PARSER)
+// =====================================
 export const applyJob = async (req, res) => {
   try {
     const { name, email, phone, experience, skills, portfolio } = req.body;
@@ -145,7 +173,6 @@ export const applyJob = async (req, res) => {
       }
     }
 
-    // 🔹 ડાયનેમિક કેન્ડિડેટ પેરામીટર્સ ક્રિએશન
     const applicant = await Applicant.create({
       name,
       email,
@@ -165,16 +192,15 @@ export const applyJob = async (req, res) => {
   }
 };
 
-// =========================
-// GET APPLICANTS (HR/ADMIN WITH AUTO SEEDING)
-// =========================
+// =====================================
+// 👥 GET APPLICANTS (HR/ADMIN WITH AUTO SEEDING)
+// =====================================
 export const getApplicants = async (req, res) => {
   try {
     let applicants = await Applicant.find()
       .populate("jobId", "title location")
       .sort({ createdAt: -1 });
 
-    // જો કોઈ અરજી ન આવી હોય, તો ડેમો માટે ઓટો-સીડ એપ્લિકન્ટ બનાવો જેથી પેજ ખાલી ન દેખાય
     if (applicants.length === 0) {
       const sampleJob = await Job.findOne() || await Job.create({
         title: "Frontend Developer (React/Vite)",
@@ -198,9 +224,9 @@ export const getApplicants = async (req, res) => {
   }
 };
 
-// =========================
-// GET SINGLE APPLICANT
-// =========================
+// =====================================
+// 👤 GET SINGLE APPLICANT
+// =====================================
 export const getSingleApplicant = async (req, res) => {
   try {
     const applicant = await Applicant.findById(req.params.id).populate("jobId");
@@ -217,9 +243,9 @@ export const getSingleApplicant = async (req, res) => {
   }
 };
 
-// =========================
-// UPDATE APPLICANT STATUS & INTERVIEW EMAIL
-// =========================
+// =====================================
+// ✏️ UPDATE APPLICANT STATUS & INTERVIEW EMAIL
+// =====================================
 export const updateApplicantStatus = async (req, res) => {
   try {
     const applicant = await Applicant.findByIdAndUpdate(
@@ -231,7 +257,6 @@ export const updateApplicantStatus = async (req, res) => {
       { new: true }
     );
 
-    // જો ઇન્ટરવ્યુ ડેટ સેટ થાય તો ઓટોમેટિકલી ઇમેઇલ મોકલો
     if (req.body.interviewDate && applicant) {
       try {
         await sendInterviewMail(applicant.email, req.body.interviewDate);
@@ -248,9 +273,9 @@ export const updateApplicantStatus = async (req, res) => {
   }
 };
 
-// =========================
-// DELETE APPLICANT
-// =========================
+// =====================================
+// ❌ DELETE APPLICANT
+// =====================================
 export const deleteApplicant = async (req, res) => {
   try {
     await Applicant.findByIdAndDelete(req.params.id);

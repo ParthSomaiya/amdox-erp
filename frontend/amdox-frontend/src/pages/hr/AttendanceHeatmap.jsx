@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Flame, Info, Clock, ShieldAlert } from "lucide-react";
+import { Loader2, Flame, Info, Clock, ShieldAlert, User } from "lucide-react";
 import API from "../../services/api";
 
 export default function AttendanceHeatmap() {
@@ -9,7 +9,6 @@ export default function AttendanceHeatmap() {
   useEffect(() => {
     API.get("/attendance")
       .then((res) => {
-        // 🔹 એરર ફિક્સ: ઓબ્જેક્ટમાંથી સચોટ અરેય (Array) ડેટા ફિલ્ટર કરવો
         const records = res.data?.data || res.data || [];
         setData(Array.isArray(records) ? records : []);
       })
@@ -21,19 +20,22 @@ export default function AttendanceHeatmap() {
     const hrs = Number(hours || 0);
     if (hrs >= 8) {
       return {
-        bg: "bg-emerald-500 text-white border-emerald-600",
-        label: "Full Shift (8+ hrs)",
+        bg: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
+        badge: "bg-emerald-500 text-white",
+        status: "Full Shift (8+ Hrs)",
       };
     }
     if (hrs >= 5) {
       return {
-        bg: "bg-amber-500 text-white border-amber-600",
-        label: "Half Shift (5-7 hrs)",
+        bg: "bg-amber-500/10 text-amber-700 border-amber-200",
+        badge: "bg-amber-500 text-white",
+        status: "Half Shift (5-7 Hrs)",
       };
     }
     return {
-      bg: "bg-rose-500 text-white border-rose-600",
-      label: "Short / Absent (<5 hrs)",
+      bg: "bg-rose-500/10 text-rose-700 border-rose-200",
+      badge: "bg-rose-500 text-white",
+      status: "Short Shift (<5 Hrs)",
     };
   };
 
@@ -49,7 +51,7 @@ export default function AttendanceHeatmap() {
   }
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-8">
       {/* 🚀 Header */}
       <div className="bg-gradient-to-r from-orange-500 via-red-500 to-indigo-700 p-8 rounded-[32px] text-white shadow-md relative overflow-hidden">
         <div className="absolute top-0 right-0 h-48 w-48 rounded-full bg-white/10 blur-3xl pointer-events-none" />
@@ -95,7 +97,7 @@ export default function AttendanceHeatmap() {
           <p className="text-slate-400 text-sm">Please clock-in from the portal to view data.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {data.map((a) => {
             const hrs = a.totalHours || 0;
             const heat = getHeatLevel(hrs);
@@ -103,15 +105,32 @@ export default function AttendanceHeatmap() {
             return (
               <div
                 key={a._id}
-                className={`p-5 rounded-2xl border text-center font-bold shadow-sm transition duration-300 hover:scale-[1.03] ${heat.bg}`}
+                className="bg-white border rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border-slate-200/80 flex flex-col justify-between"
               >
-                <p className="text-xs truncate">{a.employeeId?.name || "Employee"}</p>
-                <p className="text-lg mt-3 flex items-center justify-center gap-1">
-                  <Clock size={16} /> {hrs.toFixed(1)} hrs
-                </p>
-                <p className="text-[9px] opacity-75 font-semibold mt-2">
-                  {a.date ? new Date(a.date).toLocaleDateString() : ""}
-                </p>
+                {/* Visual Top Bar */}
+                <div className="h-16 bg-slate-50 border-b relative flex items-center justify-center">
+                  <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <User size={16} />
+                  </div>
+                  {/* Status Badge */}
+                  <span className={`absolute top-2.5 right-3 px-2 py-0.5 rounded-md text-[8px] font-black tracking-wide uppercase ${heat.badgeClass}`}>
+                    {heat.status}
+                  </span>
+                </div>
+
+                {/* Content */}
+                <div className="p-4 space-y-3">
+                  <h4 className="font-extrabold text-slate-800 text-sm truncate" title={a.employeeId?.name || "Employee"}>
+                    {a.employeeId?.name || "Employee"}
+                  </h4>
+                  
+                  <div className="flex items-center justify-between pt-2.5 border-t text-xs">
+                    <span className="text-slate-400 font-bold">{a.date ? new Date(a.date).toLocaleDateString("en-IN") : ""}</span>
+                    <span className={`px-2.5 py-1 rounded-xl font-black text-[11px] border ${heat.bg}`}>
+                      {hrs.toFixed(1)} Hrs
+                    </span>
+                  </div>
+                </div>
               </div>
             );
           })}

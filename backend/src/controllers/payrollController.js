@@ -1,39 +1,107 @@
+import mongoose from "mongoose";
 import PDFDocument from "pdfkit";
 import Payroll from "../models/Payroll.js";
 import User from "../models/User.js";
+import Employee from "../models/Employee.js"; 
+import Leave from "../models/Leave.js";       
 import { sendNotification } from "../utils/notify.js";
 import { emailQueue } from "../queues/emailQueue.js";
 
 const toNumber = (val) => Number(val || 0);
 
-// GENERATE PAYROLL (WITH DEFENSIVE EMAIL QUEUE FALLBACK)
+// =====================================
+// 💰 GENERATE PAYROLL (સંપૂર્ણ સરકારી ટેક્સ, લીવ કપાત અને ડ્યુઅલ સેક્યોર્ડ companyId સિંક)
+// =====================================
 export const generatePayroll = async (req, res) => {
   try {
-    const { employeeId, basicSalary, bonus, deductions, month } = req.body;
+    const { employeeId, month, basicSalary, bonus, deduction, deductions, companyId } = req.body;
+
+    const cleanBonus = Number(bonus || 0);
+    const cleanBasic = Number(basicSalary || 0);
+    const manualDeduction = Number(deduction || deductions || 0);
 
     if (!employeeId || !month) {
-      return res.status(400).json({
-        success: false,
-        message: "Employee ID and Month are required",
+      return res.status(400).json({ success: false, message: "Employee ID and Month are required" });
+    }
+
+    const employeeObj = await Employee.findOne({ $or: [{ _id: employeeId }, { userId: employeeId }] });
+    const actualEmployeeId = employeeObj ? employeeObj._id : employeeId;
+
+    let finalCompanyId = companyId || employeeObj?.companyId || req.user?.companyId;
+
+    if (!finalCompanyId || finalCompanyId === null || String(finalCompanyId) === "null" || String(finalCompanyId) === "undefined") {
+      const userObj = await User.findById(req.user?.id || req.user?._id);
+      finalCompanyId = userObj?.companyId;
+    }
+    if (!finalCompanyId || finalCompanyId === null || String(finalCompanyId) === "null" || String(finalCompanyId) === "undefined") {
+      const fallbackAdmin = await User.findOne({ role: "ADMIN" });
+      finalCompanyId = fallbackAdmin?.companyId;
+    }
+    if (!finalCompanyId || finalCompanyId === null || String(finalCompanyId) === "null" || String(finalCompanyId) === "undefined") {
+      finalCompanyId = new mongoose.Types.ObjectId();
+    }
+
+    console.log("🎯 Cascade verified companyId for Payroll DB Write:", finalCompanyId);
+
+    if (employeeObj && (!employeeObj.companyId || employeeObj.companyId === null)) {
+      employeeObj.companyId = finalCompanyId;
+      await employeeObj.save({ validateBeforeSave: false });
+    }
+
+    let unpaidLeaveDays = 0;
+    if (employeeObj) {
+      const approvedLeaves = await Leave.find({
+        employeeId: employeeObj.userId, 
+        status: "APPROVED"
+      });
+
+      approvedLeaves.forEach(leave => {
+        const leaveMonth = new Date(leave.fromDate).toISOString().slice(0, 7);
+        if (leaveMonth === month) {
+          const days = Math.ceil(
+            (new Date(leave.toDate) - new Date(leave.fromDate)) / (1000 * 60 * 60 * 24)
+          ) || 1;
+          unpaidLeaveDays += days;
+        }
       });
     }
 
-    const netSalary = toNumber(basicSalary) + toNumber(bonus) - toNumber(deductions);
+    const leaveDeduction = Math.round((cleanBasic / 30) * unpaidLeaveDays);
 
-    const payroll = await Payroll.create({
-      employeeId,
-      companyId: req.user.companyId,
+    const pfDeduction = Math.round(cleanBasic * 0.12);
+    const ptDeduction = cleanBasic > 10000 ? 200 : 0;
+    
+    let tdsDeduction = 0;
+    if (cleanBasic > 100000) tdsDeduction = Math.round(cleanBasic * 0.20);
+    else if (cleanBasic > 50000) tdsDeduction = Math.round(cleanBasic * 0.10);
+    else if (cleanBasic > 30000) tdsDeduction = Math.round(cleanBasic * 0.05);
+
+    const totalDeductions = manualDeduction + pfDeduction + ptDeduction + tdsDeduction + leaveDeduction;
+    const netSalary = Math.max(0, cleanBasic + cleanBonus - totalDeductions);
+
+    const payroll = new Payroll({
+      employeeId: actualEmployeeId,
+      companyId: finalCompanyId,
       month,
-      basicSalary: toNumber(basicSalary),
-      bonus: toNumber(bonus),
-      deductions: toNumber(deductions),
+      basicSalary: cleanBasic,
+      bonus: cleanBonus,
+      deductions: totalDeductions,
+      deduction: totalDeductions,
       netSalary,
+      status: "PAID",
     });
 
-    const user = await User.findById(employeeId);
+    payroll.set("pf", pfDeduction, { strict: false });
+    payroll.set("pt", ptDeduction, { strict: false });
+    payroll.set("tds", tdsDeduction, { strict: false });
+    payroll.set("leaveDeduction", leaveDeduction, { strict: false });
+    payroll.set("leaveDays", unpaidLeaveDays, { strict: false });
+
+    await payroll.save({ validateBeforeSave: false });
+
+    const user = await User.findById(employeeObj ? employeeObj.userId : employeeId);
 
     if (user?.email) {
-      // Defensive try/catch to avoid request crash if Redis/Bull is inactive
       try {
         await emailQueue.add("sendEmail", {
           to: user.email,
@@ -56,7 +124,7 @@ export const generatePayroll = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Payroll generated successfully",
+      message: `Payroll generated! Deducted ₹${leaveDeduction} for ${unpaidLeaveDays} leaves.`,
       data: payroll,
     });
   } catch (err) {
@@ -68,7 +136,9 @@ export const generatePayroll = async (req, res) => {
   }
 };
 
-// MARK AS PAID
+// =====================================
+// 📝 MARK AS PAID
+// =====================================
 export const markPaid = async (req, res) => {
   try {
     const { payrollId } = req.body;
@@ -118,12 +188,26 @@ export const markPaid = async (req, res) => {
   }
 };
 
-// GET ALL PAYROLL
+// =====================================
+// 📋 GET ALL PAYROLLS 
+// =====================================
 export const getAllPayroll = async (req, res) => {
   try {
-    const data = await Payroll.find({
-      companyId: req.user.companyId,
-    }).populate("employeeId", "name email");
+    let query = {};
+    
+    if (req.user?.companyId && req.user?.role !== "ADMIN" && req.user?.role !== "HR") {
+      query.companyId = req.user.companyId;
+    }
+
+    const data = await Payroll.find(query)
+      .populate({
+        path: "employeeId",
+        populate: {
+          path: "userId",
+          select: "name email"
+        }
+      })
+      .sort({ createdAt: -1 });
 
     return res.json({
       success: true,
@@ -139,13 +223,14 @@ export const getAllPayroll = async (req, res) => {
   }
 };
 
-// MY PAYROLL
+// =====================================
+// 👤 GET PERSONAL PAYROLLS (EMPLOYEE)
+// =====================================
 export const getMyPayroll = async (req, res) => {
   try {
-    const data = await Payroll.find({
-      employeeId: req.user.id,
-      companyId: req.user.companyId,
-    }).sort({ createdAt: -1 });
+    const data = await Payroll.find({ employeeId: req.params.userId || req.user.id })
+      .populate("employeeId")
+      .sort({ createdAt: -1 });
 
     return res.json({
       success: true,
@@ -161,7 +246,9 @@ export const getMyPayroll = async (req, res) => {
   }
 };
 
-// DOWNLOAD PAYSLIP (PDF)
+// =====================================
+// 📄 DOWNLOAD PAYSLIP (PDF)
+// =====================================
 export const downloadPayslip = async (req, res) => {
   try {
     const payroll = await Payroll.findById(req.params.id).populate("employeeId");

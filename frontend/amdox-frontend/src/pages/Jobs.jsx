@@ -1,1331 +1,383 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import API from "../services/api";
-
-import {
-  Plus,
-  Briefcase,
-  MapPin,
-  IndianRupee,
-  Trash2,
-  Search,
-  Building2,
-  Users,
-  Loader2,
-  Eye,
-} from "lucide-react";
+import { Plus, Briefcase, MapPin, IndianRupee, Trash2, Search, Building2, Users, Loader2, Edit3, X, Check, FileText } from "lucide-react";
 
 export default function Jobs() {
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [search, setSearch] = useState("");
 
-  // ================= STATE =================
+  // Edit modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", location: "", salary: "", type: "FULL_TIME" });
+  const [updating, setUpdating] = useState(false);
 
-  const [jobs, setJobs] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [creating, setCreating] =
-    useState(false);
-
-  const [search, setSearch] =
-    useState("");
-
-  const [form, setForm] =
-    useState({
-
-      title: "",
-      description: "",
-      location: "",
-      salary: "",
-      type: "FULL_TIME",
-
-    });
-
-  // ================= FETCH JOBS =================
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    location: "",
+    salary: "",
+    type: "FULL_TIME",
+  });
 
   useEffect(() => {
-
     fetchJobs();
-
   }, []);
 
-  const fetchJobs =
-    async () => {
-
-      try {
-
-        setLoading(true);
-
-        const res =
-          await API.get(
-            "/jobs"
-          );
-
-        setJobs(
-          res.data || []
-        );
-
-      } catch (err) {
-
-        console.log(err);
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
-    };
-
-  // ================= HANDLE CHANGE =================
-
-  const handleChange =
-    (e) => {
-
-      setForm({
-
-        ...form,
-
-        [e.target.name]:
-          e.target.value,
-
-      });
-
-    };
-
-  // ================= CREATE JOB =================
-
-  const createJob =
-    async (e) => {
-
-      e.preventDefault();
-
-      try {
-
-        setCreating(true);
-
-        await API.post(
-          "/jobs",
-          {
-            ...form,
-            salary:
-              Number(
-                form.salary
-              ),
-          }
-        );
-
-        setForm({
-
-          title: "",
-          description: "",
-          location: "",
-          salary: "",
-          type: "FULL_TIME",
-
-        });
-
-        fetchJobs();
-
-      } catch (err) {
-
-        console.log(err);
-
-        alert(
-
-          err.response?.data
-            ?.message ||
-
-          "Failed to create job"
-
-        );
-
-      } finally {
-
-        setCreating(false);
-
-      }
-
-    };
-
-  // ================= DELETE JOB =================
-
-  const deleteJob =
-    async (id) => {
-
-      const confirmDelete =
-        window.confirm(
-          "Are you sure you want to delete this job?"
-        );
-
-      if (!confirmDelete)
-        return;
-
-      try {
-
-        await API.delete(
-          `/jobs/${id}`
-        );
-
-        setJobs((prev) =>
-          prev.filter(
-            (job) =>
-              job._id !== id
-          )
-        );
-
-      } catch (err) {
-
-        console.log(err);
-
-        alert(
-          "Failed to delete job"
-        );
-
-      }
-
-    };
-
-  // ================= FILTER =================
-
-  const filteredJobs =
-    useMemo(() => {
-
-      return jobs.filter(
-        (job) =>
-
-          job.title
-            ?.toLowerCase()
-            .includes(
-              search.toLowerCase()
-            ) ||
-
-          job.location
-            ?.toLowerCase()
-            .includes(
-              search.toLowerCase()
-            ) ||
-
-          job.type
-            ?.toLowerCase()
-            .includes(
-              search.toLowerCase()
-            )
-      );
-
-    }, [jobs, search]);
-
-  // ================= JOB TYPE STYLE =================
-
-  const jobTypeStyle =
-    (type) => {
-
-      switch (type) {
-
-        case "FULL_TIME":
-
-          return `
-            bg-green-100
-            text-green-700
-          `;
-
-        case "PART_TIME":
-
-          return `
-            bg-yellow-100
-            text-yellow-700
-          `;
-
-        case "INTERNSHIP":
-
-          return `
-            bg-blue-100
-            text-blue-700
-          `;
-
-        case "REMOTE":
-
-          return `
-            bg-purple-100
-            text-purple-700
-          `;
-
-        default:
-
-          return `
-            bg-gray-100
-            text-gray-700
-          `;
-
-      }
-
-    };
-
-  // ================= STATS =================
-
-  const fullTimeJobs =
-    jobs.filter(
-      (j) =>
-        j.type ===
-        "FULL_TIME"
-    ).length;
-
-  const internshipJobs =
-    jobs.filter(
-      (j) =>
-        j.type ===
-        "INTERNSHIP"
-    ).length;
+  const fetchJobs = async () => {
+    try {
+      setLoading(true);
+      const res = await API.get("/jobs");
+      setJobs(res.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const createJob = async (e) => {
+    e.preventDefault();
+    try {
+      setCreating(true);
+      await API.post("/jobs", { ...form, salary: Number(form.salary) });
+      setForm({ title: "", description: "", location: "", salary: "", type: "FULL_TIME" });
+      fetchJobs();
+      alert("Job vacancy published successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create job vacancy");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const openEditModal = (job) => {
+    setSelectedJob(job);
+    setEditForm({
+      title: job.title || "",
+      description: job.description || "",
+      location: job.location || "",
+      salary: job.salary || "",
+      type: job.type || "FULL_TIME",
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setUpdating(true);
+      await API.put(`/jobs/${selectedJob._id}`, editForm); // 🔹 PUT /api/jobs/:id
+      alert("Job vacancy updated successfully!");
+      setShowEditModal(false);
+      fetchJobs();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update job details");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const deleteJob = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this job?")) return;
+    try {
+      await API.delete(`/jobs/${id}`); // 🔹 DELETE /api/jobs/:id
+      alert("Job vacancy deleted successfully!");
+      fetchJobs();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete job");
+    }
+  };
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((job) =>
+      job.title?.toLowerCase().includes(search.toLowerCase()) ||
+      job.location?.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [jobs, search]);
+
+  const getJobTypeStyle = (type) => {
+    switch (type) {
+      case "FULL_TIME": return "bg-indigo-50 text-indigo-700 border-indigo-100";
+      case "PART_TIME": return "bg-purple-50 text-purple-700 border-purple-100";
+      case "INTERNSHIP": return "bg-blue-50 text-blue-700 border-blue-100";
+      case "REMOTE": return "bg-slate-100 text-slate-700 border-slate-200";
+      default: return "bg-slate-50 text-slate-700 border-slate-100";
+    }
+  };
 
   return (
-
     <div className="space-y-8">
-
-      {/* HERO */}
-
-      <div
-        className="
-          bg-gradient-to-r
-          from-cyan-600
-          via-blue-600
-          to-indigo-700
-          rounded-[32px]
-          p-10
-          text-white
-          shadow-2xl
-          relative
-          overflow-hidden
-        "
-      >
-
-        <div
-          className="
-            absolute
-            top-0
-            right-0
-            h-72
-            w-72
-            bg-white/10
-            rounded-full
-            blur-3xl
-          "
-        />
-
-        <div className="relative z-10">
-
-          <h1
-            className="
-              text-5xl
-              font-black
-            "
-          >
-
-            Recruitment Portal
-
-          </h1>
-
-          <p
-            className="
-              mt-4
-              text-cyan-100
-              text-lg
-              max-w-2xl
-            "
-          >
-
-            Create, manage and
-            publish professional
-            company job openings
-
-          </p>
-
-        </div>
-
+      {/* 🚀 Hero Banner */}
+      <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 rounded-[32px] p-10 text-white shadow-md relative overflow-hidden">
+        <div className="absolute top-0 right-0 h-48 w-48 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+        <span className="text-xs uppercase tracking-widest text-indigo-100 font-bold">Workspace Recruitment</span>
+        <h1 className="text-3xl md:text-4xl font-black mt-1">Recruitment Portal</h1>
+        <p className="mt-2 text-indigo-100 text-sm">Create, edit, and publish professional company-wide job openings.</p>
       </div>
 
-      {/* STATS */}
-
-      <div
-        className="
-          grid
-          grid-cols-1
-          md:grid-cols-3
-          gap-6
-        "
-      >
-
-        <div
-          className="
-            bg-white
-            rounded-3xl
-            p-6
-            shadow-lg
-          "
-        >
-
-          <div
-            className="
-              flex
-              items-center
-              justify-between
-            "
-          >
-
-            <div>
-
-              <p className="text-gray-500">
-
-                Total Jobs
-
-              </p>
-
-              <h2
-                className="
-                  text-5xl
-                  font-black
-                  mt-3
-                "
-              >
-
-                {jobs.length}
-
-              </h2>
-
-            </div>
-
-            <div
-              className="
-                h-16
-                w-16
-                rounded-3xl
-                bg-cyan-100
-                flex
-                items-center
-                justify-center
-              "
-            >
-
-              <Briefcase
-                className="
-                  text-cyan-600
-                "
-                size={30}
-              />
-
-            </div>
-
+      {/* 🚀 CREATE FORM CARD */}
+      <div className="bg-white rounded-[32px] shadow-sm border p-8 space-y-6">
+        <div className="flex items-center gap-3 pb-4 border-b">
+          <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <Plus size={20} />
           </div>
-
-        </div>
-
-        <div
-          className="
-            bg-white
-            rounded-3xl
-            p-6
-            shadow-lg
-          "
-        >
-
-          <div
-            className="
-              flex
-              items-center
-              justify-between
-            "
-          >
-
-            <div>
-
-              <p className="text-gray-500">
-
-                Full Time
-
-              </p>
-
-              <h2
-                className="
-                  text-5xl
-                  font-black
-                  mt-3
-                  text-green-600
-                "
-              >
-
-                {fullTimeJobs}
-
-              </h2>
-
-            </div>
-
-            <div
-              className="
-                h-16
-                w-16
-                rounded-3xl
-                bg-green-100
-                flex
-                items-center
-                justify-center
-              "
-            >
-
-              <Building2
-                className="
-                  text-green-600
-                "
-                size={30}
-              />
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <div
-          className="
-            bg-white
-            rounded-3xl
-            p-6
-            shadow-lg
-          "
-        >
-
-          <div
-            className="
-              flex
-              items-center
-              justify-between
-            "
-          >
-
-            <div>
-
-              <p className="text-gray-500">
-
-                Internships
-
-              </p>
-
-              <h2
-                className="
-                  text-5xl
-                  font-black
-                  mt-3
-                  text-blue-600
-                "
-              >
-
-                {internshipJobs}
-
-              </h2>
-
-            </div>
-
-            <div
-              className="
-                h-16
-                w-16
-                rounded-3xl
-                bg-blue-100
-                flex
-                items-center
-                justify-center
-              "
-            >
-
-              <Users
-                className="
-                  text-blue-600
-                "
-                size={30}
-              />
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* CREATE FORM */}
-
-      <div
-        className="
-          bg-white
-          rounded-[32px]
-          shadow-xl
-          p-10
-        "
-      >
-
-        <div
-          className="
-            flex
-            items-center
-            gap-5
-            mb-10
-          "
-        >
-
-          <div
-            className="
-              h-16
-              w-16
-              rounded-3xl
-              bg-gradient-to-r
-              from-cyan-500
-              to-blue-600
-              flex
-              items-center
-              justify-center
-              text-white
-            "
-          >
-
-            <Plus size={30} />
-
-          </div>
-
           <div>
-
-            <h2
-              className="
-                text-3xl
-                font-black
-              "
-            >
-
-              Create New Job
-
-            </h2>
-
-            <p className="text-gray-500 mt-1">
-
-              Publish a new vacancy
-              for candidates
-
-            </p>
-
+            <h2 className="text-lg font-bold text-slate-800">Publish New Job Opening</h2>
+            <p className="text-xs text-slate-400">Onboard new hiring campaigns with salary metrics</p>
           </div>
-
         </div>
 
-        <form
-          onSubmit={createJob}
-          className="space-y-6"
-        >
-
-          <div
-            className="
-              grid
-              grid-cols-1
-              md:grid-cols-2
-              gap-6
-            "
-          >
-
-            {/* TITLE */}
-
+        <form onSubmit={createJob} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Title */}
             <div>
-
-              <label
-                className="
-                  block
-                  font-semibold
-                  mb-3
-                "
-              >
-
-                Job Title
-
-              </label>
-
-              <input
-                type="text"
-                name="title"
-                value={form.title}
-                onChange={
-                  handleChange
-                }
-                required
-                placeholder="Frontend Developer"
-                className="
-                  w-full
-                  h-14
-                  rounded-2xl
-                  border
-                  border-gray-300
-                  px-5
-                  outline-none
-                  focus:border-cyan-500
-                "
-              />
-
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Job Title</label>
+              <div className="relative">
+                <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <input
+                  type="text"
+                  name="title"
+                  required
+                  value={form.title}
+                  onChange={handleChange}
+                  placeholder="e.g. Lead Software Engineer"
+                  className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50"
+                />
+              </div>
             </div>
 
-            {/* LOCATION */}
-
+            {/* Location */}
             <div>
-
-              <label
-                className="
-                  block
-                  font-semibold
-                  mb-3
-                "
-              >
-
-                Location
-
-              </label>
-
-              <input
-                type="text"
-                name="location"
-                value={
-                  form.location
-                }
-                onChange={
-                  handleChange
-                }
-                required
-                placeholder="Ahmedabad"
-                className="
-                  w-full
-                  h-14
-                  rounded-2xl
-                  border
-                  border-gray-300
-                  px-5
-                  outline-none
-                  focus:border-cyan-500
-                "
-              />
-
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Location</label>
+              <div className="relative">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <input
+                  type="text"
+                  name="location"
+                  required
+                  value={form.location}
+                  onChange={handleChange}
+                  placeholder="e.g. Remote / Ahmedabad"
+                  className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50"
+                />
+              </div>
             </div>
 
-            {/* SALARY */}
-
+            {/* Salary */}
             <div>
-
-              <label
-                className="
-                  block
-                  font-semibold
-                  mb-3
-                "
-              >
-
-                Salary
-
-              </label>
-
-              <input
-                type="number"
-                name="salary"
-                value={form.salary}
-                onChange={
-                  handleChange
-                }
-                required
-                placeholder="50000"
-                className="
-                  w-full
-                  h-14
-                  rounded-2xl
-                  border
-                  border-gray-300
-                  px-5
-                  outline-none
-                  focus:border-cyan-500
-                "
-              />
-
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Monthly Budget (INR)</label>
+              <div className="relative">
+                <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <input
+                  type="number"
+                  name="salary"
+                  required
+                  value={form.salary}
+                  onChange={handleChange}
+                  placeholder="e.g. 55000"
+                  className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50"
+                />
+              </div>
             </div>
 
-            {/* TYPE */}
-
+            {/* Type */}
             <div>
-
-              <label
-                className="
-                  block
-                  font-semibold
-                  mb-3
-                "
-              >
-
-                Job Type
-
-              </label>
-
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Job Type</label>
               <select
                 name="type"
                 value={form.type}
-                onChange={
-                  handleChange
-                }
-                className="
-                  w-full
-                  h-14
-                  rounded-2xl
-                  border
-                  border-gray-300
-                  px-5
-                  outline-none
-                  focus:border-cyan-500
-                "
+                onChange={handleChange}
+                className="w-full h-12 rounded-xl border px-3 outline-none focus:border-indigo-500 text-sm bg-slate-50/50 cursor-pointer font-semibold text-slate-600"
               >
-
-                <option value="FULL_TIME">
-                  Full Time
-                </option>
-
-                <option value="PART_TIME">
-                  Part Time
-                </option>
-
-                <option value="INTERNSHIP">
-                  Internship
-                </option>
-
-                <option value="REMOTE">
-                  Remote
-                </option>
-
+                <option value="FULL_TIME">Full Time</option>
+                <option value="PART_TIME">Part Time</option>
+                <option value="INTERNSHIP">Internship</option>
+                <option value="REMOTE">Remote</option>
               </select>
-
             </div>
-
           </div>
 
-          {/* DESCRIPTION */}
-
+          {/* Description */}
           <div>
-
-            <label
-              className="
-                block
-                font-semibold
-                mb-3
-              "
-            >
-
-              Description
-
-            </label>
-
-            <textarea
-              name="description"
-              value={
-                form.description
-              }
-              onChange={
-                handleChange
-              }
-              required
-              rows={6}
-              placeholder="Write job description..."
-              className="
-                w-full
-                rounded-3xl
-                border
-                border-gray-300
-                p-5
-                outline-none
-                resize-none
-                focus:border-cyan-500
-              "
-            />
-
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Job Description</label>
+            <div className="relative">
+              <FileText className="absolute left-4 top-4 text-slate-400 h-5 w-5" />
+              <textarea
+                name="description"
+                required
+                rows={3}
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Write detailed responsibilities and qualifications..."
+                className="w-full rounded-2xl border p-4 pl-11 text-sm bg-slate-50/50 outline-none resize-none focus:border-indigo-500"
+              />
+            </div>
           </div>
-
-          {/* BUTTON */}
 
           <button
             type="submit"
             disabled={creating}
-            className="
-              h-14
-              px-10
-              rounded-2xl
-              bg-gradient-to-r
-              from-cyan-500
-              to-blue-600
-              text-white
-              font-bold
-              hover:scale-[1.02]
-              transition-all
-              duration-300
-              disabled:opacity-50
-              flex
-              items-center
-              gap-3
-            "
+            className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 transition disabled:opacity-50"
           >
-
-            {
-
-              creating ? (
-
-                <>
-
-                  <Loader2
-                    className="
-                      animate-spin
-                    "
-                    size={20}
-                  />
-
-                  Publishing...
-
-                </>
-
-              ) : (
-
-                <>
-
-                  <Plus size={20} />
-
-                  Publish Job
-
-                </>
-
-              )
-
-            }
-
+            {creating ? <Loader2 className="animate-spin h-4 w-4" /> : <Plus size={16} />}
+            Publish Vacancy
           </button>
-
         </form>
-
       </div>
 
-      {/* SEARCH */}
-
-      <div
-        className="
-          bg-white
-          rounded-3xl
-          shadow-lg
-          p-5
-        "
-      >
-
-        <div className="relative">
-
-          <Search
-            size={20}
-            className="
-              absolute
-              top-1/2
-              left-5
-              -translate-y-1/2
-              text-gray-400
-            "
-          />
-
+      {/* 🚀 SEARCH BAR */}
+      <div className="bg-white rounded-3xl border p-5 shadow-sm">
+        <div className="relative max-w-md">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
             type="text"
-            placeholder="Search jobs..."
+            placeholder="Search company vacancies..."
             value={search}
-            onChange={(e) =>
-              setSearch(
-                e.target.value
-              )
-            }
-            className="
-              w-full
-              h-14
-              rounded-2xl
-              border
-              border-gray-300
-              pl-14
-              pr-5
-              outline-none
-              focus:border-cyan-500
-            "
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-11 rounded-xl border pl-11 pr-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50"
           />
-
         </div>
-
       </div>
 
-      {/* JOB LIST */}
+      {/* 🚀 JOB CARDS GRID */}
+      {loading ? (
+        <div className="p-20 text-center">
+          <Loader2 className="animate-spin h-10 w-10 text-indigo-600 mx-auto" />
+        </div>
+      ) : filteredJobs.length === 0 ? (
+        <div className="bg-white rounded-[32px] border p-20 text-center text-slate-400">
+          <Briefcase size={48} className="mx-auto text-slate-300" />
+          <h3 className="text-xl font-bold mt-4">No Vacancies Published</h3>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {filteredJobs.map((job) => (
+            <div key={job._id} className="bg-white rounded-3xl border p-6 shadow-sm flex flex-col justify-between hover:shadow-xl hover:border-indigo-100 transition duration-300 group">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${getJobTypeStyle(job.type || "FULL_TIME")}`}>
+                    {(job.type || "FULL_TIME").replace("_", " ")}
+                  </span>
+                </div>
+                <h3 className="font-extrabold text-slate-800 text-base mt-4 group-hover:text-indigo-600 transition">{job.title}</h3>
+                <p className="text-xs text-slate-500 mt-2 line-clamp-3 leading-relaxed">{job.description}</p>
+              </div>
 
-      {
-
-        loading ? (
-
-          <div
-            className="
-              bg-white
-              rounded-[32px]
-              shadow-lg
-              p-24
-              text-center
-            "
-          >
-
-            <Loader2
-              className="
-                animate-spin
-                mx-auto
-                text-cyan-600
-              "
-              size={50}
-            />
-
-            <h2
-              className="
-                text-3xl
-                font-black
-                mt-6
-              "
-            >
-
-              Loading Jobs...
-
-            </h2>
-
-          </div>
-
-        ) : filteredJobs.length === 0 ? (
-
-          <div
-            className="
-              bg-white
-              rounded-[32px]
-              shadow-lg
-              p-24
-              text-center
-            "
-          >
-
-            <Briefcase
-              size={60}
-              className="
-                mx-auto
-                text-gray-300
-              "
-            />
-
-            <h2
-              className="
-                text-4xl
-                font-black
-                mt-6
-              "
-            >
-
-              No Jobs Found
-
-            </h2>
-
-            <p
-              className="
-                text-gray-500
-                mt-4
-              "
-            >
-
-              Create your first job
-              posting
-
-            </p>
-
-          </div>
-
-        ) : (
-
-          <div
-            className="
-              grid
-              grid-cols-1
-              md:grid-cols-2
-              xl:grid-cols-3
-              gap-8
-            "
-          >
-
-            {
-
-              filteredJobs.map(
-                (job) => (
-
-                  <div
-                    key={job._id}
-                    className="
-                      bg-white
-                      rounded-[32px]
-                      shadow-lg
-                      p-8
-                      hover:shadow-2xl
-                      transition-all
-                      duration-300
-                      hover:-translate-y-2
-                      border
-                      border-gray-100
-                    "
+              <div className="mt-6 pt-4 border-t space-y-4">
+                <div className="grid grid-cols-2 gap-3 text-xs text-slate-400 font-bold">
+                  <span className="flex items-center gap-1.5"><MapPin size={13} /> {job.location}</span>
+                  <span className="flex items-center gap-1.5 text-emerald-600"><IndianRupee size={13} />{job.salary?.toLocaleString("en-IN")}</span>
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => openEditModal(job)}
+                    className="flex-1 h-9 bg-indigo-50 border border-indigo-100 text-indigo-600 font-bold text-xs rounded-lg flex items-center justify-center gap-1"
                   >
+                    <Edit3 size={12} /> Edit
+                  </button>
+                  <button
+                    onClick={() => deleteJob(job._id)}
+                    className="h-9 w-9 bg-rose-50 border border-rose-200 text-rose-600 rounded-lg flex items-center justify-center transition hover:bg-rose-500 hover:text-white"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-                    {/* TOP */}
+      {/* 🚀 EDIT MODAL USING PORTAL */}
+      {showEditModal && createPortal(
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-6">
+            <div className="flex justify-between items-center pb-3 border-b">
+              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <Edit3 size={20} className="text-indigo-600" /> Edit Vacancy Details
+              </h2>
+              <button onClick={() => setShowEditModal(false)} className="text-slate-400"><X size={18} /></button>
+            </div>
 
-                    <div
-                      className="
-                        flex
-                        justify-between
-                        items-start
-                        gap-5
-                      "
-                    >
+            <form onSubmit={handleUpdateSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Job Title</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className="w-full h-11 border rounded-xl px-4 text-sm bg-slate-50/50 outline-none focus:border-indigo-500"
+                />
+              </div>
 
-                      <div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Location</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.location}
+                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                  className="w-full h-11 border rounded-xl px-4 text-sm bg-slate-50/50 outline-none focus:border-indigo-500"
+                />
+              </div>
 
-                        <h2
-                          className="
-                            text-2xl
-                            font-black
-                          "
-                        >
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Monthly Salary (INR)</label>
+                <input
+                  type="number"
+                  required
+                  value={editForm.salary}
+                  onChange={(e) => setEditForm({ ...editForm, salary: e.target.value })}
+                  className="w-full h-11 border rounded-xl px-4 text-sm bg-slate-50/50 outline-none focus:border-indigo-500"
+                />
+              </div>
 
-                          {job.title}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Description</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  className="w-full rounded-2xl border p-4 text-sm bg-slate-50/50 outline-none resize-none focus:border-indigo-500"
+                />
+              </div>
 
-                        </h2>
-
-                        <p
-                          className="
-                            text-cyan-600
-                            font-semibold
-                            mt-2
-                          "
-                        >
-
-                          AMDOX ERP
-
-                        </p>
-
-                      </div>
-
-                      <div
-                        className="
-                          h-16
-                          w-16
-                          rounded-3xl
-                          bg-gradient-to-r
-                          from-cyan-500
-                          to-blue-600
-                          flex
-                          items-center
-                          justify-center
-                          text-white
-                          shrink-0
-                        "
-                      >
-
-                        <Briefcase
-                          size={30}
-                        />
-
-                      </div>
-
-                    </div>
-
-                    {/* JOB TYPE */}
-
-                    <div className="mt-5">
-
-                      <span
-                        className={`
-                          px-4
-                          py-2
-                          rounded-full
-                          text-sm
-                          font-bold
-                          ${jobTypeStyle(
-                            job.type
-                          )}
-                        `}
-                      >
-
-                        {
-
-                          job.type?.replace(
-                            "_",
-                            " "
-                          )
-
-                        }
-
-                      </span>
-
-                    </div>
-
-                    {/* DESCRIPTION */}
-
-                    <p
-                      className="
-                        text-gray-600
-                        mt-6
-                        leading-7
-                        line-clamp-4
-                      "
-                    >
-
-                      {
-
-                        job.description
-
-                      }
-
-                    </p>
-
-                    {/* INFO */}
-
-                    <div
-                      className="
-                        mt-8
-                        space-y-4
-                      "
-                    >
-
-                      <div
-                        className="
-                          flex
-                          items-center
-                          gap-3
-                          text-gray-600
-                        "
-                      >
-
-                        <MapPin
-                          size={18}
-                        />
-
-                        <span>
-
-                          {
-
-                            job.location
-
-                          }
-
-                        </span>
-
-                      </div>
-
-                      <div
-                        className="
-                          flex
-                          items-center
-                          gap-3
-                          text-green-600
-                          font-bold
-                        "
-                      >
-
-                        <IndianRupee
-                          size={18}
-                        />
-
-                        <span>
-
-                          ₹{
-
-                            job.salary
-
-                          }
-
-                        </span>
-
-                      </div>
-
-                    </div>
-
-                    {/* ACTIONS */}
-
-                    <div
-                      className="
-                        mt-8
-                        flex
-                        gap-4
-                      "
-                    >
-
-                      <button
-                        className="
-                          flex-1
-                          h-12
-                          rounded-2xl
-                          bg-gradient-to-r
-                          from-cyan-500
-                          to-blue-600
-                          text-white
-                          font-bold
-                          flex
-                          items-center
-                          justify-center
-                          gap-2
-                        "
-                      >
-
-                        <Eye size={18} />
-
-                        Applicants
-
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          deleteJob(
-                            job._id
-                          )
-                        }
-                        className="
-                          h-12
-                          w-12
-                          rounded-2xl
-                          bg-red-500
-                          hover:bg-red-600
-                          text-white
-                          flex
-                          items-center
-                          justify-center
-                          transition-all
-                        "
-                      >
-
-                        <Trash2
-                          size={18}
-                        />
-
-                      </button>
-
-                    </div>
-
-                  </div>
-
-                )
-              )
-
-            }
-
+              <div className="flex gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 h-11 border rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  className="flex-1 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm flex items-center justify-center gap-2"
+                >
+                  {updating ? <Loader2 className="animate-spin h-4 w-4" /> : <Check size={16} />}
+                  Save Changes
+                </button>
+              </div>
+            </form>
           </div>
-
-        )
-
-      }
-
+        </div>,
+        document.body
+      )}
     </div>
-
   );
-
 }

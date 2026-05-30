@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 
 import Invite from "../models/Invite.js";
 import User from "../models/User.js";
+import upload from "../config/multer.js"; // 🔹 ફાઈલ અપલોડ (Multer) ઈમ્પોર્ટ કર્યું
 
 import {
   addEmployee,
@@ -20,6 +21,10 @@ import {
   getTimeline,
   searchEmployees,
   createEmployee,
+  updateEmployee,
+  deleteEmployee,
+  uploadEmployeeDocs,
+  updateUserResume,
 } from "../controllers/hrController.js";
 
 import {
@@ -171,7 +176,18 @@ router.post("/register-invite", async (req, res) => {
 router.post("/add", protect, authorizeRoles("ADMIN", "HR"), createEmployee);
 router.post("/employees", protect, authorizeRoles("ADMIN", "HR"), addEmployee);
 router.get("/employees", protect, authorizeRoles("ADMIN", "HR"), getEmployees);
+
+// 🔹 ફિક્સ: 'authMiddleware' ને બદલે સાચું 'protect' સેટ કર્યું અને સિક્યોરિટી ગાર્ડ લાગુ કર્યો
+router.put("/employee/:id", protect, authorizeRoles("ADMIN", "HR"), updateEmployee);
+router.delete("/employee/:id", protect, authorizeRoles("ADMIN", "HR"), deleteEmployee);
 router.get("/employees/search", protect, authorizeRoles("ADMIN", "HR"), searchEmployees);
+
+// 🔹 ફિક્સ: કર્મચારીના ડોક્યુમેન્ટ્સ (Aadhaar & PAN) અપલોડ કરવાનો એન્ડપોઇન્ટ
+router.put("/employee/:id/docs", protect, authorizeRoles("ADMIN", "HR"), upload.fields([
+  { name: "resume", maxCount: 1 },
+  { name: "aadhaar", maxCount: 1 },
+  { name: "pan", maxCount: 1 }
+]), uploadEmployeeDocs);
 
 /* =========================================================
    🟡 LEAVE MANAGEMENT
@@ -183,6 +199,7 @@ router.put("/leave/status", protect, authorizeRoles("ADMIN", "HR"), updateLeaveS
 router.put("/leave/approve/:id", protect, authorizeRoles("ADMIN", "HR"), approveLeave);
 router.put("/leave/reject/:id", protect, authorizeRoles("ADMIN", "HR"), rejectLeave);
 router.get("/leave/prediction/:id", protect, authorizeRoles("ADMIN", "HR"), leavePrediction);
+router.put("/profile/resume", protect, upload.single("resume"), updateUserResume);
 
 /* =========================================================
    📊 HR ANALYTICS

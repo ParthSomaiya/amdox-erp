@@ -1,41 +1,39 @@
 import { useState } from "react";
-import { UserPlus, Mail, Briefcase, User, Loader2 } from "lucide-react";
+import { UserPlus, Mail, Briefcase, User, Lock, Coins, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 
 export default function AddEmployee() {
   const navigate = useNavigate();
-
-  // ================= STATE =================
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
     position: "",
+    password: "", // 🔹 કસ્ટમ લોગિન પાસવર્ડ
+    salary: "",   // 🔹 પ્રારંભિક સેલરી
   });
 
-  // ================= CHANGE =================
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ================= SUBMIT =================
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       setLoading(true);
+      await API.post("/hr/add", {
+        name: form.name,
+        email: form.email,
+        position: form.position,
+        password: form.password,
+        salary: Number(form.salary),
+      });
 
-      // ફેરફાર: સાચો બેકએન્ડ પાથ "/employees" સેટ કર્યો
-      await API.post("/hr/add", form); 
-
-      alert("Employee Added Successfully");
+      alert("Employee added successfully with login credentials!");
       navigate("/employees");
     } catch (err) {
-      console.error("Error Response:", err.response);
+      console.error(err);
       alert(err.response?.data?.message || "Error adding employee");
     } finally {
       setLoading(false);
@@ -43,85 +41,104 @@ export default function AddEmployee() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* HERO */}
-      <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 rounded-[32px] p-10 text-white shadow-xl">
-        <div className="flex items-center gap-5">
-          <div className="h-20 w-20 rounded-3xl bg-white/20 flex items-center justify-center">
-            <UserPlus size={40} />
-          </div>
-          <div>
-            <h1 className="text-5xl font-black">Add Employee</h1>
-            <p className="mt-3 text-cyan-100 text-lg">Create employee account professionally</p>
-          </div>
-        </div>
+    <div className="space-y-8 max-w-3xl mx-auto">
+      <div className="bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700 rounded-[32px] p-8 text-white shadow-md">
+        <h1 className="text-3xl font-black flex items-center gap-2"><UserPlus /> Add New Employee</h1>
+        <p className="mt-2 text-indigo-100 text-sm">Onboard new personnel and configure custom login credentials.</p>
       </div>
 
-      {/* FORM */}
-      <div className="bg-white rounded-[32px] shadow-lg p-10 max-w-4xl">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* NAME */}
-          <div>
-            <label className="font-bold text-lg mb-3 block">Full Name</label>
-            <div className="h-16 border border-gray-300 rounded-2xl flex items-center px-5 focus-within:border-cyan-500">
-              <User className="text-gray-400" />
-              <input
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                placeholder="Enter employee name"
-                className="flex-1 h-full px-4 outline-none"
-              />
+      <div className="bg-white rounded-[32px] border p-8 shadow-sm">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Full Name</label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Enter full name"
+                  className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Email Address</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="name@company.com"
+                  className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Custom Password</label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Enter custom password"
+                  className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Initial Salary (INR)</label>
+              <div className="relative">
+                <Coins className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <input
+                  type="number"
+                  name="salary"
+                  required
+                  value={form.salary}
+                  onChange={handleChange}
+                  placeholder="e.g. 45000"
+                  className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50"
+                />
+              </div>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Position</label>
+              <div className="relative">
+                <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <input
+                  type="text"
+                  name="position"
+                  required
+                  value={form.position}
+                  onChange={handleChange}
+                  placeholder="e.g. UI/UX Designer"
+                  className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50"
+                />
+              </div>
             </div>
           </div>
 
-          {/* EMAIL */}
-          <div>
-            <label className="font-bold text-lg mb-3 block">Email Address</label>
-            <div className="h-16 border border-gray-300 rounded-2xl flex items-center px-5 focus-within:border-cyan-500">
-              <Mail className="text-gray-400" />
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-                placeholder="Enter email"
-                className="flex-1 h-full px-4 outline-none"
-              />
-            </div>
-          </div>
-
-          {/* POSITION */}
-          <div className="md:col-span-2">
-            <label className="font-bold text-lg mb-3 block">Position</label>
-            <div className="h-16 border border-gray-300 rounded-2xl flex items-center px-5 focus-within:border-cyan-500">
-              <Briefcase className="text-gray-400" />
-              <input
-                type="text"
-                name="position"
-                value={form.position}
-                onChange={handleChange}
-                required
-                placeholder="Frontend Developer"
-                className="flex-1 h-full px-4 outline-none"
-              />
-            </div>
-          </div>
-
-          {/* BUTTON */}
-          <div className="md:col-span-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="h-16 px-10 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black text-lg hover:scale-[1.02] transition-all duration-300 flex items-center justify-center gap-2"
-            >
-              {loading && <Loader2 className="animate-spin h-5 w-5" />}
-              {loading ? "Adding Employee..." : "Add Employee"}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <UserPlus size={16} />}
+            Onboard Employee
+          </button>
         </form>
       </div>
     </div>

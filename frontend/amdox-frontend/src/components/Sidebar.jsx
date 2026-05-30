@@ -87,7 +87,7 @@ export default function Sidebar() {
             </>
           ) : (
             /* ======================================================
-               🏢 STANDARD ERP WORKSPACE MENU
+               🏢 STANDARD ERP WORKSPACE MENU (ADMIN, HR, FINANCE, EMPLOYEE)
             ====================================================== */
             <>
               <SectionHeader title="Overview" />
@@ -96,14 +96,23 @@ export default function Sidebar() {
                   👤 Portal Dashboard
                 </Link>
               ) : (
-                <Link to="/dashboard" className={menuClass("/dashboard")}>
-                  📊 Admin Dashboard
-                </Link>
+                <>
+                  <Link to="/dashboard" className={menuClass("/dashboard")}>
+                    📊 Admin Dashboard
+                  </Link>
+                  {/* 🔹 Business Intelligence */}
+                  <Link to="/analytics/bi" className={menuClass("/analytics/bi")}>
+                    📊 Business Intelligence (BI)
+                  </Link>
+                </>
               )}
 
               {/* HR SECTION */}
               {(role === "ADMIN" || role === "HR") && (
                 <>
+                  <Link to="/hr/dashboard" className={menuClass("/hr/dashboard")}>
+                    📊 HR Dashboard
+                  </Link>
                   <SectionHeader title="HR Administration" />
                   <Link to="/employees" className={menuClass("/employees")}>
                     👥 Employees List
@@ -120,11 +129,31 @@ export default function Sidebar() {
                   <Link to="/attendance" className={menuClass("/attendance")}>
                     📅 Attendance Log
                   </Link>
+                  {/* 🔹 ઉમેરેલા નવા એનાલિટિકલ એટેન્ડન્સ રિપોર્ટ્સ */}
+                  <Link to="/attendance-report" className={menuClass("/attendance-report")}>
+                    📊 Attendance Reports
+                  </Link>
                   <Link to="/hr/attendance-calendar" className={menuClass("/hr/attendance-calendar")}>
                     📅 Attendance Calendar
                   </Link>
                   <Link to="/hr/attendance-heatmap" className={menuClass("/hr/attendance-heatmap")}>
                     🔥 Attendance Heatmap
+                  </Link>
+                  <Link to="/hr/employee-profile" className={menuClass("/hr/employee-profile")}>
+                    👤 Employee Profile
+                  </Link>
+                  <Link to="/hr/employee-timeline" className={menuClass("/hr/employee-timeline")}>
+                    🕒 Employee Timeline
+                  </Link>
+                  <Link to="/generate-payroll" className={menuClass("/generate-payroll")}>
+                    💰 Generate Payroll
+                  </Link>
+                  {/* 🔹 ઉમેરેલા લાઈવ પેરોલ રેકોર્ડ્સ લિસ્ટ */}
+                  <Link to="/payroll" className={menuClass("/payroll")}>
+                    📋 Payroll Records
+                  </Link>
+                  <Link to="/hr/payroll-slip" className={menuClass("/hr/payroll-slip")}>
+                    🧾 Payroll Slips
                   </Link>
                   <Link to="/manage-leave" className={menuClass("/manage-leave")}>
                     ✅ Leave Approval
@@ -142,6 +171,10 @@ export default function Sidebar() {
                   <Link to="/apply-leave" className={menuClass("/apply-leave")}>
                     📩 Apply for Leave
                   </Link>
+                  {/* 🔹 કર્મચારી પોતાની સેલરી સ્લિપ્સ જોઈ શકશે */}
+                  <Link to="/my-payslip" className={menuClass("/my-payslip")}>
+                    🧾 My Salary Slips
+                  </Link>
                 </>
               )}
 
@@ -149,6 +182,15 @@ export default function Sidebar() {
               {(role === "ADMIN" || role === "FINANCE") && (
                 <>
                   <SectionHeader title="Financial Control" />
+                  <Link to="/finance/dashboard" className={menuClass("/finance/dashboard")}>
+                    📊 Financial Dashboard
+                  </Link>
+                  <Link to="/finance/accounting" className={menuClass("/finance/accounting")}>
+                    📘 Accounting Dashboard
+                  </Link>
+                  <Link to="/finance/analytics-dashboard" className={menuClass("/finance/analytics-dashboard")}>
+                    📈 Finance Analytics
+                  </Link>
                   <Link to="/gl" className={menuClass("/gl")}>
                     📘 General Ledger
                   </Link>
@@ -158,17 +200,23 @@ export default function Sidebar() {
                   <Link to="/receivables" className={menuClass("/receivables")}>
                     💳 Receivables
                   </Link>
-                  <Link to="/reconciliation" className={menuClass("/reconciliation")}>
+                  <Link to="/finance/reconciliation-ledger" className={menuClass("/finance/reconciliation-ledger")}>
                     🔄 Bank Reconciliation
                   </Link>
                   <Link to="/create-invoice" className={menuClass("/create-invoice")}>
                     ➕ Create Invoice
                   </Link>
-                  <Link to="/invoices" className={menuClass("/invoices")}>
+                  <Link to="/finance/invoice-builder" className={menuClass("/finance/invoice-builder")}>
+                    🧩 Invoice Drag-Builder
+                  </Link>
+                  <Link to="/finance/invoice-page" className={menuClass("/finance/invoice-page")}>
                     🧾 Invoice History
                   </Link>
                   <Link to="/profit-loss" className={menuClass("/profit-loss")}>
                     📈 Profit & Loss
+                  </Link>
+                  <Link to="/finance/cash-forecast" className={menuClass("/finance/cash-forecast")}>
+                    🔮 Cash Forecast
                   </Link>
                   <Link to="/trial-balance" className={menuClass("/trial-balance")}>
                     📊 Trial Balance
@@ -179,7 +227,7 @@ export default function Sidebar() {
                 </>
               )}
 
-              {/* 🔹 SUPPLY CHAIN & INVENTORY SECTION (બધા જ રૂટ્સ અને સબ-પેજીસ અહીં સાઇડબારમાં છે) */}
+              {/* SUPPLY CHAIN & INVENTORY SECTION */}
               {(role === "ADMIN" || role === "HR" || role === "FINANCE") && (
                 <>
                   <SectionHeader title="Inventory Control" />
@@ -193,7 +241,7 @@ export default function Sidebar() {
                     🧾 Purchase Orders
                   </Link>
                   <Link to="/inventory/create-po" className={menuClass("/inventory/create-po")}>
-                    🧾 Create Purchase Order
+                    ➕ Create Purchase Order
                   </Link>
                   <Link to="/stock-history" className={menuClass("/stock-history")}>
                     🕒 Stock History
@@ -211,16 +259,16 @@ export default function Sidebar() {
                     🤖 AI Demand Forecasting
                   </Link>
                   <Link to="/inventory/forecast-analysis" className={menuClass("/inventory/forecast-analysis")}>
-                    📈 Reorder Forecasting
+                    🔮 Reorder Forecasting
                   </Link>
                   <Link to="/inventory/charts" className={menuClass("/inventory/charts")}>
                     📊 Stock Charts
                   </Link>
                   <Link to="/inventory/analytics" className={menuClass("/inventory/analytics")}>
-                    📉 Inventory Analytics
+                    📈 Inventory Analytics
                   </Link>
                   <Link to="/inventory/vendors" className={menuClass("/inventory/vendors")}>
-                    👥 Vendors Registry
+                    🏢 Vendors Registry
                   </Link>
                 </>
               )}
@@ -229,8 +277,20 @@ export default function Sidebar() {
               {(role === "ADMIN" || role === "HR") && (
                 <>
                   <SectionHeader title="Sprints & Tasks" />
+                  <Link to="/projects/dashboard" className={menuClass("/projects/dashboard")}>
+                    📊 Projects Dashboard
+                  </Link>
+                  <Link to="/analytics/projects" className={menuClass("/analytics/projects")}>
+                    📈 Project Analytics
+                  </Link>
                   <Link to="/projects" className={menuClass("/projects")}>
                     🚀 Workspace Projects
+                  </Link>
+                  <Link to="/projects/budget" className={menuClass("/projects/budget")}>
+                    💰 Project Budgets
+                  </Link>
+                  <Link to="/projects/sprints" className={menuClass("/projects/sprints")}>
+                    🏃 Sprint Backlogs
                   </Link>
                   <Link to="/tasks-board" className={menuClass("/tasks-board")}>
                     🧩 Kanban Board
@@ -248,11 +308,26 @@ export default function Sidebar() {
               {role === "ADMIN" && (
                 <>
                   <SectionHeader title="Administration" />
+                  <Link to="/admin/dashboard" className={menuClass("/admin/dashboard")}>
+                    📊 Admin Metrics Dashboard
+                  </Link>
+                  <Link to="/admin/analytics" className={menuClass("/admin/analytics")}>
+                    📊 Admin Analytics
+                  </Link>
+                  <Link to="/analytics/chart-builder" className={menuClass("/analytics/chart-builder")}>
+                    📊 Custom Chart Builder
+                  </Link>
                   <Link to="/admin/settings" className={menuClass("/admin/settings")}>
                     ⚙️ Settings Configuration
                   </Link>
                   <Link to="/admin/security" className={menuClass("/admin/security")}>
                     🔐 Security Access
+                  </Link>
+                  <Link to="/admin/permissions" className={menuClass("/admin/permissions")}>
+                    🧩 Permission Matrix
+                  </Link>
+                  <Link to="/admin/roles" className={menuClass("/admin/roles")}>
+                    👥 Role Management
                   </Link>
                   <Link to="/admin/tenants" className={menuClass("/admin/tenants")}>
                     🏢 Tenant Manager
@@ -265,7 +340,7 @@ export default function Sidebar() {
 
               <SectionHeader title="Workspace" />
               <Link to="/calendar" className={menuClass("/calendar")}>
-                📆 Calendar Events
+                📅 Calendar Events
               </Link>
               <Link to="/team-chat" className={menuClass("/team-chat")}>
                 💬 Team Workspace Chat

@@ -1,420 +1,117 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
+import { useEffect, useMemo, useState } from "react";
+import { Receipt, Search, Loader2, Coins, Calendar, ArrowUpDown, ShieldCheck } from "lucide-react";
 import API from "../services/api";
 
 export default function PayrollList() {
-
-  const [payrolls, setPayrolls] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [search, setSearch] =
-    useState("");
-
-  // ================= FETCH PAYROLLS =================
+  const [payrolls, setPayrolls] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
-
     fetchPayrolls();
-
   }, []);
 
-  const fetchPayrolls =
-    async () => {
+  const fetchPayrolls = async () => {
+    try {
+      setLoading(true);
+      const res = await API.get("/payroll");
+      const rawList = res.data?.data || res.data || [];
+      setPayrolls(Array.isArray(rawList) ? rawList : []);
+    } catch (err) {
+      console.error(err);
+      setPayrolls([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      try {
-
-        const res =
-          await API.get(
-            "/payroll"
-          );
-
-        setPayrolls(
-          res.data
-        );
-
-      } catch (err) {
-
-        console.log(err);
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
-    };
-
-  // ================= FILTER =================
-
-  const filteredPayrolls =
-    useMemo(() => {
-
-      return payrolls.filter((item) =>
-
-        item?.employeeId?.name
-          ?.toLowerCase()
-          .includes(
-            search.toLowerCase()
-          )
-
-      );
-
-    }, [payrolls, search]);
-
-  // ================= STATUS STYLE =================
-
-  const statusStyle =
-    (status) => {
-
-      switch (status) {
-
-        case "PAID":
-
-          return `
-            bg-green-100
-            text-green-700
-          `;
-
-        case "PENDING":
-
-          return `
-            bg-yellow-100
-            text-yellow-700
-          `;
-
-        default:
-
-          return `
-            bg-gray-100
-            text-gray-700
-          `;
-
-      }
-
-    };
+  const filteredPayrolls = useMemo(() => {
+    return payrolls.filter((item) => {
+      const name = (item?.employeeId?.userId?.name || item?.employeeId?.name || "").toLowerCase();
+      const month = (item?.month || "").toLowerCase();
+      return name.includes(search.toLowerCase()) || month.includes(search.toLowerCase());
+    });
+  }, [payrolls, search]);
 
   return (
-
     <div className="space-y-8">
-
-      {/* HERO */}
-
-      <div
-        className="
-          bg-gradient-to-r
-          from-violet-600
-          via-purple-600
-          to-fuchsia-500
-          rounded-3xl
-          p-8
-          text-white
-          shadow-xl
-        "
-      >
-
-        <h1 className="text-4xl font-black">
-
-          Payroll Management
-
+      {/* Header */}
+      <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-500 rounded-3xl p-8 text-white shadow-md">
+        <h1 className="text-3xl font-black mt-1 flex items-center gap-2">
+          <Receipt /> Payroll Records
         </h1>
-
-        <p className="mt-2 text-purple-100">
-
-          Manage all employee payroll records
-
-        </p>
-
+        <p className="mt-2 text-purple-100 text-sm">Review, verify, and monitor compiled employee salary transactions.</p>
       </div>
 
-      {/* SEARCH */}
-
-      <div
-        className="
-          bg-white
-          rounded-3xl
-          shadow-lg
-          p-5
-        "
-      >
-
-        <input
-          type="text"
-          placeholder="Search employee payroll..."
-          value={search}
-          onChange={(e) =>
-            setSearch(
-              e.target.value
-            )
-          }
-          className="
-            w-full
-            border
-            border-gray-300
-            rounded-2xl
-            px-5
-            py-4
-            outline-none
-            focus:border-purple-500
-          "
-        />
-
-      </div>
-
-      {/* PAYROLL TABLE */}
-
-      <div
-        className="
-          bg-white
-          rounded-3xl
-          shadow-xl
-          overflow-hidden
-        "
-      >
-
-        {/* HEADER */}
-
-        <div
-          className="
-            grid
-            grid-cols-12
-            bg-slate-100
-            px-8
-            py-5
-            text-sm
-            font-bold
-            uppercase
-            text-gray-600
-          "
-        >
-
-          <div className="col-span-3">
-            Employee
-          </div>
-
-          <div className="col-span-2">
-            Salary
-          </div>
-
-          <div className="col-span-2">
-            Bonus
-          </div>
-
-          <div className="col-span-2">
-            Deduction
-          </div>
-
-          <div className="col-span-2">
-            Net Salary
-          </div>
-
-          <div className="col-span-1">
-            Status
-          </div>
-
+      {/* Search Bar */}
+      <div className="bg-white rounded-3xl border p-5 shadow-sm">
+        <div className="relative max-w-md">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search payroll by name or month..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-11 rounded-xl border pl-11 pr-4 outline-none focus:border-purple-500 text-sm bg-slate-50/50"
+          />
         </div>
-
-        {/* BODY */}
-
-        {
-
-          loading ? (
-
-            <div className="p-20 text-center">
-
-              <h2
-                className="
-                  text-2xl
-                  font-bold
-                "
-              >
-
-                Loading Payrolls...
-
-              </h2>
-
-            </div>
-
-          ) : filteredPayrolls.length === 0 ? (
-
-            <div className="p-20 text-center">
-
-              <h2
-                className="
-                  text-3xl
-                  font-black
-                "
-              >
-
-                No Payroll Records Found
-
-              </h2>
-
-            </div>
-
-          ) : (
-
-            filteredPayrolls.map((item) => (
-
-              <div
-
-                key={item._id}
-
-                className="
-                  grid
-                  grid-cols-12
-                  px-8
-                  py-5
-                  border-b
-                  hover:bg-slate-50
-                  transition-all
-                "
-              >
-
-                {/* EMPLOYEE */}
-
-                <div className="col-span-3">
-
-                  <h2 className="font-bold">
-
-                    {
-
-                      item?.employeeId?.name ||
-
-                      "Employee"
-
-                    }
-
-                  </h2>
-
-                </div>
-
-                {/* BASIC */}
-
-                <div
-                  className="
-                    col-span-2
-                    font-semibold
-                  "
-                >
-
-                  ₹{
-
-                    item.basicSalary ||
-
-                    0
-
-                  }
-
-                </div>
-
-                {/* BONUS */}
-
-                <div
-                  className="
-                    col-span-2
-                    text-green-600
-                    font-bold
-                  "
-                >
-
-                  ₹{
-
-                    item.bonus ||
-
-                    0
-
-                  }
-
-                </div>
-
-                {/* DEDUCTION */}
-
-                <div
-                  className="
-                    col-span-2
-                    text-red-600
-                    font-bold
-                  "
-                >
-
-                  ₹{
-
-                    item.deduction ||
-
-                    0
-
-                  }
-
-                </div>
-
-                {/* NET */}
-
-                <div
-                  className="
-                    col-span-2
-                    text-blue-600
-                    font-black
-                  "
-                >
-
-                  ₹{
-
-                    item.netSalary ||
-
-                    0
-
-                  }
-
-                </div>
-
-                {/* STATUS */}
-
-                <div className="col-span-1">
-
-                  <span
-                    className={`
-                      px-3
-                      py-1
-                      rounded-full
-                      text-xs
-                      font-bold
-                      ${statusStyle(
-                        item.status
-                      )}
-                    `}
-                  >
-
-                    {
-
-                      item.status ||
-
-                      "PENDING"
-
-                    }
-
-                  </span>
-
-                </div>
-
-              </div>
-
-            ))
-
-          )
-
-        }
-
       </div>
 
+      {/* Grid Table */}
+      <div className="bg-white rounded-[32px] border shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="p-20 text-center">
+            <Loader2 className="animate-spin h-10 w-10 text-indigo-600 mx-auto" />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-slate-600">
+              <thead className="bg-slate-50 text-slate-700 border-b text-xs uppercase font-bold">
+                <tr>
+                  <th className="p-4 text-left">Employee</th>
+                  <th className="p-4 text-left">Month</th>
+                  <th className="p-4 text-left">Basic Salary</th>
+                  <th className="p-4 text-left">Deductions</th>
+                  <th className="p-4 text-left">Net Salary</th>
+                  <th className="p-4 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPayrolls.map((item) => {
+                  // 🔹 ફિક્સ: ડીપ પોપ્યુલેટેડ સિંક્ડ નેમ
+                  const empName = item?.employeeId?.userId?.name || item?.employeeId?.name || "Employee";
+                  return (
+                    <tr key={item._id} className="border-b hover:bg-slate-50/50 transition">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 font-bold flex items-center justify-center uppercase">
+                            {empName.charAt(0)}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-slate-800 text-sm">{empName}</h4>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">ID: {item._id.slice(-6)}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <span className="flex items-center gap-1 text-slate-600 font-semibold"><Calendar size={13} /> {item.month}</span>
+                      </td>
+                      <td className="p-4 font-bold text-slate-700">₹{item.basicSalary?.toLocaleString("en-IN")}</td>
+                      <td className="p-4 font-bold text-rose-500">₹{item.deductions?.toLocaleString("en-IN") || 0}</td>
+                      <td className="p-4 font-black text-emerald-600 text-sm">₹{item.netSalary?.toLocaleString("en-IN")}</td>
+                      <td className="p-4">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100">
+                          Paid ✓
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
-
   );
-
 }

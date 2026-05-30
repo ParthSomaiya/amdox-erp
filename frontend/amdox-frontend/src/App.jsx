@@ -29,6 +29,10 @@ import AttendanceReport from "./pages/AttendanceReport";
 import AttendanceCalendar from "./pages/hr/AttendanceCalendar";
 import AttendanceHeatmap from "./pages/hr/AttendanceHeatmap";
 import Documents from "./pages/hr/Documents";
+import EmployeeProfile from "./pages/hr/EmployeeProfile";
+import EmployeeTimeline from "./pages/hr/EmployeeTimeline";
+import PayrollSlip from "./pages/hr/PayrollSlip";
+import HRDashboard from "./pages/hr/HRDashboard";
 
 // ================= PAYROLL =================
 import GeneratePayroll from "./pages/GeneratePayroll";
@@ -37,29 +41,36 @@ import MyPayslip from "./pages/MyPayslip";
 import Payroll from "./pages/Payroll";
 
 // ================= ANALYTICS =================
-import Analytics from "./pages/Analytics";
+import Analytics from "./pages/analytics/Analytics";
 import AnalyticsDashboard from "./pages/analytics/AnalyticsDashboard";
-import FinanceAnalytics from "./pages/finance/FinanceAnalytics";
 import ProjectAnalytics from "./pages/analytics/ProjectAnalytics";
+import BusinessIntelligence from "./pages/analytics/BusinessIntelligence";
+import AdminAnalytics from "./pages/analytics/AdminAnalytics";
+import ChartBuilder from "./pages/analytics/ChartBuilder";
 
 // ================= FINANCE =================
 import GL from "./pages/GL";
 import Bills from "./pages/Bills";
 import Receivables from "./pages/Receivables";
-import Reconciliation from "./pages/Reconciliation";
 import TrialBalance from "./pages/TrialBalance";
 import BalanceSheet from "./pages/BalanceSheet";
 import CreateInvoice from "./pages/CreateInvoice";
 import Invoices from "./pages/Invoices";
 import ProfitLoss from "./pages/ProfitLoss";
+import FinanceDashboard from "./pages/finance/FinanceDashboard";
+import Forecasting from "./pages/finance/Forecasting";
+import InvoiceBuilder from "./pages/finance/InvoiceBuilder";
+import AccountingDashboard from "./pages/finance/AccountingDashboard";
+import FinanceAnalytics from "./pages/finance/FinanceAnalytics";
+import Forecast from "./pages/finance/Forecast";
+import InvoicePage from "./pages/finance/InvoicePage";
+import Reconciliation from "./pages/finance/Reconciliation";
 
 // ================= 📦 INVENTORY SUB-PAGES IMPORTS =================
 import InventoryDashboard from "./pages/InventoryDashboard";
 import Products from "./pages/Products";
 import PurchaseOrders from "./pages/PurchaseOrders";
 import StockHistory from "./pages/StockHistory";
-
-// તમારા ફોલ્ડર સ્ટ્રક્ચર મુજબના તમામ પેજીસ ઇમ્પોર્ટ કર્યા છે:
 import BarcodeScanner from "./pages/inventory/BarcodeScanner";
 import CreatePO from "./pages/inventory/CreatePO";
 import InventoryAnalytics from "./pages/inventory/InventoryAnalytics";
@@ -80,6 +91,8 @@ import KanbanBoard from "./pages/projects/KanbanBoard";
 import CreateProject from "./pages/projects/CreateProject";
 import GanttBoard from "./pages/projects/GanttBoard";
 import BurndownChart from "./pages/projects/BurndownChart";
+import ProjectBudget from "./pages/projects/ProjectBudget";
+import Sprints from "./pages/projects/Sprints";
 
 // ================= JOBS =================
 import Jobs from "./pages/Jobs";
@@ -94,6 +107,9 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import SecuritySettings from "./pages/admin/SecuritySettings";
 import TenantManagement from "./pages/admin/TenantManagement";
 import AuditLogs from "./pages/admin/AuditLogs";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import PermissionMatrix from "./pages/admin/PermissionMatrix";
+import RoleManagement from "./pages/admin/RoleManagement";
 
 // ================= OTHER =================
 import CalendarPage from "./pages/CalendarPage";
@@ -150,6 +166,10 @@ function App() {
             <Route path="/hr/documents" element={<Documents />} />
             <Route path="/hr/attendance-calendar" element={<AttendanceCalendar />} />
             <Route path="/hr/attendance-heatmap" element={<AttendanceHeatmap />} />
+            <Route path="/hr/employee-profile" element={<EmployeeProfile />} />
+            <Route path="/hr/employee-timeline" element={<EmployeeTimeline />} />
+            <Route path="/hr/payroll-slip" element={<PayrollSlip />} />
+            <Route path="/hr/dashboard" element={<HRDashboard />} />
 
             {/* PAYROLL */}
             <Route path="/generate-payroll" element={<GeneratePayroll />} />
@@ -162,10 +182,13 @@ function App() {
             <Route path="/analytics/dashboard" element={<AnalyticsDashboard />} />
             <Route path="/analytics/finance" element={<FinanceAnalytics />} />
             <Route path="/analytics/projects" element={<ProjectAnalytics />} />
+            <Route path="/analytics/bi" element={<BusinessIntelligence />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="/analytics/chart-builder" element={<ChartBuilder />} />
 
             {/* FINANCE */}
             <Route path="/gl" element={<GL />} />
-            <Route path="/bills" border element={<Bills />} />
+            <Route path="/bills" element={<Bills />} />
             <Route path="/receivables" element={<Receivables />} />
             <Route path="/reconciliation" element={<Reconciliation />} />
             <Route path="/trial-balance" element={<TrialBalance />} />
@@ -173,6 +196,14 @@ function App() {
             <Route path="/create-invoice" element={<CreateInvoice />} />
             <Route path="/invoices" element={<Invoices />} />
             <Route path="/profit-loss" element={<ProfitLoss />} />
+            <Route path="/finance/dashboard" element={<FinanceDashboard />} />
+            <Route path="/finance/forecast" element={<Forecasting />} />
+            <Route path="/finance/invoice-builder" element={<InvoiceBuilder />} />
+            <Route path="/finance/accounting" element={<AccountingDashboard />} />
+            <Route path="/finance/analytics-dashboard" element={<FinanceAnalytics />} />
+            <Route path="/finance/cash-forecast" element={<Forecast />} />
+            <Route path="/finance/invoice-page" element={<InvoicePage />} />
+            <Route path="/finance/reconciliation-ledger" element={<Reconciliation />} />
 
             {/* 📦 INVENTORY SUB-PAGES ROUTES REGISTERED */}
             <Route path="/inventory" element={<InventoryDashboard />} />
@@ -180,7 +211,6 @@ function App() {
             <Route path="/purchase-orders" element={<PurchaseOrders />} />
             <Route path="/stock-history" element={<StockHistory />} />
 
-            {/* તમારા ફોલ્ડર ટ્રી ના તમામ નવા પેજીસ અહીં રજીસ્ટર કર્યા છે: */}
             <Route path="/inventory/create-po" element={<CreatePO />} />
             <Route path="/inventory/low-stock" element={<LowStock />} />
             <Route path="/inventory/scanner" element={<BarcodeScanner />} />
@@ -201,6 +231,8 @@ function App() {
             <Route path="/projects/burndown" element={<BurndownChart />} />
             <Route path="/tasks-board" element={<TaskBoard />} />
             <Route path="/timeline" element={<Timeline />} />
+            <Route path="/projects/budget" element={<ProjectBudget />} />
+            <Route path="/projects/sprints" element={<Sprints />} />
 
             {/* JOBS */}
             <Route path="/jobs" element={<Jobs />} />
@@ -215,6 +247,9 @@ function App() {
             <Route path="/admin/security" element={<SecuritySettings />} />
             <Route path="/admin/tenants" element={<TenantManagement />} />
             <Route path="/admin/audit" element={<AuditLogs />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/permissions" element={<PermissionMatrix />} />
+            <Route path="/admin/roles" element={<RoleManagement />} />
 
             {/* OTHER */}
             <Route path="/calendar" element={<CalendarPage />} />
