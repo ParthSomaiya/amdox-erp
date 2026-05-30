@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Receipt, FileText, Check, Loader2, RefreshCw } from "lucide-react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function Bills() {
   const [bills, setBills] = useState([]);
@@ -28,6 +29,7 @@ export default function Bills() {
       setPayingId(id);
       await API.put("/ap/pay", { id });
       alert("Bill paid successfully!");
+      notifier.billPaid("Vendor Provider", amount);
       await fetchBills(); // રીલોડ ડેટા
     } catch (err) {
       console.error(err);

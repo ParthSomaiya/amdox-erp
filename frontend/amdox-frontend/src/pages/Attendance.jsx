@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function Attendance() {
   const [attendance, setAttendance] = useState([]);
@@ -57,6 +58,7 @@ export default function Attendance() {
       await API.post("/attendance/check-in");
       await fetchAttendance();
       alert("Check-in successful! Have a great shift.");
+      notifier.attendanceLogged(user.name, todayRecord ? "Out" : "In");
     } catch (error) {
       console.error("Check-in error:", error);
       alert(error?.response?.data?.message || "Check-in failed");
@@ -72,6 +74,7 @@ export default function Attendance() {
       await API.post("/attendance/check-out");
       await fetchAttendance();
       alert("Check-out successful! Goodbye.");
+      notifier.attendanceLogged(user.name, todayRecord ? "Out" : "In");
     } catch (error) {
       console.error("Check-out error:", error);
       alert(error?.response?.data?.message || "Check-out failed");

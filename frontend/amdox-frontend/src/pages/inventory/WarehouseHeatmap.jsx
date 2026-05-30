@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, Flame, Package, Info, Layers } from "lucide-react";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function WarehouseHeatmap() {
   const [products, setProducts] = useState([]);
@@ -55,6 +56,7 @@ export default function WarehouseHeatmap() {
   };
 
   if (loading) {
+    notifier.heatmapViewed();
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
         <div className="text-center">

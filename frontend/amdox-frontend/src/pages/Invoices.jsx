@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function Invoices() {
 
@@ -31,6 +32,7 @@ export default function Invoices() {
         invoiceId: id,
       }
     );
+    notifier.invoiceCreated("Client Paid State", amount);
 
     fetchInvoices();
 

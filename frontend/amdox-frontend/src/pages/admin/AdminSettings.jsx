@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Building2, Mail, Phone, Globe, Save, Shield, Bell, Palette, Settings2, Loader2 } from "lucide-react";
 import API from "../../services/api";
+import notifier from "../utils/notifier";
 
 export default function AdminSettings() {
   const [loading, setLoading] = useState(true);
@@ -70,6 +71,7 @@ export default function AdminSettings() {
       setSaving(true);
       await API.post("/admin/settings", settings);
       alert("Settings saved successfully");
+      notifier.settingsConfigured("Company Profile Configuration");
     } catch (err) {
       alert(err.response?.data?.message || "Failed to save settings");
     } finally {

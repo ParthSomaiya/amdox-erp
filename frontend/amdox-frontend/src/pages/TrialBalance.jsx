@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function TrialBalance() {
   const [data, setData] = useState({});
@@ -9,6 +10,7 @@ export default function TrialBalance() {
   const fetchData = async () => {
     try {
       const res = await API.get(`/reports/trial-balance?from=${from}&to=${to}`);
+      notifier.statementDownloaded("Trial Balance Statement");
       setData(res.data || {});
     } catch (err) {
       console.error(err);

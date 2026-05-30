@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Target, RefreshCw, Loader2, ShieldCheck } from "lucide-react";
 import API from "../../services/api";
+import notifier from "../utils/notifier";
 
 export default function Sprints() {
   const [sprints, setSprints] = useState([]);
@@ -82,6 +83,7 @@ export default function Sprints() {
       setName("");
       setGoal("");
       alert("Sprint backlog created and saved permanently!");
+      notifier.sprintGoalCreated(name);
     } catch (err) {
       console.error(err);
     } finally {

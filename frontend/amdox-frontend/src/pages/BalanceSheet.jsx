@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function BalanceSheet() {
   const [data, setData] = useState({});
@@ -7,6 +8,7 @@ export default function BalanceSheet() {
   const fetchData = async () => {
     try {
       const res = await API.get("/reports/balance-sheet");
+      notifier.statementDownloaded("Balance Sheet Statement");
       setData(res.data || {});
     } catch (err) {
       console.error(err);

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, Loader2, ClipboardList } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function TaskBoard() {
   const [tasks, setTasks] = useState([]);
@@ -54,6 +55,7 @@ export default function TaskBoard() {
       });
       setNewTask({ title: "", description: "", priority: "MEDIUM" });
       fetchTasks();
+      notifier.taskCreated(newTask.title);
     } catch (err) {
       console.error(err);
       alert("Failed to create task");
@@ -76,6 +78,7 @@ export default function TaskBoard() {
 
     try {
       await API.put(`/tasks/${draggableId}`, { status: destination.droppableId });
+      notifier.taskUpdated(draggableId, destination.droppableId);
     } catch (err) {
       console.error("Failed to update task status:", err);
       fetchTasks(); 

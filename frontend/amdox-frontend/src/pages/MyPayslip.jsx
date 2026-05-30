@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, Coins, Loader2, ShieldAlert } from "lucide-react";
+import { Download, Coins, Loader2, ShieldAlert, Receipt } from "lucide-react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import API from "../services/api";
@@ -12,7 +12,6 @@ export default function MyPayslip() {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     API.get(`/payroll/my/${user.id || user._id}`)
       .then((res) => {
-        // 🔹 ફિક્સ: બેકએન્ડના 'data' કી સ્ટ્રક્ચર (res.data.data) માંથી અરેય મેળવ્યો
         const rawList = res.data?.data || res.data || [];
         const list = Array.isArray(rawList) ? rawList : [];
         setSlips(list);
@@ -23,6 +22,8 @@ export default function MyPayslip() {
 
   const downloadPayslip = (slip) => {
     const doc = new jsPDF();
+    const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+    const empName = userObj.name || slip.employeeId?.userId?.name || slip.employeeId?.name || "Staff Member";
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
@@ -36,14 +37,14 @@ export default function MyPayslip() {
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 116, 139);
-    doc.text(`Employee Name: ${slip.employeeId?.name || "Staff Member"}`, 14, 38);
+    doc.text(`Employee Name: ${empName}`, 14, 38);
     doc.text(`Payroll Month: ${slip.month}`, 14, 44);
     doc.text(`Generated on: ${new Date().toLocaleString("en-IN")}`, 14, 50);
 
     const pf = slip.pf || Math.round(slip.basicSalary * 0.12);
     const pt = slip.pt || (slip.basicSalary > 10000 ? 200 : 0);
     const tds = slip.tds || 0;
-    const leaveCut = slip.leaveDeduction || 0;
+    const leaveCut = slip.leaveDeduction || slip.deductions || 0;
 
     const columns = ["Compensation Component", "Type", "Amount (INR)"];
     const rows = [
@@ -66,6 +67,13 @@ export default function MyPayslip() {
     });
 
     doc.save(`AMDOX_Payslip_${slip.month}_${slip._id?.slice(-6)}.pdf`);
+
+    // 🚀 લાઈવ નોટિફિકેશન ટ્રિગર
+    window.triggerAmdoxNotification?.(
+      "Payslip Downloaded", 
+      `Salary slip for ${slip.month} has been downloaded as PDF.`, 
+      "PAYROLL"
+    );
   };
 
   return (

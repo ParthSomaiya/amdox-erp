@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FolderPlus, IndianRupee, Send, Loader2 } from "lucide-react";
 import API from "../../services/api";
+import notifier from "../../utils/notifier"; 
 
 export default function CreateProject() {
   const navigate = useNavigate();
@@ -9,7 +10,7 @@ export default function CreateProject() {
   const [form, setForm] = useState({
     name: "",
     description: "",
-    budget: "", // 🔹 ઉમેરેલ: ડાયનેમિક બજેટ ઇનપુટ
+    budget: "", 
   });
 
   const handleChange = (e) => {
@@ -24,13 +25,15 @@ export default function CreateProject() {
     try {
       setLoading(true);
       
-      // 🔹 POST /api/projects with dynamic planned budget!
       await API.post("/projects", {
         ...form,
         budget: Number(form.budget || 0),
       });
 
       alert("Project Created Successfully");
+      
+      notifier.projectCreated(form.name, form.budget);
+
       navigate("/projects");
     } catch (err) {
       console.error(err);

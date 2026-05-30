@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Send, Loader2, ClipboardList, RefreshCw, ShoppingCart } from "lucide-react";
+import { Send, Loader2, RefreshCw, ShoppingCart } from "lucide-react";
 import API from "../../services/api";
+import notifier from "./notifier";
 
 export default function CreatePO() {
   const [vendorsList, setVendorsList] = useState([]);
@@ -54,13 +55,23 @@ export default function CreatePO() {
     try {
       setCreating(true);
       
+      const selectedProd = productsList.find(p => (p._id || p.id) === selectedProduct);
+
       await API.post("/inventory/purchase-order", {
         vendor: selectedVendor,
         product: selectedProduct,
         quantity: Number(quantity),
       });
+
+      // 🚀 લાઈવ નોટિફિકેશન ટ્રિગર
+      window.triggerAmdoxNotification?.(
+        "Purchase Order Raised", 
+        `New PO raised for ${quantity} units of ${selectedProd?.name || "Product"}.`, 
+        "SCM"
+      );
       
       alert("Purchase Order Created Successfully!");
+      notifier.poReceived(vendorName, productName);
       setQuantity("");
     } catch (err) {
       console.error(err);
@@ -72,7 +83,6 @@ export default function CreatePO() {
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
-      {/* 🚀 Header Banner */}
       <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 p-8 rounded-[32px] text-white shadow-md relative overflow-hidden">
         <div className="absolute top-0 right-0 h-48 w-48 rounded-full bg-white/10 blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
@@ -95,7 +105,6 @@ export default function CreatePO() {
         </div>
       </div>
 
-      {/* 🚀 Form Card */}
       <div className="bg-white rounded-[32px] border border-slate-200/80 p-8 shadow-sm max-w-2xl mx-auto">
         {loadingData ? (
           <div className="py-10 text-center space-y-2">
@@ -104,7 +113,6 @@ export default function CreatePO() {
           </div>
         ) : (
           <form onSubmit={handleCreatePO} className="space-y-6">
-            {/* Vendor Select */}
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5">
                 Select Vendor
@@ -118,13 +126,12 @@ export default function CreatePO() {
                 <option value="">-- Choose Vendor --</option>
                 {vendorsList.map((v) => (
                   <option key={v._id || v.id} value={v._id || v.id}>
-                    {v.name} ({v.email || "No Email"})
+                    {v.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Product Select */}
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5">
                 Select Product
@@ -138,13 +145,12 @@ export default function CreatePO() {
                 <option value="">-- Choose Product --</option>
                 {productsList.map((p) => (
                   <option key={p._id || p.id} value={p._id || p.id}>
-                    {p.name} (Available Stock: {p.quantity || p.stock || 0})
+                    {p.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Quantity */}
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5">
                 Order Quantity
@@ -160,7 +166,6 @@ export default function CreatePO() {
               />
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={creating}

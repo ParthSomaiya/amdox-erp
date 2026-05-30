@@ -335,6 +335,14 @@ export default function Sidebar() {
                   <Link to="/admin/audit" className={menuClass("/admin/audit")}>
                     📜 Audit Activity
                   </Link>
+                  {/* 🔹 GDPR અને DSR કમ્પ્લાયન્સ મેનુ લિંક */}
+                  <Link to="/admin/gdpr" className={menuClass("/admin/gdpr")}>
+                    🇪🇺 GDPR & DSR Compliance
+                  </Link>
+                  {/* 🔹 નવું નોટિફિકેશન એન્જિન મેનુ લિંક */}
+                  <Link to="/admin/notifications-config" className={menuClass("/admin/notifications-config")}>
+                    🔔 Notification & Webhook Engine
+                  </Link>
                 </>
               )}
 

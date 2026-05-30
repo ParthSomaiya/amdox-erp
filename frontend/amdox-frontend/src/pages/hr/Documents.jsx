@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FileText, Eye, Loader2, ShieldAlert, Upload, X, Check } from "lucide-react";
 import { createPortal } from "react-dom";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function Documents() {
   const [docs, setDocs] = useState([]);
@@ -54,6 +55,7 @@ export default function Documents() {
       });
 
       alert("Documents uploaded successfully!");
+      notifier.documentVerified(selectedEmp?.userId?.name, "Aadhaar/PAN/Resume");
       setShowUploadModal(false);
       fetchDocs();
     } catch (err) {

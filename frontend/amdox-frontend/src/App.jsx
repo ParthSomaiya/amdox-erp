@@ -110,6 +110,8 @@ import AuditLogs from "./pages/admin/AuditLogs";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import PermissionMatrix from "./pages/admin/PermissionMatrix";
 import RoleManagement from "./pages/admin/RoleManagement";
+import GdprCompliance from "./pages/admin/GdprCompliance";
+import NotificationSettings from "./pages/admin/NotificationSettings";
 
 // ================= OTHER =================
 import CalendarPage from "./pages/CalendarPage";
@@ -250,6 +252,8 @@ function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/permissions" element={<PermissionMatrix />} />
             <Route path="/admin/roles" element={<RoleManagement />} />
+            <Route path="/admin/gdpr" element={<GdprCompliance />} /> 
+            <Route path="/admin/notifications-config" element={<NotificationSettings />} /> 
 
             {/* OTHER */}
             <Route path="/calendar" element={<CalendarPage />} />

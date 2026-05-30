@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ScanBarcode, Loader2, Play, Package, ShieldCheck } from "lucide-react";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function BarcodeScanner() {
   const [scannedData, setScannedData] = useState("");
@@ -18,6 +19,7 @@ export default function BarcodeScanner() {
   const handleSimulateScan = () => {
     if (products.length === 0) {
       alert("No products available to scan. Please add products first.");
+      notifier.barcodeScanned(scannedData, productDetails?.name);
       return;
     }
     setScanning(true);

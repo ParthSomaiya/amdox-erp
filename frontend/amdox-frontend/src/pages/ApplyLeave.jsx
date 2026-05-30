@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, Clock3, FileText, Send, ShieldCheck } from "lucide-react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function ApplyLeave() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -80,6 +81,8 @@ export default function ApplyLeave() {
 
       // બેકએન્ડમાં રજાની રિકવેસ્ટ મોકલવી (Protected Route)
       await API.post("/leave/apply", form);
+
+      notifier.leaveApplied(form.leaveType, form.reason);
 
       alert("Leave Applied Successfully");
       setForm({

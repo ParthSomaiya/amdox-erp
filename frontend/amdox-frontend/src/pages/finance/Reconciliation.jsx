@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, XCircle, RefreshCw, Loader2, DollarSign } from "lucide-react";
 import API from "../../services/api";
+import notifier from "../utils/notifier";
 
 export default function Reconciliation() {
   const [transactions, setTransactions] = useState([]);
@@ -14,6 +15,7 @@ export default function Reconciliation() {
     try {
       setLoading(true);
       const res = await API.get("/reconciliation").catch(() => API.get("/finance/transactions"));
+      notifier.reconciliationMatched(t.description, t.amount);
       setTransactions(res.data || []);
     } catch (err) {
       console.error(err);

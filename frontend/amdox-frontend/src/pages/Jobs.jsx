@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import API from "../services/api";
 import { Plus, Briefcase, MapPin, IndianRupee, Trash2, Search, Building2, Users, Loader2, Edit3, X, Check, FileText } from "lucide-react";
+import notifier from "../utils/notifier";
 
 export default function Jobs() {
   const [jobs, setJobs] = useState([]);
@@ -51,6 +52,7 @@ export default function Jobs() {
       setForm({ title: "", description: "", location: "", salary: "", type: "FULL_TIME" });
       fetchJobs();
       alert("Job vacancy published successfully!");
+      notifier.employeeOnboarded(form.title, "Hiring Candidate Campaign");
     } catch (err) {
       console.error(err);
       alert("Failed to create job vacancy");

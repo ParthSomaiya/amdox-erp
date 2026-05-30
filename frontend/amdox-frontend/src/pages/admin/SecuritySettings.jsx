@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Shield, Lock, Save, Smartphone, KeyRound, Loader2, CheckCircle2 } from "lucide-react";
 import API from "../../services/api";
+import notifier from "../utils/notifier";
 
 export default function SecuritySettings() {
   const [passwordMinLength, setPasswordMinLength] = useState(8);
@@ -43,6 +44,7 @@ export default function SecuritySettings() {
         },
       });
       alert("Security configuration saved successfully");
+      notifier.settingsConfigured("Workspace Authorization Policies");
     } catch (err) {
       alert(err.response?.data?.message || "Failed to save security settings");
     } finally {

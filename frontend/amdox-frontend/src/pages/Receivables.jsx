@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Landmark, ArrowUpRight, RefreshCw, Loader2, ShieldCheck } from "lucide-react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function Receivables() {
   const [data, setData] = useState([]);
@@ -10,6 +11,7 @@ export default function Receivables() {
     try {
       setLoading(true);
       const res = await API.get("/ar");
+      notifier.receivablesViewed();
       setData(res.data || []);
     } catch (err) {
       console.error(err);

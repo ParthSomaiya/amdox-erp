@@ -13,10 +13,10 @@ export default function GeneratePayroll() {
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
-    API.get("/hr/employees") // 🔹 સાચો એન્ડપોઇન્ટ
+    API.get("/hr/employees") 
       .then((res) => setEmployees(res.data || []))
       .catch((err) => console.error(err))
-      .finally(() => setFetching(false));
+      .finally(() => setLoading(false));
   }, []);
 
   const netSalary = useMemo(() => {
@@ -32,19 +32,24 @@ export default function GeneratePayroll() {
     try {
       setLoading(true);
 
-      // ૧. સિલેક્ટ કરેલા કર્મચારીના રેકોર્ડમાંથી તેનું companyId શોધો
       const selectedEmp = employees.find(emp => emp._id === employeeId);
       const empCompanyId = selectedEmp?.companyId || null;
 
-      // ૨. પેલોડ સાથે ડાયરેક્ટ companyId બેકએન્ડ પર મોકલો
       await API.post("/payroll/generate", {
         employeeId,
         month,
         basicSalary: Number(basicSalary),
         bonus: Number(bonus),
         deduction: Number(deduction),
-        companyId: empCompanyId, // 🔹 ફ્રન્ટએન્ડથી ડાયરેક્ટ સિંક
+        companyId: empCompanyId, 
       });
+
+      // 🚀 લાઈવ નોટિફિકેશન ટ્રિગર
+      window.triggerAmdoxNotification?.(
+        "Salary Dispatched", 
+        `Monthly payroll of ₹${netSalary.toLocaleString("en-IN")} credited to ${selectedEmp?.userId?.name || "Employee"}'s bank account.`, 
+        "PAYROLL"
+      );
 
       alert("Payroll generated and salary credited successfully!");
       setEmployeeId("");
@@ -62,7 +67,6 @@ export default function GeneratePayroll() {
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
-      {/* Header */}
       <div className="bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 rounded-3xl p-8 text-white shadow-md">
         <h1 className="text-3xl font-black">Generate Payroll</h1>
         <p className="mt-2 text-emerald-100 text-sm">Calculate salary with dynamic leave deductions and issue payslips.</p>
@@ -135,7 +139,6 @@ export default function GeneratePayroll() {
               </div>
             </div>
 
-            {/* Calculations Summary */}
             <div className="bg-slate-50 p-6 rounded-2xl border space-y-2 text-sm font-semibold">
               <div className="flex justify-between">
                 <span>Net Salary Projection:</span>

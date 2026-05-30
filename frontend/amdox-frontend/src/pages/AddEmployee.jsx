@@ -10,8 +10,8 @@ export default function AddEmployee() {
     name: "",
     email: "",
     position: "",
-    password: "", // 🔹 કસ્ટમ લોગિન પાસવર્ડ
-    salary: "",   // 🔹 પ્રારંભિક સેલરી
+    password: "", 
+    salary: "",   
   });
 
   const handleChange = (e) => {
@@ -29,6 +29,13 @@ export default function AddEmployee() {
         password: form.password,
         salary: Number(form.salary),
       });
+
+      // 🚀 લાઈવ નોટિફિકેશન ટ્રિગર
+      window.triggerAmdoxNotification?.(
+        "Employee Onboarded", 
+        `${form.name} has been successfully onboarded as ${form.position}.`, 
+        "HR"
+      );
 
       alert("Employee added successfully with login credentials!");
       navigate("/employees");

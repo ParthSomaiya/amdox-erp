@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ClipboardList, CheckCircle2, RefreshCw, Loader2, ArrowDownLeft } from "lucide-react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function PurchaseOrders() {
   const [orders, setOrders] = useState([]);
@@ -23,12 +24,24 @@ export default function PurchaseOrders() {
     }
   };
 
-  const handleReceiveOrder = async (id) => {
+  const handleReceiveOrder = async (orderObj) => {
     if (!window.confirm("Are you sure you want to mark this Purchase Order as RECEIVED?")) return;
     try {
-      setReceivingId(id);
-      await API.put(`/inventory/po/${id}/receive`);
+      setReceivingId(orderObj._id);
+      await API.put(`/inventory/po/${orderObj._id}/receive`);
+
+      const vendorName = orderObj.vendorName || orderObj.vendorId?.name || "Vendor";
+      const productName = orderObj.productName || orderObj.productId?.name || "Product";
+
+      // 🚀 લાઈવ નોટિફિકેશન ટ્રિગર
+      window.triggerAmdoxNotification?.(
+        "Inventory Stock Received", 
+        `Successfully received shipment from ${vendorName} (${productName}). Warehouse stock incremented.`, 
+        "SCM"
+      );
+
       alert("Purchase Order received! Product stock incremented and recorded in history successfully.");
+      notifier.poReceived(vendorName, productName);
       await fetchOrders();
     } catch (err) {
       console.error(err);
@@ -40,7 +53,6 @@ export default function PurchaseOrders() {
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
       <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Purchase Orders</h1>
@@ -54,7 +66,6 @@ export default function PurchaseOrders() {
         </button>
       </div>
 
-      {/* Grid Table */}
       <div className="bg-white rounded-3xl border shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-20 text-center">
@@ -69,10 +80,9 @@ export default function PurchaseOrders() {
         ) : (
           <div className="p-8 space-y-4">
             {orders.map((o) => {
-              // 🔹 અલ્ટીમેટ ફ્રન્ટએન્ડ ફોલબેક ગણતરી (આનાથી NaN કે ખોટા નામો ક્યારેય નહીં દેખાય!)
-              const vendorName = o.vendorName || o.vendorId?.name || o.vendor || "Dharmik Kotecha";
-              const productName = o.productName || o.productId?.name || o.product || "erfe";
-              const qty = Number(o.quantity || o.qty || (o.items && o.items[0]?.quantity) || 5);
+              const vendorName = o.vendorName || o.vendorId?.name || o.vendor || "Vendor";
+              const productName = o.productName || o.productId?.name || o.product || "Product";
+              const qty = Number(o.quantity || o.qty || 5);
               const amount = o.total || o.amount || o.totalAmount || (qty * 5000);
 
               return (
@@ -101,7 +111,7 @@ export default function PurchaseOrders() {
                       {o.status !== "RECEIVED" && (
                         <button
                           disabled={receivingId === o._id}
-                          onClick={() => handleReceiveOrder(o._id)}
+                          onClick={() => handleReceiveOrder(o)}
                           className="h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1 transition disabled:opacity-50"
                         >
                           {receivingId === o._id ? <Loader2 className="animate-spin h-3.5 w-3.5" /> : <CheckCircle2 size={12} />}

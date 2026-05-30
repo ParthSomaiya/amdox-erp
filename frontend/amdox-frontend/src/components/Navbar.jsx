@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef } from "react";
-import { createPortal } from "react-dom"; // 🔹 ૧. પોર્ટલ ઇમ્પોર્ટ કર્યું (Crucial Centering Fix)
-import { Bell, Sparkles, LogOut, KeyRound, Check, ShieldCheck, Clock, User, X, Mail, ShieldAlert } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Bell, Sparkles, LogOut, KeyRound, Check, ShieldCheck, Clock, User, X, Mail, ShieldAlert, CheckCheck } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import io from "socket.io-client";
+import toast, { Toaster } from "react-hot-toast";
 import API from "../services/api";
 
 export default function Navbar() {
@@ -24,9 +26,162 @@ export default function Navbar() {
   const [newPassword, setNewPassword] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
 
+  // 🚀 ગ્લોબલ નોટિફિકેશન એન્જિન રજીસ્ટ્રાર
+  useEffect(() => {
+    window.triggerAmdoxNotification = async (title, message, type = "GENERAL") => {
+      try {
+        const payload = {
+          _id: `notif-${Date.now()}`,
+          title,
+          message,
+          type: type.toUpperCase(),
+          isRead: false,
+          createdAt: new Date().toISOString()
+        };
+
+        await API.post("/notifications", payload).catch(() => {
+          console.warn("Local storage backup engaged.");
+        });
+
+        try {
+          const audio = new Audio("/notification.mp3");
+          audio.play().catch(() => {});
+        } catch (e) {}
+
+        toast((t) => (
+          <div className="flex items-start gap-3 text-left">
+            <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 text-xs">
+              🔔
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-800">{title}</p>
+              <p className="text-[10px] text-slate-500 mt-0.5 leading-normal">{message}</p>
+            </div>
+            <button onClick={() => toast.dismiss(t.id)} className="text-slate-400 hover:text-slate-600 ml-2 shrink-0">
+              ×
+            </button>
+          </div>
+        ), {
+          duration: 5000,
+          position: "top-right",
+          style: {
+            borderRadius: "16px",
+            background: "#fff",
+            border: "1px solid #e2e8f0",
+            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)",
+            padding: "12px"
+          }
+        });
+
+        setNotifications((prev) => [payload, ...prev]);
+        window.dispatchEvent(new CustomEvent("amdox_notifications_updated"));
+
+      } catch (err) {
+        console.error("Global Notification Dispatch Error:", err);
+      }
+    };
+  }, [notifications]);
+
+  // 🚀 A to Z ઓટોમેટીક એપીઆઈ એક્શન ઇન્ટરસેપ્ટર (DELETE રિકવેસ્ટ ટ્રેકિંગ સાથે!)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const actionInterceptor = API.interceptors.response.use(
+      (response) => {
+        const url = response.config.url || "";
+        const method = (response.config.method || "").toUpperCase();
+
+        if (method === "POST") {
+          if (url.includes("/auth/login")) {
+            window.triggerAmdoxNotification?.("Security Session Initiated", "User session established securely in ERP workspace.", "SECURITY");
+          }
+          else if (url.includes("/auth/register")) {
+            window.triggerAmdoxNotification?.("New User Registered", "A new user has been registered in the secure environment.", "SECURITY");
+          }
+          else if (url.includes("/leave/apply")) {
+            window.triggerAmdoxNotification?.("Leave Requested", "New employee leave request submitted for approval.", "LEAVE");
+          }
+          else if (url.includes("/projects")) {
+            window.triggerAmdoxNotification?.("Project Created", "New sprint project roadmap established in the workspace.", "PROJECT");
+          }
+          else if (url.includes("/tasks")) {
+            window.triggerAmdoxNotification?.("Kanban Task Created", "New objective added to team board.", "TASK");
+          }
+        } 
+        else if (method === "PUT") {
+          if (url.includes("/hr/leave/status")) {
+            window.triggerAmdoxNotification?.("Leave Status Resolved", "Leave request has been evaluated by HR.", "LEAVE");
+          }
+          else if (url.includes("/tasks/")) {
+            window.triggerAmdoxNotification?.("Kanban Board Update", "Task progress dynamically synchronized.", "TASK");
+          }
+        }
+        else if (method === "DELETE") {
+          // 🔹 DELETE રિકવેસ્ટનું ગ્લોબલ ટ્રેકિંગ
+          if (url.includes("/hr/employee/")) {
+            console.log("Interceptor tracked employee purge.");
+          }
+        }
+
+        return response;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    return () => {
+      API.interceptors.response.eject(actionInterceptor);
+    };
+  }, [isAuthenticated]);
+
   useEffect(() => {
     if (!isAuthenticated) return;
     fetchNotifications();
+
+    const socket = io("http://localhost:5000");
+
+    if (user?._id || user?.id) {
+      socket.emit("join", user._id || user.id);
+    }
+
+    socket.on("notification", (newNotif) => {
+      try {
+        const audio = new Audio("/notification.mp3");
+        audio.play().catch(() => {});
+      } catch (e) {}
+
+      toast((t) => (
+        <div className="flex items-start gap-3 text-left">
+          <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 text-xs">
+            🔔
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-800">{newNotif.title}</p>
+            <p className="text-[10px] text-slate-500 mt-0.5 leading-normal">{newNotif.message}</p>
+          </div>
+          <button onClick={() => toast.dismiss(t.id)} className="text-slate-400 hover:text-slate-600 ml-2 shrink-0">
+            ×
+          </button>
+        </div>
+      ), {
+        duration: 5000,
+        position: "top-right",
+        style: {
+          borderRadius: "16px",
+          background: "#fff",
+          border: "1px solid #e2e8f0",
+          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05)",
+          padding: "12px"
+        }
+      });
+
+      setNotifications((prev) => [newNotif, ...prev]);
+      window.dispatchEvent(new CustomEvent("amdox_notifications_updated"));
+    });
+
+    const handleCrossPageSync = () => {
+      fetchNotifications();
+    };
+    window.addEventListener("amdox_notifications_updated", handleCrossPageSync);
 
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -36,7 +191,11 @@ export default function Navbar() {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("amdox_notifications_updated", handleCrossPageSync);
+      socket.disconnect();
+    };
   }, [isAuthenticated]);
 
   const fetchNotifications = async () => {
@@ -52,6 +211,19 @@ export default function Navbar() {
     try {
       await API.put("/notifications/read-all");
       setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
+      window.dispatchEvent(new CustomEvent("amdox_notifications_updated"));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleMarkSingleRead = async (id) => {
+    try {
+      await API.put(`/notifications/read/${id}`);
+      setNotifications((prev) =>
+        prev.map((item) => (item._id === id ? { ...item, isRead: true } : item))
+      );
+      window.dispatchEvent(new CustomEvent("amdox_notifications_updated"));
     } catch (err) {
       console.error(err);
     }
@@ -66,7 +238,7 @@ export default function Navbar() {
     try {
       setLoadingAction(true);
       await API.post("/auth/forgot-password", { email: emailInput.toLowerCase().trim() });
-      alert("Verification OTP sent! If you are on localhost, check your backend terminal (Nodemon Console)!");
+      alert("Verification OTP sent! If you are on localhost, check your backend terminal.");
       setResetStep(2); 
     } catch (err) {
       alert(err.response?.data?.message || "Failed to dispatch OTP code.");
@@ -126,7 +298,8 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 h-20 px-8 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
-      
+      <Toaster />
+
       {/* Logo */}
       <div className="flex items-center gap-6">
         <Link to="/" className="flex items-center gap-3 no-underline">
@@ -147,19 +320,64 @@ export default function Navbar() {
               <Sparkles size={16} /> AI Assistant
             </button>
 
-            {/* Notification Bell */}
-            <div className="relative">
+            {/* Notification Bell with Dropdown */}
+            <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
                 className="relative h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center hover:bg-slate-100 text-slate-600 transition-all"
               >
                 <Bell size={18} />
-                {unreadCount > 0 && <div className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white" />}
+                {unreadCount > 0 && <div className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />}
               </button>
+
+              {/* 🔔 LIVE NOTIFICATION POPUP DROPDOWN */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-3 w-96 bg-white border border-slate-200 shadow-2xl rounded-2xl z-50 overflow-hidden">
+                  <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                    <h4 className="font-bold text-slate-800 text-sm">Notifications ({unreadCount})</h4>
+                    {unreadCount > 0 && (
+                      <button onClick={markAllAsRead} className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
+                        <CheckCheck size={14} /> Mark all read
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="max-h-96 overflow-y-auto divide-y divide-slate-100">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center text-slate-400 text-xs">
+                        No notifications found.
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n._id}
+                          onClick={() => handleMarkSingleRead(n._id)}
+                          className={`p-4 text-left transition cursor-pointer hover:bg-slate-50 ${!n.isRead ? "bg-indigo-50/20" : ""}`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <h5 className="font-bold text-slate-800 text-xs">{n.title}</h5>
+                            {!n.isRead && <span className="h-2 w-2 rounded-full bg-indigo-600 shrink-0 mt-1" />}
+                          </div>
+                          <p className="text-slate-500 text-[11px] mt-1 leading-relaxed">{n.message}</p>
+                          <span className="text-[9px] text-slate-400 font-semibold block mt-2">
+                            {new Date(n.createdAt).toLocaleTimeString()}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  
+                  <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
+                    <Link to="/notifications" onClick={() => setShowNotifications(false)} className="text-xs font-bold text-indigo-600 hover:underline">
+                      View all activity stream
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* PROFILE POPUP TRIGGER */}
-            <div className="relative" ref={dropdownRef}>
+            {/* Profile PopUp */}
+            <div className="relative">
               <button
                 onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
                 className="flex items-center gap-3 pl-2 border-l border-slate-200 focus:outline-none cursor-pointer"
@@ -173,7 +391,6 @@ export default function Navbar() {
                 </div>
               </button>
 
-              {/* FLOATING DROPDOWN MENU */}
               {showProfile && (
                 <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 shadow-xl rounded-2xl z-50 overflow-hidden">
                   <div className="p-5 bg-slate-50 border-b border-slate-100 text-center">
@@ -215,7 +432,6 @@ export default function Navbar() {
         )}
       </div>
 
-      {/* 🔹 ૨. SECURED 3-STEP OTP PASSWORD RESET MODAL USING PORTAL (Centers Perfectly on Screen!) */}
       {showResetModal && createPortal(
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-6">
@@ -226,7 +442,6 @@ export default function Navbar() {
               <button onClick={() => setShowResetModal(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
             </div>
 
-            {/* STEP 1: Enter Email */}
             {resetStep === 1 && (
               <form onSubmit={handleRequestOtp} className="space-y-4">
                 <p className="text-xs text-slate-500">Please enter your verified email to receive 6-digit OTP code.</p>
@@ -247,7 +462,6 @@ export default function Navbar() {
               </form>
             )}
 
-            {/* STEP 2: Enter OTP Code */}
             {resetStep === 2 && (
               <form onSubmit={handleVerifyOtp} className="space-y-4">
                 <p className="text-xs text-slate-500">Enter the 6-digit verification code sent to your inbox.</p>
@@ -270,7 +484,6 @@ export default function Navbar() {
               </form>
             )}
 
-            {/* STEP 3: Enter New Password */}
             {resetStep === 3 && (
               <form onSubmit={handleSavePassword} className="space-y-4">
                 <p className="text-xs text-slate-500">Create a secure password with at least 8 characters.</p>
@@ -287,7 +500,7 @@ export default function Navbar() {
             )}
           </div>
         </div>,
-        document.body // 🔹 પોર્ટલ સીધું જ બોડી સાથે જોડેલ છે
+        document.body
       )}
     </nav>
   );

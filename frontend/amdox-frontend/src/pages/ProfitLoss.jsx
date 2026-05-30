@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BarChart, RefreshCw, Loader2, ArrowUpRight, TrendingUp, DollarSign } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function ProfitLoss() {
   const [data, setData] = useState({});
@@ -37,6 +38,7 @@ export default function ProfitLoss() {
       `http://localhost:5000/api/reports/pl-pdf?revenue=${data.revenue || 0}&expenses=${data.expenses || 0}&payroll=${data.payroll || 0}&profit=${data.profit || 0}`,
       "_blank"
     );
+    notifier.statementDownloaded("Profit & Loss Statement");
   };
 
   useEffect(() => {

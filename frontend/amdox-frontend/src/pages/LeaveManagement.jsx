@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle, Clock3, Search, XCircle } from "lucide-react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function LeaveManagement() {
   const [leaves, setLeaves] = useState([]);
@@ -42,6 +43,9 @@ export default function LeaveManagement() {
       );
       
       alert(`Leave request ${status.toLowerCase()} successfully.`);
+
+      notifier.leaveResolved(status); // APPROVED અથવા REJECTED
+      
     } catch (err) {
       console.error(err);
       alert("Failed to update leave status.");

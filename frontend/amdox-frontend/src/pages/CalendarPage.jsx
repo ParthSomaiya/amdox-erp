@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import api from "../utils/axiosInstance";
+import notifier from "../utils/notifier";
 
 export default function CalendarPage() {
 
@@ -140,6 +141,7 @@ export default function CalendarPage() {
         });
 
         fetchEvents();
+        notifier.calendarEventLogged(form.title);
 
       } catch (err) {
 

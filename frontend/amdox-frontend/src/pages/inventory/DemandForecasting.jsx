@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Loader2, Sparkles, BrainCircuit, RefreshCw, BarChart2, TrendingUp, Info, Package, ShieldCheck } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line, Legend } from "recharts";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function DemandForecasting() {
   const [products, setProducts] = useState([]);
@@ -29,6 +30,7 @@ export default function DemandForecasting() {
   useEffect(() => {
     if (!selectedProduct) return;
     fetchForecast(selectedProduct);
+    notifier.demandForecastGenerated("Target SKU");
   }, [selectedProduct]);
 
   const fetchForecast = async (productId) => {

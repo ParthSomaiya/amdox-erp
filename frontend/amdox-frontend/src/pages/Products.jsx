@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Search, Package, Plus, Trash2, Edit3, Loader2, Upload, X, Check } from "lucide-react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 // 🔹 ઇમેજ લોડ કરવા માટેનું હેલ્પર કોમ્પોનન્ટ (CORS અને CORP એરર હેન્ડલિંગ સાથે)
 function ProductImage({ p }) {
@@ -103,6 +104,7 @@ export default function Products() {
       setImageFile(null);
       fetchProducts();
       alert("Product added successfully!");
+      notifier.productRegistered(newProduct.name, newProduct.stock);
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Failed to add product");
@@ -157,6 +159,7 @@ export default function Products() {
       await API.delete(`/inventory/product/${id}`);
       fetchProducts();
       alert("Product deleted successfully");
+      notifier.productPurged("Purged SKU");
     } catch (err) {
       console.error(err);
       alert("Failed to delete product");

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../services/api";
 import { Mail, Lock, ShieldCheck, Loader2 } from "lucide-react";
+import notifier from "../utils/notifier";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -48,6 +49,7 @@ export default function Login() {
         default:
           navigate("/");
       }
+      notifier.aiModeChanged(`Session Initiated for ${form.email.split("@")[0]}`, true);
     } catch (err) {
       setError(err.response?.data?.message || "Invalid credentials. Please try again.");
     } finally {
@@ -58,7 +60,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-sm border border-slate-200/60">
-        
+
         {/* Header */}
         <div className="text-center">
           <div className="mx-auto h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-black text-2xl shadow-sm">
@@ -81,7 +83,7 @@ export default function Login() {
 
         <form className="mt-8 space-y-6" onSubmit={submit}>
           <div className="space-y-4">
-            
+
             {/* Email Field */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">

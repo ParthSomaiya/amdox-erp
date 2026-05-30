@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import api from "../utils/axiosInstance";
+import notifier from "../utils/notifier";
 
 const socket = io(
   "http://localhost:5000",
@@ -114,6 +115,8 @@ export default function TeamChat() {
           ...prev,
           message,
         ]);
+
+        notifier.chatMessageSent(room);
 
       }
     );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { BookOpen, RefreshCw, Loader2, ArrowUpRight, ArrowDownLeft, ShieldCheck } from "lucide-react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function GL() {
   const [entries, setEntries] = useState([]);
@@ -10,6 +11,7 @@ export default function GL() {
     try {
       setLoading(true);
       const res = await API.get("/gl");
+      notifier.ledgerEntryLogged("Double-Entry Adjusted");
       setEntries(res.data || []);
     } catch (err) {
       console.error(err);

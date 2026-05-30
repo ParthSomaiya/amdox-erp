@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Search, Users, Mail, Briefcase, Plus, Trash2, Edit3, Loader2, X, Check, Coins, User, Lock } from "lucide-react";
+import { Search, Users, Mail, Plus, Trash2, Edit3, Loader2, X, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import API from "../services/api";
 
@@ -48,7 +48,7 @@ export default function Employees() {
     setEditForm({
       name: emp.userId?.name || "",
       email: emp.userId?.email || "",
-      password: "", // સેક્યુરિટી માટે પાસવર્ડ ખાલી રાખવો
+      password: "", 
       position: emp.position || "",
       salary: emp.salary || "",
     });
@@ -60,6 +60,14 @@ export default function Employees() {
     try {
       setUpdating(true);
       await API.put(`/hr/employee/${selectedEmp._id}`, editForm);
+
+      // 🚀 લાઈવ નોટિફિકેશન ટ્રિગર (અપડેટ / એડિટ પર!)
+      window.triggerAmdoxNotification?.(
+        "Employee Profile Updated", 
+        `Details updated successfully for ${editForm.name} (${editForm.position}).`, 
+        "HR"
+      );
+
       alert("Employee and login account updated successfully!");
       setShowEditModal(false);
       fetchEmployees();
@@ -74,7 +82,18 @@ export default function Employees() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this employee? This will also delete their login credentials.")) return;
     try {
+      const selected = employees.find(emp => emp._id === id);
+      const empName = selected?.userId?.name || "Employee";
+
       await API.delete(`/hr/employee/${id}`);
+
+      // 🚀 લાઈવ નોટિફિકેશન ટ્રિગર (કર્મચારી ડિલીટ થવા પર!)
+      window.triggerAmdoxNotification?.(
+        "Employee Account Purged", 
+        `Account of ${empName} has been permanently purged from the secure database.`, 
+        "HR"
+      );
+
       alert("Employee and user account deleted successfully!");
       fetchEmployees();
     } catch (err) {
@@ -165,7 +184,7 @@ export default function Employees() {
                         </button>
                         <button
                           onClick={() => handleDelete(emp._id)}
-                          className="h-9 w-9 rounded-lg bg-rose-50 border text-rose-600 flex items-center justify-center"
+                          className="h-9 w-9 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -179,7 +198,6 @@ export default function Employees() {
         )}
       </div>
 
-      {/* COMPREHENSIVE UPDATE MODAL */}
       {showEditModal && createPortal(
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-6">

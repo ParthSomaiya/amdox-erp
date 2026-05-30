@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import API from "../../services/api";
 import { Upload, FileText, Send, User, Mail, Phone, Briefcase, Code, Globe, Loader2 } from "lucide-react";
+import notifier from "../../utils/notifier";
 
 export default function ApplyJob() {
   const { id } = useParams();
@@ -50,6 +51,7 @@ export default function ApplyJob() {
       });
 
       alert("Application Submitted Successfully!");
+      notifier.employeeOnboarded(form.name, "Job Candidate Pool");
       navigate("/careers");
     } catch (err) {
       console.error(err);
