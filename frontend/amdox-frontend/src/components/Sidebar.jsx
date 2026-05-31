@@ -353,8 +353,8 @@ export default function Sidebar() {
               <Link to="/calendar" className={menuClass("/calendar")}>
                 📅 Calendar Events
               </Link>
-              <Link to="/team-chat" className={menuClass("/team-chat")}>
-                💬 Team Workspace Chat
+              <Link to="/expense" className={menuClass("/expense")}>
+                💳 Expense Claims
               </Link>
               <Link to="/timeline" className={menuClass("/timeline")}>
                 🕒 Employee Timeline
@@ -390,7 +390,7 @@ export default function Sidebar() {
         >
           Sign Out
         </button>
-      </div>
+      </div>  
     </aside>
   );
 }

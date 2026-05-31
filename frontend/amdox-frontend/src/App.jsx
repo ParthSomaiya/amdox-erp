@@ -117,7 +117,7 @@ import NotificationSettings from "./pages/admin/NotificationSettings";
 
 // ================= OTHER =================
 import CalendarPage from "./pages/CalendarPage";
-import TeamChat from "./pages/TeamChat";
+import WorkspaceExpenses from "./pages/WorkspaceExpenses";
 import Notifications from "./pages/notifications/Notifications";
 import PushSetup from "./components/PushSetup";
 import AIAssistant from "./pages/ai/AIAssistant";
@@ -261,7 +261,7 @@ function App() {
 
             {/* OTHER */}
             <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/team-chat" element={<TeamChat />} />
+            <Route path="/expense" element={<WorkspaceExpenses />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/ai" element={<AIAssistant />} />
             <Route path="/profile" element={<MyProfile />} />

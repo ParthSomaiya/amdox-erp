@@ -1,124 +1,139 @@
-/*  */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-
   --bg: #030712;
   --card: #111827;
-  --border: rgba(255,255,255,0.08);
-
+  --border: rgba(255, 255, 255, 0.08);
   --primary: #6366f1;
   --secondary: #8b5cf6;
-
   --text: #f9fafb;
   --muted: #9ca3af;
-
 }
 
 body {
-
   margin: 0;
   padding: 0;
-
-  background:
-    radial-gradient(circle at top left,
-      rgba(99,102,241,0.15),
-      transparent 30%),
-
-    radial-gradient(circle at bottom right,
-      rgba(139,92,246,0.12),
-      transparent 30%),
-
-    #030712;
-
-  color: var(--text);
-
-  font-family:
-    Inter,
-    sans-serif;
-
+  background-color: #f8fafc;
+  color: #0f172a;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-* {
-  box-sizing: border-box;
+/* ==========================================================================
+   🎯 PRECISE ENTERPRISE RESPONSIVE BREAKPOINTS OVERRIDES
+   ========================================================================== */
+
+/* 📱 1. Mobile Viewports (Optimized for 375px and down) */
+@media (max-width: 375px) {
+  .max-w-7xl, .container {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  /* Typography Scale Down */
+  h1, .text-3xl, .text-4xl, .text-5xl {
+    font-size: 1.5rem !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.025em !important;
+  }
+  h2, .text-2xl {
+    font-size: 1.25rem !important;
+  }
+  h3, .text-xl {
+    font-size: 1.1rem !important;
+  }
+  p, .text-sm {
+    font-size: 0.75rem !important;
+    line-height: 1.4 !important;
+  }
+  
+  /* Force single column layouts */
+  .grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    gap: 1rem !important;
+  }
+  
+  /* Reset large padding to prevent shrink clipping */
+  .p-6, .p-8, .p-10, .p-14, .p-16 {
+    padding: 1.25rem !important;
+  }
+  .px-8, .px-10 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  .py-8, .py-10 {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
+  
+  /* Complex Components Fix */
+  .stats-grid, .grid-cols-12 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+  .lg\:col-span-3, .lg\:col-span-4, .lg\:col-span-5, .lg\:col-span-6, .lg\:col-span-7, .lg\:col-span-8, .lg\:col-span-12 {
+    grid-column: span 12 / span 12 !important;
+  }
+  
+  /* Rounding adjustments for tiny displays */
+  .rounded-\[32px\], .rounded-3xl, .rounded-2xl {
+    border-radius: 1rem !important;
+  }
 }
 
+/* 7 2. Tablet Viewports (376px up to 768px) */
+@media (max-width: 768px) {
+  main {
+    padding: 1rem !important;
+  }
+  
+  /* Form components and rows stacking */
+  .flex, .sm\:flex-row, .flex-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+  }
+  .flex.items-center.justify-between, .flex.justify-between {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+  .flex-row-reverse {
+    flex-direction: column-reverse !important;
+  }
+  .shrink-0 {
+    width: 100% !important;
+  }
+  
+  /* Complete table scroll safety constraints */
+  .overflow-x-auto, table {
+    width: 100% !important;
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important; /* Momentum swipe on touch devices */
+  }
+  
+  thead, tbody, tr {
+    min-width: 600px !important; /* Forces table columns to scroll gracefully without shrinking */
+  }
+}
+
+/* 💻 3. Ultra-Wide & Desktop (1440px and up) */
+@media (min-width: 1440px) {
+  .max-w-7xl {
+    max-width: 1380px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .grid {
+    gap: 1.75rem !important;
+  }
+}
+
+/* Base custom fluid helpers */
 .glass {
-
-  background:
-    rgba(17,24,39,0.72);
-
-  border:
-    1px solid rgba(255,255,255,0.08);
-
-  backdrop-filter:
-    blur(20px);
-
-  box-shadow:
-    0 10px 40px rgba(0,0,0,0.35);
-
-}
-
-.gradient-text {
-
-  background:
-    linear-gradient(
-      to right,
-      #818cf8,
-      #c084fc
-    );
-
-  -webkit-background-clip: text;
-
-  -webkit-text-fill-color: transparent;
-
-}
-
-.primary-btn {
-
-  background:
-    linear-gradient(
-      to right,
-      #6366f1,
-      #8b5cf6
-    );
-
-  border-radius: 18px;
-
-  transition: 0.3s ease;
-
-}
-
-.primary-btn:hover {
-
-  transform:
-    translateY(-2px);
-
-  opacity: 0.92;
-
-}
-
-.premium-input {
-
-  width: 100%;
-
-  height: 58px;
-
-  border-radius: 18px;
-
-  border:
-    1px solid rgba(255,255,255,0.08);
-
-  background:
-    rgba(255,255,255,0.04);
-
-  padding: 0 18px;
-
-  color: white;
-
-  outline: none;
-
-}
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+} 
