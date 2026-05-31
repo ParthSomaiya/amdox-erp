@@ -8,7 +8,7 @@ const hashed = await bcrypt.hash("admin123", 10);
 
 await User.create({
   name: "Admin",
-  email: "admin@amdox.com",
+  email: "parthsomaiya2004@gmail.com",
   password: hashed,
   role: "ADMIN",
   isVerified: true,

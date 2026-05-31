@@ -14,6 +14,7 @@ import {
   registerEmployeeWithInvite,
   registerJobUser,
   verifyEmail,
+  resetPasswordViaOTP
 } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -39,6 +40,8 @@ router.post("/register-admin", registerAdmin);
 
 // NORMAL USER REGISTER
 router.post("/register-user", registerUser);
+
+router.post("/reset-password-otp", resetPasswordViaOTP);
 
 // JOB SEEKER REGISTER
 router.post("/register-job", registerJobUser);

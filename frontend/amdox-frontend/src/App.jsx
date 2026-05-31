@@ -33,6 +33,8 @@ import EmployeeProfile from "./pages/hr/EmployeeProfile";
 import EmployeeTimeline from "./pages/hr/EmployeeTimeline";
 import PayrollSlip from "./pages/hr/PayrollSlip";
 import HRDashboard from "./pages/hr/HRDashboard";
+import InterviewCalendar from "./pages/jobs/InterviewCalendar";
+import InterviewScheduler from "./pages/jobs/InterviewScheduler";
 
 // ================= PAYROLL =================
 import GeneratePayroll from "./pages/GeneratePayroll";
@@ -172,6 +174,8 @@ function App() {
             <Route path="/hr/employee-timeline" element={<EmployeeTimeline />} />
             <Route path="/hr/payroll-slip" element={<PayrollSlip />} />
             <Route path="/hr/dashboard" element={<HRDashboard />} />
+            <Route path="/hr/interviews" element={<InterviewCalendar />} />
+            <Route path="/hr/interview-scheduler" element={<InterviewScheduler />} />
 
             {/* PAYROLL */}
             <Route path="/generate-payroll" element={<GeneratePayroll />} />
@@ -252,8 +256,8 @@ function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/permissions" element={<PermissionMatrix />} />
             <Route path="/admin/roles" element={<RoleManagement />} />
-            <Route path="/admin/gdpr" element={<GdprCompliance />} /> 
-            <Route path="/admin/notifications-config" element={<NotificationSettings />} /> 
+            <Route path="/admin/gdpr" element={<GdprCompliance />} />
+            <Route path="/admin/notifications-config" element={<NotificationSettings />} />
 
             {/* OTHER */}
             <Route path="/calendar" element={<CalendarPage />} />

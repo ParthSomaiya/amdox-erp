@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ShieldCheck, Plus, Check, Award } from "lucide-react";
+import notifier from "../../utils/notifier";
 
 export default function RoleManagement() {
   const [roles, setRoles] = useState([
@@ -7,6 +8,7 @@ export default function RoleManagement() {
     { _id: "2", name: "HR", permissions: ["EMPLOYEE_CRUD", "LEAVE_APPROVALS", "PAYROLL_GENERATION"] },
     { _id: "3", name: "FINANCE", permissions: ["LEDGER_WRITE", "BILL_PAYMENTS", "INVOICE_CREATE"] },
     { _id: "4", name: "EMPLOYEE", permissions: ["ATTENDANCE_CLOCKIN", "LEAVE_APPLICATIONS", "VIEW_PAYSLIPS"] }
+    
   ]);
 
   return (

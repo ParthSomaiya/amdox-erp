@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Sparkles, Loader2, RefreshCw, Layers } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function InventoryForecast() {
   const [data, setData] = useState([]);
@@ -25,6 +26,7 @@ export default function InventoryForecast() {
         };
       });
       setData(formatted);
+      notifier.inventoryForecastViewed();
     } catch (err) {
       console.error(err);
     } finally {

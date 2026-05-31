@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Flame, RefreshCw, Loader2 } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function BurndownChart() {
   const [tasks, setTasks] = useState([]);
@@ -16,6 +17,7 @@ export default function BurndownChart() {
       setLoading(true);
       const res = await API.get("/tasks");
       setTasks(res.data || []);
+      notifier.burndownViewed();
     } catch (err) {
       console.error("Burndown Fetch Error:", err);
     } finally {

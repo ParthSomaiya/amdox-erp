@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { History, ArrowDownLeft, ArrowUpRight, ClipboardList, Loader2 } from "lucide-react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function StockHistory() {
   const [history, setHistory] = useState([]);
@@ -15,6 +16,7 @@ export default function StockHistory() {
       setLoading(true);
       const res = await API.get("/inventory/history");
       setHistory(res.data || []);
+      notifier.stockHistoryViewed();
     } catch (err) {
       console.error(err);
     } finally {

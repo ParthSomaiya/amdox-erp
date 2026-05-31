@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Bell, ShieldCheck, Plus, Play, Trash2, Settings2, Info, Loader2, Save, Wifi, CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
 import API from "../../services/api";
-import notifier from "./notifier";
+import notifier from "../../utils/notifier";
 
 export default function NotificationSettings() {
   const [saving, setSaving] = useState(false);

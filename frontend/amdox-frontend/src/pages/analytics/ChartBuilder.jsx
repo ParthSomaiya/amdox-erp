@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Loader2, Plus, BarChart2, Check, TrendingUp, Sparkles, Layers } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, LineChart, Line, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function ChartBuilder() {
   const [dataset, setDataset] = useState("revenue"); // revenue, stock, tasks
@@ -37,6 +38,7 @@ export default function ChartBuilder() {
           return acc;
         }, {});
         setChartData(Object.keys(grouped).map(key => ({ name: key, value: grouped[key] })));
+        notifier.chartBuilderViewed();
       }
     } catch (err) {
       console.error(err);

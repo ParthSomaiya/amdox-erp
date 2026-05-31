@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Clock, RefreshCw, Loader2, PlayCircle, ShieldCheck } from "lucide-react";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function EmployeeTimeline() {
   const [timeline, setTimeline] = useState([]);
@@ -11,6 +12,7 @@ export default function EmployeeTimeline() {
       setLoading(true);
       const res = await API.get("/admin/audit").catch(() => API.get("/audit"));
       setTimeline(res.data?.logs || res.data || []);
+      notifier.employeeTimelineReviewed();
     } catch (err) {
       console.error("Failed to load audit logs:", err);
     } finally {

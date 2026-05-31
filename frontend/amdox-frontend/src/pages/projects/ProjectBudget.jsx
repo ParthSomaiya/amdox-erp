@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, RefreshCw, Landmark, Coins, AlertCircle } from "lucide-react";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function ProjectBudget() {
   const [budgets, setBudgets] = useState([]);
@@ -12,6 +13,7 @@ export default function ProjectBudget() {
       // પર્ફેક્ટ સિંકિંગ: પ્રોજેક્ટ મોડ્યુલમાંથી બજેટ અને સ્પેન્ટ વેલ્યુ મેળવો
       const res = await API.get("/projects");
       setBudgets(res.data || []);
+      notifier.projectBudgetViewed();
     } catch (err) {
       console.error(err);
     } finally {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, ChevronRight, PackageOpen, RefreshCw, Loader2 } from "lucide-react";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function LowStock() {
   const [products, setProducts] = useState([]);
@@ -15,6 +16,7 @@ export default function LowStock() {
       setLoading(true);
       const res = await API.get("/inventory/low-stock");
       setProducts(res.data || []);
+      notifier.lowStockAlertViewed();
     } catch (err) {
       console.error(err);
     } finally {

@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 
 import API from "../services/api";
+import notifier from "../utils/notifier";
+
 
 export default function AttendanceReport() {
   // ================= STATE =================
@@ -53,6 +55,7 @@ export default function AttendanceReport() {
             ? res.data
             : []
         );
+        notifier.attendanceReportGenerated();
       } catch (err) {
         console.error(
           "Failed to fetch attendance reports:",
@@ -785,8 +788,8 @@ export default function AttendanceReport() {
                       text-sm
                       font-bold
                       ${getStatusStyle(
-                        item.status
-                      )}
+                      item.status
+                    )}
                     `}
                   >
                     {

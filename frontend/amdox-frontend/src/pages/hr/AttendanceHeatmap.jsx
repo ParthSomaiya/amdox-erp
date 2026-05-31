@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, Flame, Info, Clock, ShieldAlert, User } from "lucide-react";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function AttendanceHeatmap() {
   const [data, setData] = useState([]);
@@ -14,6 +15,7 @@ export default function AttendanceHeatmap() {
       })
       .catch((err) => console.error("Heatmap fetch error:", err))
       .finally(() => setLoading(false));
+    notifier.attendanceHeatmapAnalyzed();
   }, []);
 
   const getHeatLevel = (hours) => {
@@ -123,7 +125,7 @@ export default function AttendanceHeatmap() {
                   <h4 className="font-extrabold text-slate-800 text-sm truncate" title={a.employeeId?.name || "Employee"}>
                     {a.employeeId?.name || "Employee"}
                   </h4>
-                  
+
                   <div className="flex items-center justify-between pt-2.5 border-t text-xs">
                     <span className="text-slate-400 font-bold">{a.date ? new Date(a.date).toLocaleDateString("en-IN") : ""}</span>
                     <span className={`px-2.5 py-1 rounded-xl font-black text-[11px] border ${heat.bg}`}>

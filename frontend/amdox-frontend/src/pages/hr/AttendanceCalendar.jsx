@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
-import { Calendar, UserCheck, Clock, Loader2 } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Calendar, UserCheck, Clock, Loader2, ArrowLeft, RefreshCw, Activity, Layers } from "lucide-react";
 import API from "../../services/api";
 
 export default function AttendanceCalendar() {
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+
+  const monthsList = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
   useEffect(() => {
     API.get("/attendance")
       .then((res) => {
-        // Handle nested responses
         const data = res.data?.data || res.data || [];
         setAttendance(Array.isArray(data) ? data : []);
       })
@@ -17,49 +20,101 @@ export default function AttendanceCalendar() {
       .finally(() => setLoading(false));
   }, []);
 
+  const totalShiftCompleted = useMemo(() => {
+    return attendance.filter(a => (a.totalHours || 0) >= 8).length;
+  }, [attendance]);
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-500 p-8 rounded-[32px] text-white shadow-md">
-        <h1 className="text-3xl font-black flex items-center gap-2">📅 Attendance Calendar View</h1>
-        <p className="mt-2 text-emerald-100 text-sm">Visualize daily logs and shift completion status.</p>
+    <div className="space-y-8 font-sans">
+      {/* Top Header Banner */}
+      <div className="bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 p-8 rounded-[32px] text-white shadow-md relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-56 h-56 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+        <span className="text-[10px] uppercase tracking-widest text-emerald-100 font-bold block mb-2">Workforce Timesheets</span>
+        <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
+          <Calendar /> Attendance Calendar View
+        </h1>
+        <p className="mt-2 text-emerald-500/10 text-sm max-w-xl">Monitor daily shifts, log times, and analyze completion rates for local office departments.</p>
       </div>
 
+      {/* Filter toolbar */}
+      <div className="bg-white border rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex gap-3">
+          <select
+            value={currentMonth}
+            onChange={(e) => setCurrentMonth(Number(e.target.value))}
+            className="h-10 rounded-xl border bg-slate-50 px-3 text-xs font-bold text-slate-700 outline-none"
+          >
+            {monthsList.map((m, idx) => (
+              <option key={idx} value={idx}>{m}</option>
+            ))}
+          </select>
+          <select
+            value={currentYear}
+            onChange={(e) => setCurrentYear(Number(e.target.value))}
+            className="h-10 rounded-xl border bg-slate-50 px-3 text-xs font-bold text-slate-700 outline-none"
+          >
+            <option value={2026}>2026</option>
+            <option value={2025}>2025</option>
+          </select>
+        </div>
+
+        <div className="flex gap-4 text-xs font-bold text-slate-500">
+          <span className="flex items-center gap-1.5"><Layers size={14} className="text-indigo-600" /> Active Logins: {attendance.length}</span>
+          <span className="flex items-center gap-1.5"><UserCheck size={14} className="text-emerald-600" /> 8+ Hr Shifts: {totalShiftCompleted}</span>
+        </div>
+      </div>
+
+      {/* Grid container */}
       {loading ? (
         <div className="p-20 text-center">
           <Loader2 className="animate-spin h-10 w-10 text-emerald-600 mx-auto" />
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {attendance.map((a) => (
-            <div key={a._id} className="bg-white border rounded-3xl p-6 shadow-sm space-y-4 hover:shadow-md transition">
-              <div className="flex items-center justify-between border-b pb-3">
-                <div>
-                  <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
-                    <UserCheck size={16} className="text-emerald-500" /> {a.employeeId?.name || "Employee"}
-                  </h3>
+          {attendance.map((a) => {
+            const empName = a.employeeId?.name || "Staff Member";
+            const hrs = a.totalHours || 0;
+            const isFullShift = hrs >= 8;
+
+            return (
+              <div key={a._id} className="bg-white border rounded-3xl p-6 shadow-sm hover:shadow-md transition space-y-4 border-slate-200/80">
+                <div className="flex items-center justify-between border-b pb-3">
+                  <div>
+                    <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 font-bold flex items-center justify-center text-xs">
+                        {empName.charAt(0)}
+                      </div>
+                      {empName}
+                    </h3>
+                  </div>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                    isFullShift ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-amber-50 text-amber-700 border border-amber-100"
+                  }`}>
+                    {isFullShift ? "Full Shift" : "Part Shift"}
+                  </span>
                 </div>
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-100">
-                  Logged
-                </span>
+
+                <div className="space-y-2 text-xs text-slate-500 font-semibold">
+                  <div className="flex justify-between">
+                    <span>Date Logged:</span>
+                    <span className="text-slate-800">{a.date ? new Date(a.date).toLocaleDateString("en-IN") : "-"}</span>
+                  </div>
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Check-In:</span>
+                    <span>{a.checkIn ? new Date(a.checkIn).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' }) : "-"}</span>
+                  </div>
+                  <div className="flex justify-between text-rose-500">
+                    <span>Check-Out:</span>
+                    <span>{a.checkOut ? new Date(a.checkOut).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' }) : "-"}</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-2.5 font-bold text-slate-800">
+                    <span>Net Active:</span>
+                    <span>{hrs.toFixed(2)} Hours</span>
+                  </div>
+                </div>
               </div>
-              
-              <div className="space-y-2 text-xs text-slate-500 font-semibold">
-                <div className="flex items-center justify-between">
-                  <span>Date:</span>
-                  <span className="text-slate-700">{a.date ? new Date(a.date).toLocaleDateString() : "-"}</span>
-                </div>
-                <div className="flex items-center justify-between text-emerald-600">
-                  <span>In Time:</span>
-                  <span>{a.checkIn ? new Date(a.checkIn).toLocaleTimeString() : "-"}</span>
-                </div>
-                <div className="flex items-center justify-between text-rose-500">
-                  <span>Out Time:</span>
-                  <span>{a.checkOut ? new Date(a.checkOut).toLocaleTimeString() : "-"}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Coins, TrendingUp, Receipt, ShieldCheck } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function FinanceDashboard() {
   const [data, setData] = useState([]);
@@ -18,9 +19,11 @@ export default function FinanceDashboard() {
           { name: "Invoice Accounts", value: raw.totalInvoices || 15000 },
         ];
         setData(formatted);
+        notifier.financeDashboardViewed();
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
+
   }, []);
 
   return (

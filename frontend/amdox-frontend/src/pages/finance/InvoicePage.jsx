@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Receipt, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import API from "../../services/api";
 import ReportExportButtons from "./ReportExportButtons";
+import notifier from "../../utils/notifier";
 
 export default function InvoicePage() {
   const [invoices, setInvoices] = useState([]);
@@ -19,6 +20,7 @@ export default function InvoicePage() {
 
   useEffect(() => {
     fetchInvoices().finally(() => setLoading(false));
+    notifier.invoiceHistoryAudited();
   }, []);
 
   // 🔹 "PAID" સ્ટેટસ અપડેટ કરવાનું ફંક્શન
@@ -73,9 +75,8 @@ export default function InvoicePage() {
                       <td className="p-4">{inv.clientName || "Customer"}</td>
                       <td className="p-4 font-black text-emerald-600">₹{inv.amount}</td>
                       <td className="p-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                          inv.status === "PAID" ? "bg-emerald-50 text-emerald-700 border" : "bg-rose-50 text-rose-700 border"
-                        }`}>
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${inv.status === "PAID" ? "bg-emerald-50 text-emerald-700 border" : "bg-rose-50 text-rose-700 border"
+                          }`}>
                           {inv.status || "UNPAID"}
                         </span>
                       </td>

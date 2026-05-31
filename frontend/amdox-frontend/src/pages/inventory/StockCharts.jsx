@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Loader2, RefreshCw, Layers3 } from "lucide-react";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function StockCharts() {
   const [data, setData] = useState([]);
@@ -20,6 +21,7 @@ export default function StockCharts() {
         stock: p.quantity || p.stock || 0,
       }));
       setData(formatted);
+      notifier.stockChartsViewed();
     } catch (err) {
       console.error(err);
     } finally {

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Coins, TrendingUp, BarChart2 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function FinanceAnalytics() {
   const [data, setData] = useState([]);
@@ -18,6 +19,7 @@ export default function FinanceAnalytics() {
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
+      notifier.financeAnalyticsViewed();
   }, []);
 
   return (

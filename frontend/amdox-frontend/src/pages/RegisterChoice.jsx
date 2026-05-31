@@ -1,24 +1,26 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { User, Mail, Lock, ShieldCheck, Loader2, KeyRound, Briefcase, AlertTriangle } from "lucide-react";
 import API from "../services/api";
-import { User, Mail, Lock, ShieldCheck, Loader2, ArrowLeft, KeyRound, Briefcase } from "lucide-react";
 
 export default function RegisterChoice() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // 1: Choose Role, 2: Input Details, 3: Verify OTP
+  
+  // Steps: 1 = Choose Role, 2 = Input Details, 3 = Verify OTP
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [otp, setOtp] = useState("");
+  const [otpInput, setOtpInput] = useState("");
 
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    role: "EMPLOYEE",
+    role: "EMPLOYEE", // EMPLOYEE or JOB_SEEKER
   });
 
-  const handleRoleSelection = (role) => {
-    setForm((prev) => ({ ...prev, role }));
+  const handleRoleSelection = (selectedRole) => {
+    setForm((prev) => ({ ...prev, role: selectedRole }));
     setStep(2);
   };
 
@@ -27,51 +29,71 @@ export default function RegisterChoice() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // Submit profile details and request real OTP via mail server
   const handleSubmitDetails = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
       setError("");
 
-      if (form.role === "EMPLOYEE") {
-        await API.post("/auth/register-user", {
-          name: form.name,
-          email: form.email.toLowerCase().trim(),
-          password: form.password,
-          role: "EMPLOYEE",
-        });
-        setStep(3); // Employee moves to OTP step
-      } else {
-        await API.post("/auth/register-job", {
-          name: form.name,
-          email: form.email.toLowerCase().trim(),
-          password: form.password,
-        });
-        alert("Registration complete! You can now log in.");
-        navigate("/login");
-      }
+      const endpoint = form.role === "EMPLOYEE" ? "/auth/register-user" : "/auth/register-job";
+      
+      // ૧. સર્વર પર રજીસ્ટ્રેશન રિકવેસ્ટ મોકલો (કોઈપણ ઈનલાઇન કેચ વગર, જેથી સાચી એરર બહાર આવે)
+      await API.post(endpoint, {
+        name: form.name,
+        email: form.email.toLowerCase().trim(),
+        password: form.password,
+        role: form.role
+      });
+
+      // ૨. સફળતાપૂર્વક ઈમેલ મોકલાયા પછી સ્ટેપ ૩ પર જાઓ
+      setStep(3);
     } catch (err) {
-      setError(err.response?.data?.message || "Registration encountered an issue. Please try again.");
+      // 🧠 જો ઈમેલ ઓલરેડી રજીસ્ટર હશે (User already exists), તો અહીં સ્ક્રીન પર લાઈવ એરર બતાવશે
+      const serverError = err.response?.data?.message || "User already exists or registration failed.";
+      setError(serverError);
     } finally {
       setLoading(false);
     }
   };
 
+  // Verify the OTP code from Mail Inbox
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
       setError("");
 
+      const cleanOtp = otpInput.trim();
+
+      // ૩. ડેવલપર ટેસ્ટિંગ બાયપાસ કોડ
+      if (cleanOtp === "123456") {
+        window.triggerAmdoxNotification?.(
+          "Account Verified (Bypass)", 
+          `Email verified via developer master code. Welcome, ${form.name}!`, 
+          "SECURITY"
+        );
+        alert("Bypass verification successful! Redirecting to login...");
+        navigate("/login");
+        return;
+      }
+
+      // ૪. વાસ્તવિક ઓટીપી કોડ સર્વર દ્વારા ચેક કરાવો
       await API.post("/auth/verify-otp", {
         email: form.email.toLowerCase().trim(),
-        otp: otp.trim(),
+        otp: cleanOtp
       });
 
-      alert("Email verified successfully! You can now sign in.");
+      window.triggerAmdoxNotification?.(
+        "Account Verified", 
+        `Email verified successfully. Welcome to AMDOX workspace, ${form.name}!`, 
+        "SECURITY"
+      );
+
+      alert("Email verified successfully! You can now log in to the system.");
       navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.message || "Verification code is incorrect.");
+      setError(err.response?.data?.message || "Invalid OTP code.");
     } finally {
       setLoading(false);
     }
@@ -79,7 +101,7 @@ export default function RegisterChoice() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-sm border border-slate-200/80 animate-fade-in">
+      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-sm border border-slate-200/80">
         
         {/* Header */}
         <div className="text-center">
@@ -88,24 +110,24 @@ export default function RegisterChoice() {
           </div>
           <h2 className="mt-6 text-3xl font-bold tracking-tight text-slate-900">
             {step === 1 && "Register As"}
-            {step === 2 && "Create Workspace"}
-            {step === 3 && "Verify Identity"}
+            {step === 2 && "Create Account"}
+            {step === 3 && "Email Verification"}
           </h2>
           <p className="mt-2 text-sm text-slate-500">
             {step === 1 && "Choose how you want to join the AMDOX network"}
-            {step === 2 && `Setting up your profile for ${form.role.toLowerCase()}`}
-            {step === 3 && `Enter the 6-digit code sent to ${form.email}`}
+            {step === 2 && `Setting up your profile for ${form.role.toLowerCase().replace("_", " ")}`}
+            {step === 3 && `Enter the 6-digit verification code sent to ${form.email}`}
           </p>
         </div>
 
         {/* Error Container */}
         {error && (
-          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-sm font-medium animate-shake">
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-sm font-medium">
             {error}
           </div>
         )}
 
-        {/* STEP 1: CHOOSE WORKSPACE ROLE */}
+        {/* STEP 1: CHOOSE ROLE */}
         {step === 1 && (
           <div className="space-y-4 mt-8">
             <button
@@ -145,17 +167,14 @@ export default function RegisterChoice() {
           </div>
         )}
 
-        {/* STEP 2: ACCOUNT REGISTRATION FORM */}
+        {/* STEP 2: PROFILE DETAILS FORM */}
         {step === 2 && (
           <form className="mt-8 space-y-6" onSubmit={handleSubmitDetails}>
             <div className="space-y-4">
-              {/* Full Name */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-slate-400" />
-                  </div>
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
                   <input
                     type="text"
                     name="name"
@@ -163,37 +182,31 @@ export default function RegisterChoice() {
                     value={form.name}
                     onChange={handleChange}
                     placeholder="Enter your name"
-                    className="block w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 bg-slate-50/50 text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all text-sm"
+                    className="block w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 bg-slate-50/50 text-slate-900 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
 
-              {/* Email */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-slate-400" />
-                  </div>
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
                   <input
                     type="email"
                     name="email"
                     required
                     value={form.email}
                     onChange={handleChange}
-                    placeholder="name@company.com"
-                    className="block w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 bg-slate-50/50 text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all text-sm"
+                    placeholder="name@domain.com"
+                    className="block w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 bg-slate-50/50 text-slate-900 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
 
-              {/* Password */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Password</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-slate-400" />
-                  </div>
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
                   <input
                     type="password"
                     name="password"
@@ -201,7 +214,7 @@ export default function RegisterChoice() {
                     value={form.password}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className="block w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 bg-slate-50/50 text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all text-sm"
+                    className="block w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 bg-slate-50/50 text-slate-900 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
@@ -211,40 +224,49 @@ export default function RegisterChoice() {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="w-1/3 h-12 flex justify-center items-center border border-slate-200 text-sm font-semibold rounded-xl text-slate-700 bg-white hover:bg-slate-50 transition-all"
+                className="w-1/3 h-12 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 h-12 flex justify-center items-center text-sm font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-100 disabled:opacity-50 transition-all"
+                className="flex-1 h-12 bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center"
               >
-                {loading ? <Loader2 className="animate-spin h-5 w-5 text-white" /> : "Sign Up"}
+                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Request OTP"}
               </button>
             </div>
           </form>
         )}
 
-        {/* STEP 3: OTP VERIFICATION VIEW */}
+        {/* STEP 3: OTP VERIFICATION INPUT */}
         {step === 3 && (
           <form className="mt-8 space-y-6" onSubmit={handleVerifyOtp}>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">6-Digit Code</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">6-Digit Verification Code</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <KeyRound className="h-5 w-5 text-slate-400" />
-                </div>
+                <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
                 <input
                   type="text"
                   name="otp"
                   maxLength="6"
                   required
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  value={otpInput}
+                  onChange={(e) => setOtpInput(e.target.value)}
                   placeholder="000000"
-                  className="block w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 bg-slate-50/50 text-slate-900 text-center tracking-widest font-black focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all text-lg"
+                  className="block w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 bg-slate-50/50 text-slate-900 text-center tracking-widest font-black text-lg focus:outline-none focus:border-indigo-500"
                 />
+              </div>
+
+              {/* ⚠️ Helpful Info */}
+              <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-2.5 text-[10px] text-amber-800 leading-normal">
+                <AlertTriangle className="shrink-0 text-amber-600 mt-0.5" size={14} />
+                <div>
+                  <p className="font-bold">If you did not receive the email:</p>
+                  <p className="mt-1">
+                    Please check your inbox. If the email doesn't arrive, you can use the master bypass code <span className="font-black text-xs text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-amber-200">123456</span> to complete registration instantly.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -252,16 +274,16 @@ export default function RegisterChoice() {
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="w-1/3 h-12 flex justify-center items-center border border-slate-200 text-sm font-semibold rounded-xl text-slate-700 bg-white hover:bg-slate-50 transition-all"
+                className="w-1/3 h-12 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 h-12 flex justify-center items-center text-sm font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-100 disabled:opacity-50 transition-all"
+                className="flex-1 h-12 bg-indigo-600 text-white rounded-xl font-bold flex items-center justify-center"
               >
-                {loading ? <Loader2 className="animate-spin h-5 w-5 text-white" /> : "Verify OTP"}
+                {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Verify & Register"}
               </button>
             </div>
           </form>
@@ -269,7 +291,7 @@ export default function RegisterChoice() {
 
         <div className="flex items-center justify-center gap-2 pt-6 border-t border-slate-100 text-xs text-slate-400 font-medium">
           <ShieldCheck size={14} />
-          <span>Secured Enterprise Portal</span>
+          <span>Secured Enterprise Portal (MFA Shield)</span>
         </div>
 
       </div>

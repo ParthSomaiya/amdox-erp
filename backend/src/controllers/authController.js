@@ -8,6 +8,9 @@ import User from "../models/User.js";
 import Company from "../models/Company.js";
 import OTP from "../models/Otp.js";
 
+// આપણી નવી અને સિક્યોર ઈમેલ ફાઈલ ઈમ્પોર્ટ કરો
+import { sendDirectEmail } from "../utils/sendEmail.js";
+
 // ================= TOKEN GENERATORS =================
 
 const generateAccessToken = (user) => {
@@ -46,23 +49,42 @@ export const sendOTP = async (req, res) => {
 
     console.log("Generated OTP:", otp);
 
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
+        <h2 style="color: #4f46e5;">AMDOX ERP - Email Verification</h2>
+        <p>Hello,</p>
+        <p>Please use the following 6-digit verification code to verify your action:</p>
+        <div style="background-color: #f1f5f9; padding: 15px; border-radius: 10px; display: inline-block; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #4f46e5;">
+          ${otp}
+        </div>
+        <p style="margin-top: 15px; font-size: 11px; color: #64748b;">This code is valid for 10 minutes.</p>
+      </div>
+    `;
+
+    await sendDirectEmail(email, "AMDOX ERP - Verification Code", htmlContent);
+
     res.json({
       success: true,
-      message: "OTP generated",
+      message: "OTP generated and sent to email",
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// ================= VERIFY OTP =================
+// ================= VERIFY OTP (STABLE UNIFIED CHECK) =================
 
 export const verifyOTP = async (req, res) => {
   try {
-    const email = req.body.email?.toLowerCase();
+    const email = req.body.email?.toLowerCase().trim();
     const { otp } = req.body;
 
-    const record = await OTP.findOne({ email, otp });
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: "Email and OTP are required" });
+    }
+
+    // 🧠 યુનિફાઇડ સિક્યોર લુકઅપ: આપણી મુખ્ય OTP કલેક્શનમાંથી જ ઓટીપી શોધો
+    const record = await OTP.findOne({ email, otp: Number(otp) });
 
     if (!record) {
       return res.status(400).json({
@@ -71,15 +93,19 @@ export const verifyOTP = async (req, res) => {
       });
     }
 
+    const user = await User.findOne({ email });
+    const resetToken = user ? user.resetToken : null;
+
     await User.updateOne({ email }, { isVerified: true });
     await OTP.deleteMany({ email });
 
-    res.json({
+    return res.json({
       success: true,
       message: "Email verified successfully",
+      resetToken: resetToken 
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -117,6 +143,20 @@ export const registerUser = async (req, res) => {
 
     console.log("Employee Signup OTP:", otp);
 
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
+        <h2 style="color: #4f46e5;">Welcome to AMDOX ERP - Complete Signup</h2>
+        <p>Hello ${name},</p>
+        <p>Thank you for registering. Please find your 6-digit account verification OTP below:</p>
+        <div style="background-color: #f1f5f9; padding: 15px; border-radius: 10px; display: inline-block; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #4f46e5;">
+          ${otp}
+        </div>
+        <p style="margin-top: 15px; font-size: 11px; color: #64748b;">This OTP is valid for 10 minutes.</p>
+      </div>
+    `;
+
+    await sendDirectEmail(email, "AMDOX ERP - Verify Your Account", htmlContent);
+
     res.json({
       success: true,
       message: "OTP sent to email for verification",
@@ -139,7 +179,6 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // Force load the select: false password field
     const user = await User.findOne({
       email: email.toLowerCase().trim(),
     }).select("+password");
@@ -148,6 +187,13 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Invalid credentials",
+      });
+    }
+
+    if (!user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Please verify your email address before logging in.",
       });
     }
 
@@ -179,7 +225,6 @@ export const loginUser = async (req, res) => {
       { expiresIn: "30d" }
     );
 
-    // Bypass full document save validation that causes required-field errors
     await User.updateOne(
       { _id: user._id },
       { $set: { refreshToken } }
@@ -293,63 +338,60 @@ export const registerAdmin = async (req, res) => {
 
 
 // ======================================
-// 📩 FORGOT PASSWORD (OTP SENDER VIA GMAIL)
+// 📩 FORGOT PASSWORD (UNIFIED OTP & LINK SENDER)
 // ======================================
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email: email.toLowerCase().trim() });
-    
+
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // ૧. ૬-આંકડાનો યુનિક ઓટીપી બનાવો
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetToken = crypto.randomBytes(20).toString("hex");
 
-    user.otp = otpCode;
-    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // ૧૦ મિનિટની વેલિડિટી
-    await user.save();
+    // ૧. પાસવર્ડ રીસેટ માટેના ઓટીપીને પણ સીધા જ આપણી 'OTP' કલેક્શન ફાઈલમાં સેવ કરો
+    await OTP.deleteMany({ email: email.toLowerCase().trim() }); // જૂના ઓટીપી ક્લીનઅપ કરો
+    await OTP.create({
+      email: email.toLowerCase().trim(),
+      otp: Number(otpCode),
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000), // ૧૫ મિનિટ વેલિડિટી
+    });
 
-    // ૨. લોકલ હોસ્ટ કોન્સોલ લોગીંગ
+    // ૨. સેશનની સિક્યોરિટી માટે લિંક ટોકન સેવ કરો
+    user.resetToken = resetToken;
+    user.resetTokenExpiry = new Date(Date.now() + 3600000);
+    await user.save({ validateBeforeSave: false });
+
     console.log("-----------------------------------------");
-    console.log(`🔑 SECURE PASSWORD RESET OTP FOR ${email}: ${otpCode}`);
+    console.log(`🔑 PASSWORD RESET OTP FOR ${email}: ${otpCode}`);
+    console.log(`🔗 RESET LINK: http://localhost:5173/reset-password/${resetToken}`);
     console.log("-----------------------------------------");
 
-    // ૩. 100% Real Gmail SMTP Transporter સેટઅપ
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      const transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true, // true for port 465
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px;">
+        <h2 style="color: #4f46e5; text-align: center;">AMDOX ERP - Password Reset</h2>
+        <p>Hello,</p>
+        <p>You requested to reset your account password. We have provided both ways for your convenience:</p>
+        
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0;">
+          <p style="margin: 0 0 10px 0; font-weight: bold; color: #475569;">Method 1: Enter 6-Digit Verification OTP</p>
+          <span style="font-size: 28px; font-weight: 900; letter-spacing: 5px; color: #4f46e5;">${otpCode}</span>
+        </div>
 
-      await transporter.sendMail({
-        from: `"AMDOX Technologies" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: "Secure Password Reset OTP Code",
-        html: `
-          <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
-            <h2 style="color: #1e3a8a;">AMDOX ERP - Password Reset</h2>
-            <p>Hello,</p>
-            <p>You requested a password reset verification code. Please find your 6-digit OTP code below:</p>
-            <div style="background-color: #f1f5f9; padding: 15px; border-radius: 10px; display: inline-block; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #1e3a8a;">
-              ${otpCode}
-            </div>
-            <p style="margin-top: 15px; font-size: 11px; color: #64748b;">This OTP is valid for 10 minutes. Please do not share this code with anyone.</p>
-          </div>
-        `,
-      });
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "Email SMTP credentials are missing in backend .env file.",
-      });
-    }
+        <div style="text-align: center; margin: 25px 0;">
+          <p style="margin-bottom: 12px; font-weight: bold; color: #475569;">Method 2: Click Direct Reset Link</p>
+          <a href="http://localhost:5173/reset-password/${resetToken}" target="_blank" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 10px; display: inline-block;">Reset Password Now</a>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+        <p style="font-size: 11px; color: #94a3b8; text-align: center;">This security token/OTP is confidential. Please do not share it with anyone.</p>
+      </div>
+    `;
+
+    await sendDirectEmail(email, "AMDOX ERP - Password Reset Verification", htmlContent);
 
     return res.json({
       success: true,
@@ -406,6 +448,57 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+// ======================================
+// 🔑 RESET PASSWORD VIA OTP (MFA SECURED FOR NAVBAR MODAL)
+// ======================================
+export const resetPasswordViaOTP = async (req, res) => {
+  try {
+    const email = req.body.email?.toLowerCase().trim();
+    const { otp, password } = req.body;
+
+    if (!email || !otp || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, OTP, and password are required",
+      });
+    }
+
+    const record = await OTP.findOne({ email, otp: Number(otp) });
+
+    if (!record) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired OTP code",
+      });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    await User.updateOne(
+      { email },
+      {
+        $set: {
+          password: hashed,
+          isVerified: true,
+        }
+      }
+    );
+
+    await OTP.deleteMany({ email });
+
+    return res.json({
+      success: true,
+      message: "Password reset successfully!",
+    });
+  } catch (err) {
+    console.error("Reset password via OTP error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reset password: " + err.message,
+    });
+  }
+};
+
 // ================= VERIFY EMAIL =================
 
 export const verifyEmail = async (req, res) => {
@@ -445,15 +538,14 @@ export const verifyEmail = async (req, res) => {
   }
 };
 
-// ================= REGISTER JOB USER =================
+// ================= REGISTER JOB USER (OTP SECURED) =================
 
 export const registerJobUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const email = req.body.email?.toLowerCase();
+    const { name, password } = req.body;
 
-    const existing = await User.findOne({
-      email: email.toLowerCase(),
-    });
+    const existing = await User.findOne({ email });
 
     if (existing) {
       return res.status(400).json({
@@ -464,27 +556,42 @@ export const registerJobUser = async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    const user = await User.create({
+    await User.create({
       name,
-      email: email.toLowerCase(),
+      email,
       password: hashed,
       role: "JOB_SEEKER",
-      isVerified: true,
+      isVerified: false,
     });
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+    // generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
 
-    await User.updateOne(
-      { _id: user._id },
-      { $set: { refreshToken } }
-    );
+    await OTP.create({
+      email,
+      otp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    });
+
+    console.log("Job Seeker Signup OTP:", otp);
+
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
+        <h2 style="color: #4f46e5;">Welcome to AMDOX Careers - Complete Signup</h2>
+        <p>Hello ${name},</p>
+        <p>Thank you for your application interest. Please enter the following 6-digit OTP code to verify your email:</p>
+        <div style="background-color: #f1f5f9; padding: 15px; border-radius: 10px; display: inline-block; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #4f46e5;">
+          ${otp}
+        </div>
+        <p style="margin-top: 15px; font-size: 11px; color: #64748b;">This OTP is valid for 10 minutes.</p>
+      </div>
+    `;
+
+    await sendDirectEmail(email, "AMDOX Careers - Verify Your Email", htmlContent);
 
     return res.json({
       success: true,
-      accessToken,
-      refreshToken,
-      user,
+      message: "OTP sent to email for verification",
     });
   } catch (err) {
     return res.status(500).json({

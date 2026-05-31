@@ -8,25 +8,34 @@ import API from "../services/api";
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const dropdownRef = useRef(null);
+
+  // 🔹 લોગઆઉટ ફંક્શન (આ કોડ `useNavigate()` ની બરાબર નીચે મૂકો)
+  const logout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
+
+  // 🔹 ડ્યુઅલ-રેફરન્સર્સ: બગ અને કન્ફ્લિક્ટ અટકાવવા માટે અલગ-અલગ રેફરન્સ સેટ કર્યા
+  const profileDropdownRef = useRef(null);
+  const notificationDropdownRef = useRef(null);
 
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "null");
-  const isAuthenticated = !!token && !!user;
+  const user = JSON.parse(localStorage.getItem("user") || "null") || {};
+  const isAuthenticated = !!token && !!user.email;
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  
+
   const [showProfile, setShowProfile] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
-  
-  const [resetStep, setResetStep] = useState(1); 
+
+  const [resetStep, setResetStep] = useState(1);
   const [emailInput, setEmailInput] = useState("");
   const [otpInput, setOtpInput] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
 
-  // 🚀 ગ્લોબલ નોટિફિકેશન એન્જિન રજીસ્ટ્રાર
+  // 🚀 ગ્લોબલ નોટિફિકેશન એન્જિન રજીસ્ટ્રાર (હાઇબ્રિડ લોકલ સ્ટોરેજ સિંક સાથે!)
   useEffect(() => {
     window.triggerAmdoxNotification = async (title, message, type = "GENERAL") => {
       try {
@@ -39,15 +48,23 @@ export default function Navbar() {
           createdAt: new Date().toISOString()
         };
 
+        // ૧. નોટિફિકેશનને પહેલા જ લોકલ સ્ટોરેજમાં સેવ કરો
+        const localNotifs = JSON.parse(localStorage.getItem("amdox_notifications") || "[]");
+        const updatedLocal = [payload, ...localNotifs];
+        localStorage.setItem("amdox_notifications", JSON.stringify(updatedLocal));
+
+        // ૨. ડેટાબેઝમાં સેવ કરવા માટે બેકએન્ડ પર મોકલો
         await API.post("/notifications", payload).catch(() => {
           console.warn("Local storage backup engaged.");
         });
 
+        // ૩. ઓડિયો એલર્ટ પ્લેયર
         try {
           const audio = new Audio("/notification.mp3");
-          audio.play().catch(() => {});
-        } catch (e) {}
+          audio.play().catch(() => { });
+        } catch (e) { }
 
+        // ૪. મોર્ડન ટોસ્ટ પોપઅપ કાર્ડ
         toast((t) => (
           <div className="flex items-start gap-3 text-left">
             <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 text-xs">
@@ -73,7 +90,10 @@ export default function Navbar() {
           }
         });
 
+        // ૫. લિસ્ટ અપડેટ કરો
         setNotifications((prev) => [payload, ...prev]);
+
+        // ૬. ક્રોસ-પેજ સિંક ટ્રિગર કરો
         window.dispatchEvent(new CustomEvent("amdox_notifications_updated"));
 
       } catch (err) {
@@ -82,7 +102,7 @@ export default function Navbar() {
     };
   }, [notifications]);
 
-  // 🚀 A to Z ઓટોમેટીક એપીઆઈ એક્શન ઇન્ટરસેપ્ટર (DELETE રિકવેસ્ટ ટ્રેકિંગ સાથે!)
+  // 🚀 A to Z ઓટોમેટીક એપીઆઈ એક્શન ઇન્ટરસેપ્ટર
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -107,7 +127,7 @@ export default function Navbar() {
           else if (url.includes("/tasks")) {
             window.triggerAmdoxNotification?.("Kanban Task Created", "New objective added to team board.", "TASK");
           }
-        } 
+        }
         else if (method === "PUT") {
           if (url.includes("/hr/leave/status")) {
             window.triggerAmdoxNotification?.("Leave Status Resolved", "Leave request has been evaluated by HR.", "LEAVE");
@@ -116,13 +136,6 @@ export default function Navbar() {
             window.triggerAmdoxNotification?.("Kanban Board Update", "Task progress dynamically synchronized.", "TASK");
           }
         }
-        else if (method === "DELETE") {
-          // 🔹 DELETE રિકવેસ્ટનું ગ્લોબલ ટ્રેકિંગ
-          if (url.includes("/hr/employee/")) {
-            console.log("Interceptor tracked employee purge.");
-          }
-        }
-
         return response;
       },
       (error) => Promise.reject(error)
@@ -144,10 +157,14 @@ export default function Navbar() {
     }
 
     socket.on("notification", (newNotif) => {
+      const localNotifs = JSON.parse(localStorage.getItem("amdox_notifications") || "[]");
+      const updatedLocal = [newNotif, ...localNotifs];
+      localStorage.setItem("amdox_notifications", JSON.stringify(updatedLocal));
+
       try {
         const audio = new Audio("/notification.mp3");
-        audio.play().catch(() => {});
-      } catch (e) {}
+        audio.play().catch(() => { });
+      } catch (e) { }
 
       toast((t) => (
         <div className="flex items-start gap-3 text-left">
@@ -183,9 +200,12 @@ export default function Navbar() {
     };
     window.addEventListener("amdox_notifications_updated", handleCrossPageSync);
 
+    // 🔹 ડ્યુઅલ-ક્લિક આઉટસાઇડ હેન્ડલર (કન્ફ્લિક્ટ અટકાવશે)
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(e.target)) {
         setShowProfile(false);
+      }
+      if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(e.target)) {
         setShowNotifications(false);
       }
     };
@@ -201,32 +221,60 @@ export default function Navbar() {
   const fetchNotifications = async () => {
     try {
       const res = await API.get("/notifications");
-      setNotifications(Array.isArray(res.data) ? res.data : []);
+      const serverNotifs = Array.isArray(res.data) ? res.data : [];
+
+      const localNotifs = JSON.parse(localStorage.getItem("amdox_notifications") || "[]");
+
+      const merged = [...serverNotifs];
+      localNotifs.forEach((ln) => {
+        if (!merged.some((sn) => sn._id === ln._id)) {
+          merged.push(ln);
+        }
+      });
+
+      merged.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setNotifications(merged);
     } catch (err) {
-      console.error("Failed to load notifications:", err);
+      console.error("Using LocalStorage fallback:", err);
+      const localNotifs = JSON.parse(localStorage.getItem("amdox_notifications") || "[]");
+      localNotifs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setNotifications(localNotifs);
     }
   };
 
   const markAllAsRead = async () => {
     try {
       await API.put("/notifications/read-all");
-      setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
-      window.dispatchEvent(new CustomEvent("amdox_notifications_updated"));
     } catch (err) {
       console.error(err);
     }
+    const localNotifs = JSON.parse(localStorage.getItem("amdox_notifications") || "[]");
+    const updatedLocal = localNotifs.map((item) => ({ ...item, isRead: true }));
+    localStorage.setItem("amdox_notifications", JSON.stringify(updatedLocal));
+
+    setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
+    window.dispatchEvent(new CustomEvent("amdox_notifications_updated"));
   };
 
   const handleMarkSingleRead = async (id) => {
     try {
       await API.put(`/notifications/read/${id}`);
-      setNotifications((prev) =>
-        prev.map((item) => (item._id === id ? { ...item, isRead: true } : item))
-      );
-      window.dispatchEvent(new CustomEvent("amdox_notifications_updated"));
     } catch (err) {
       console.error(err);
     }
+
+    const localNotifs = JSON.parse(localStorage.getItem("amdox_notifications") || "[]");
+    const updatedLocal = localNotifs.map((item) => item._id === id ? { ...item, isRead: true } : item);
+    localStorage.setItem("amdox_notifications", JSON.stringify(updatedLocal));
+
+    setNotifications((prev) =>
+      prev.map((item) => (item._id === id ? { ...item, isRead: true } : item))
+    );
+
+    setShowNotifications(false);
+    navigate("/notifications");
+
+    window.dispatchEvent(new CustomEvent("amdox_notifications_updated"));
   };
 
   const handleRequestOtp = async (e) => {
@@ -238,8 +286,8 @@ export default function Navbar() {
     try {
       setLoadingAction(true);
       await API.post("/auth/forgot-password", { email: emailInput.toLowerCase().trim() });
-      alert("Verification OTP sent! If you are on localhost, check your backend terminal.");
-      setResetStep(2); 
+      alert("Verification OTP sent! Check your inbox.");
+      setResetStep(2);
     } catch (err) {
       alert(err.response?.data?.message || "Failed to dispatch OTP code.");
     } finally {
@@ -247,16 +295,27 @@ export default function Navbar() {
     }
   };
 
+  const [resetToken, setResetToken] = useState("");
+
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     try {
       setLoadingAction(true);
-      await API.post("/auth/verify-otp", {
-        email: emailInput.toLowerCase().trim(),
-        otp: otpInput.trim(),
+
+      const targetEmail = user?.email || emailInput;
+      const otpNumber = Number(otpInput.trim());
+
+      const res = await API.post("/auth/verify-otp", {
+        email: targetEmail.toLowerCase().trim(),
+        otp: otpNumber,
       });
+
+      if (res.data?.resetToken) {
+        setResetToken(res.data.resetToken);
+      }
+
       alert("OTP Verified successfully! Please choose your new password.");
-      setResetStep(3); 
+      setResetStep(3);
     } catch (err) {
       alert(err.response?.data?.message || "Invalid verification code.");
     } finally {
@@ -272,26 +331,24 @@ export default function Navbar() {
 
     try {
       setLoadingAction(true);
-      await API.post("/admin/settings", {
-        securitySettings: { passwordMinLength: 8 }
+
+      await API.post(`/auth/reset-password/${resetToken}`, {
+        password: newPassword
       });
+
       alert("Your password has been securely reset.");
       setShowResetModal(false);
       setResetStep(1);
       setEmailInput("");
       setOtpInput("");
       setNewPassword("");
+      setResetToken(""); 
       setShowProfile(false);
     } catch (err) {
-      alert("Failed to reset password: " + err.message);
+      alert(err.response?.data?.message || "Failed to reset password.");
     } finally {
       setLoadingAction(false);
     }
-  };
-
-  const logout = () => {
-    localStorage.clear();
-    navigate("/login");
   };
 
   const unreadCount = notifications.filter((item) => !item.isRead).length;
@@ -321,7 +378,7 @@ export default function Navbar() {
             </button>
 
             {/* Notification Bell with Dropdown */}
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative" ref={notificationDropdownRef}>
               <button
                 onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
                 className="relative h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center hover:bg-slate-100 text-slate-600 transition-all"
@@ -341,7 +398,7 @@ export default function Navbar() {
                       </button>
                     )}
                   </div>
-                  
+
                   <div className="max-h-96 overflow-y-auto divide-y divide-slate-100">
                     {notifications.length === 0 ? (
                       <div className="p-8 text-center text-slate-400 text-xs">
@@ -366,7 +423,7 @@ export default function Navbar() {
                       ))
                     )}
                   </div>
-                  
+
                   <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
                     <Link to="/notifications" onClick={() => setShowNotifications(false)} className="text-xs font-bold text-indigo-600 hover:underline">
                       View all activity stream
@@ -377,7 +434,7 @@ export default function Navbar() {
             </div>
 
             {/* Profile PopUp */}
-            <div className="relative">
+            <div className="relative" ref={profileDropdownRef}>
               <button
                 onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
                 className="flex items-center gap-3 pl-2 border-l border-slate-200 focus:outline-none cursor-pointer"

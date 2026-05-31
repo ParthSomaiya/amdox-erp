@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ShieldCheck, RefreshCw, Loader2, Users, Activity } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function AdminAnalytics() {
   const [usersCount, setUsersCount] = useState(0);
@@ -28,6 +29,7 @@ export default function AdminAnalytics() {
       }));
 
       setData(formatted);
+      notifier.adminAnalyticsViewed();
     } catch (err) {
       console.error(err);
     } finally {

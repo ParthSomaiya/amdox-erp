@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Users, UserPlus, Mail, Phone, Loader2, Send } from "lucide-react";
-import axios from "axios"; // 🔹 ડાયરેક્ટ કનેક્શન માટે
+import axios from "axios";
+import notifier from "../../utils/notifier";
+
 
 export default function Vendors() {
   const [vendors, setVendors] = useState([]);
@@ -25,6 +27,7 @@ export default function Vendors() {
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
+    notifier.vendorsRegistryViewed();
   };
 
   const handleChange = (e) => {

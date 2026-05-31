@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2, TrendingUp, CheckCircle, ShieldAlert } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function AccountingDashboard() {
   const [data, setData] = useState([]);
@@ -17,6 +18,7 @@ export default function AccountingDashboard() {
           { month: "Mar", revenue: 85000, expense: 50000, profit: 35000 }
         ];
         setData(formatted);
+        notifier.accountingDashboardViewed();
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));

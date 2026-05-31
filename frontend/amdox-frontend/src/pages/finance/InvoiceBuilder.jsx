@@ -1,6 +1,8 @@
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { useState, useEffect } from "react";
 import { Layers, CheckCircle, RefreshCw, ChevronRight } from "lucide-react";
+import notifier from "../../utils/notifier";
+
 
 export default function InvoiceBuilder() {
   const [enabled, setEnabled] = useState(false);
@@ -25,6 +27,7 @@ export default function InvoiceBuilder() {
     const [removed] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, removed);
     setItems(reordered);
+    notifier.invoiceBuilderOpened();
   };
 
   if (!enabled) return null;

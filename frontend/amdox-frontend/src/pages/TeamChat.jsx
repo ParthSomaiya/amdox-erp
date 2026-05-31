@@ -1,843 +1,211 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { io } from "socket.io-client";
+import { Send, Users, MessageSquare, Clock, ShieldCheck, CheckCheck, Loader2 } from "lucide-react";
 
-import {
-  io,
-} from "socket.io-client";
-
-import {
-  Send,
-  Users,
-  MessageCircle,
-  Clock3,
-} from "lucide-react";
-
-import api from "../utils/axiosInstance";
-import notifier from "../utils/notifier";
-
-const socket = io(
-  "http://localhost:5000",
-  {
-    transports: ["websocket"],
-  }
-);
+// ગ્લોબલ સોકેટ કનેક્શન (સૌથી વિશ્વસનીય સેટઅપ)
+const socket = io("http://localhost:5000", {
+  transports: ["websocket", "polling"],
+});
 
 export default function TeamChat() {
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [onlineUsers, setOnlineUsers] = useState(1);
+  const messagesEndRef = useRef(null);
 
-  // ================= STATES =================
-
-  const [messages, setMessages] =
-    useState([]);
-
-  const [text, setText] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [onlineUsers, setOnlineUsers] =
-    useState(0);
-
-  const messagesEndRef =
-    useRef(null);
-
-  // ================= USER =================
-
-  const user = JSON.parse(
-    localStorage.getItem("user") || "{}"
-  );
-
-  const room = "general";
-
-  // ================= AUTO SCROLL =================
-
-  const scrollToBottom = () => {
-
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-
-  };
-
-  useEffect(() => {
-
-    scrollToBottom();
-
-  }, [messages]);
-
-  // ================= FETCH OLD MESSAGES =================
-
-  const fetchMessages =
-    async () => {
-
-      try {
-
-        setLoading(true);
-
-        const res =
-          await api.get(
-            `/chat/${room}`
-          );
-
-        setMessages(res.data);
-
-      } catch (err) {
-
-        console.log(err);
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
-    };
-
-  // ================= SOCKET =================
-
-  useEffect(() => {
-
-    fetchMessages();
-
-    socket.emit(
-      "joinRoom",
-      room
-    );
-
-    socket.on(
-      "receiveMessage",
-      (message) => {
-
-        setMessages((prev) => [
-          ...prev,
-          message,
-        ]);
-
-        notifier.chatMessageSent(room);
-
-      }
-    );
-
-    socket.on(
-      "roomUsers",
-      (users) => {
-
-        setOnlineUsers(
-          users?.length || 0
-        );
-
-      }
-    );
-
-    return () => {
-
-      socket.off(
-        "receiveMessage"
-      );
-
-      socket.off(
-        "roomUsers"
-      );
-
-    };
-
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
   }, []);
 
-  // ================= SEND MESSAGE =================
+  const room = "general"; // રૂમનું નામ
 
-  const sendMessage =
-    async () => {
-
-      if (!text.trim()) return;
-
-      const messageData = {
-
-        room,
-
-        text,
-
-        sender: {
-
-          id: user?.id,
-
-          name:
-            user?.name ||
-            "User",
-
-        },
-
-        createdAt:
-          new Date(),
-
-      };
-
-      socket.emit(
-        "sendMessage",
-        messageData
-      );
-
-      setText("");
-
-    };
-
-  // ================= ENTER KEY =================
-
-  const handleKeyDown = (e) => {
-
-    if (
-      e.key === "Enter" &&
-      !e.shiftKey
-    ) {
-
-      e.preventDefault();
-
-      sendMessage();
-
-    }
-
+  // મેસેજ આવતાની સાથે જ નીચે સ્ક્રોલ કરવા માટે
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // ================= FORMAT TIME =================
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-  const formatTime = (time) => {
+  // સોકેટ કનેક્શન અને ઇવેન્ટ લિસનર્સ સેટઅપ
+  useEffect(() => {
+    // કમ્પોનન્ટ લોડ થતાં જ લોકલ હિસ્ટ્રી લોડ કરવી
+    const localHistory = localStorage.getItem(`amdox_chat_${room}`);
+    if (localHistory) {
+      setMessages(JSON.parse(localHistory));
+    }
+    setLoading(false);
 
-    return new Date(
-      time
-    ).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
+    // કનેક્શન સફળ થવા પર લોગ અને રૂમ જોઈન કરવો
+    const onConnect = () => {
+      console.log("✅ Socket Connected:", socket.id);
+      socket.emit("joinRoom", room); // 🔹 ફાઇનલ ફિક્સ: બેકએન્ડ માટે ફક્ત રૂમનું નામ મોકલો
+    };
+
+    // સર્વર પરથી નવો મેસેજ મળવા પર
+    const onReceiveMessage = (message) => {
+      console.log("📥 Message Received:", message);
+      setMessages((prev) => {
+        const exists = prev.some((m) => m._id === message._id || (m.createdAt === message.createdAt && m.sender.name === message.sender.name));
+        if (exists) return prev;
+        
+        const updated = [...prev, message];
+        localStorage.setItem(`amdox_chat_${room}`, JSON.stringify(updated));
+        return updated;
+      });
+    };
+
+    // રૂમમાં ઓનલાઈન યુઝર્સની સંખ્યા અપડેટ કરવા
+    const onRoomUsers = (users) => {
+      setOnlineUsers(users?.length || 1);
+    };
+
+    // સોકેટ ઇવેન્ટ્સને રજીસ્ટર કરો
+    socket.on("connect", onConnect);
+    socket.on("receiveMessage", onReceiveMessage);
+    socket.on("roomUsers", onRoomUsers);
+
+    // કમ્પોનન્ટ બંધ થતાં કનેક્શન બંધ કરવું
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("receiveMessage", onReceiveMessage);
+      socket.off("roomUsers", onRoomUsers);
+    };
+  }, [room]);
+
+  // મેસેજ મોકલવાનું મુખ્ય ફંક્શન
+  const sendMessage = (e) => {
+    e?.preventDefault();
+    if (!text.trim()) return;
+
+    const messagePayload = {
+      _id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      room: room,
+      text: text.trim(),
+      sender: {
+        id: user?._id || "unknown-id",
+        name: user?.name || "User",
+        role: user?.role || "EMPLOYEE",
+      },
+      createdAt: new Date().toISOString(),
+    };
+
+    // સોકેટ દ્વારા બ્રોડકાસ્ટ કરો
+    socket.emit("sendMessage", messagePayload);
+
+    // મોકલનારની સ્ક્રીન અને લોકલ સ્ટોરેજ અપડેટ કરો
+    setMessages((prev) => {
+      const updated = [...prev, messagePayload];
+      localStorage.setItem(`amdox_chat_${room}`, JSON.stringify(updated));
+      return updated;
     });
+    setText("");
+  };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   };
 
   return (
-
-    <div className="space-y-8">
-
-      {/* HERO */}
-
-      <div
-        className="
-          bg-gradient-to-r
-          from-cyan-600
-          via-blue-600
-          to-indigo-700
-          rounded-[32px]
-          p-10
-          text-white
-          shadow-2xl
-        "
-      >
-
-        <div
-          className="
-            flex
-            flex-col
-            lg:flex-row
-            lg:items-center
-            lg:justify-between
-            gap-6
-          "
-        >
-
-          <div>
-
-            <h1
-              className="
-                text-5xl
-                font-black
-                tracking-tight
-              "
-            >
-
-              Team Chat
-
-            </h1>
-
-            <p
-              className="
-                mt-4
-                text-cyan-100
-                text-lg
-              "
-            >
-
-              Real-time team collaboration
-              and communication workspace
-
-            </p>
-
-          </div>
-
-          <div
-            className="
-              flex
-              items-center
-              gap-4
-            "
-          >
-
-            <div
-              className="
-                bg-white/10
-                backdrop-blur-xl
-                border
-                border-white/20
-                rounded-3xl
-                px-6
-                py-4
-                flex
-                items-center
-                gap-4
-              "
-            >
-
-              <div
-                className="
-                  h-12
-                  w-12
-                  rounded-2xl
-                  bg-white/20
-                  flex
-                  items-center
-                  justify-center
-                "
-              >
-
-                <Users size={24} />
-
-              </div>
-
-              <div>
-
-                <p className="text-cyan-100">
-
-                  Online Users
-
-                </p>
-
-                <h2
-                  className="
-                    text-2xl
-                    font-black
-                  "
-                >
-
-                  {onlineUsers}
-
-                </h2>
-
-              </div>
-
-            </div>
-
-          </div>
-
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Header Panel */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-3xl text-white shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <span className="text-[10px] uppercase tracking-widest text-indigo-300 font-bold">Secure Communication Channel</span>
+          <h1 className="text-2xl font-black flex items-center gap-2">💬 Team Workspace Chat</h1>
+          <p className="text-xs text-slate-400">Broadcast updates as HR/Admin or reply instantly as Employee</p>
         </div>
-
+        <div className="flex items-center gap-3 bg-white/10 px-4 py-2.5 rounded-2xl border border-white/15 backdrop-blur-md">
+          <Users size={16} className="text-indigo-300 animate-pulse" />
+          <span className="text-xs font-bold text-slate-200">{onlineUsers} Online</span>
+        </div>
       </div>
 
-      {/* CHAT CONTAINER */}
-
-      <div
-        className="
-          bg-white
-          rounded-[32px]
-          shadow-2xl
-          overflow-hidden
-          border
-          border-slate-200
-        "
-      >
-
-        {/* TOP BAR */}
-
-        <div
-          className="
-            border-b
-            border-slate-200
-            px-8
-            py-6
-            flex
-            items-center
-            justify-between
-            bg-slate-50
-          "
-        >
-
-          <div
-            className="
-              flex
-              items-center
-              gap-4
-            "
-          >
-
-            <div
-              className="
-                h-16
-                w-16
-                rounded-3xl
-                bg-gradient-to-r
-                from-cyan-500
-                to-blue-600
-                flex
-                items-center
-                justify-center
-                text-white
-              "
-            >
-
-              <MessageCircle
-                size={30}
-              />
-
-            </div>
-
-            <div>
-
-              <h2
-                className="
-                  text-2xl
-                  font-black
-                "
-              >
-
-                General Workspace
-
-              </h2>
-
-              <p className="text-gray-500">
-
-                Team collaboration room
-
-              </p>
-
-            </div>
-
+      {/* Chat Messenger Container */}
+      <div className="bg-white rounded-[32px] border shadow-sm overflow-hidden flex flex-col h-[620px]">
+        {/* Active room indicator bar */}
+        <div className="p-4 bg-slate-50 border-b flex justify-between items-center px-6">
+          <div className="flex items-center gap-2.5">
+            <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping" />
+            <span className="text-xs font-black text-slate-700 uppercase tracking-wider"># General Announcements Room</span>
           </div>
-
-          <div
-            className="
-              flex
-              items-center
-              gap-2
-              text-green-600
-              font-semibold
-            "
-          >
-
-            <div
-              className="
-                h-3
-                w-3
-                rounded-full
-                bg-green-500
-                animate-pulse
-              "
-            />
-
-            Active
-
-          </div>
-
+          <span className="text-[10px] font-bold text-slate-400">Secured via Socket.io & LocalSync</span>
         </div>
 
-        {/* CHAT BODY */}
-
-        <div
-          className="
-            h-[600px]
-            overflow-y-auto
-            bg-slate-50
-            p-8
-            space-y-6
-          "
-        >
-
+        {/* Chat Messages Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
           {loading ? (
-
-            <div
-              className="
-                h-full
-                flex
-                items-center
-                justify-center
-              "
-            >
-
-              <div className="text-center">
-
-                <div
-                  className="
-                    h-16
-                    w-16
-                    border-4
-                    border-cyan-500
-                    border-t-transparent
-                    rounded-full
-                    animate-spin
-                    mx-auto
-                  "
-                />
-
-                <h2
-                  className="
-                    text-2xl
-                    font-black
-                    mt-6
-                  "
-                >
-
-                  Loading Messages...
-
-                </h2>
-
-              </div>
-
+            <div className="h-full flex flex-col items-center justify-center space-y-3">
+              <Loader2 className="animate-spin text-indigo-600 h-8 w-8" />
+              <p className="text-xs text-slate-400 font-bold">Syncing workspace messages...</p>
             </div>
-
           ) : messages.length === 0 ? (
-
-            <div
-              className="
-                h-full
-                flex
-                flex-col
-                items-center
-                justify-center
-                text-center
-              "
-            >
-
-              <div
-                className="
-                  h-24
-                  w-24
-                  rounded-full
-                  bg-cyan-100
-                  flex
-                  items-center
-                  justify-center
-                  text-cyan-600
-                "
-              >
-
-                <MessageCircle
-                  size={45}
-                />
-
-              </div>
-
-              <h2
-                className="
-                  text-3xl
-                  font-black
-                  mt-8
-                "
-              >
-
-                No Messages Yet
-
-              </h2>
-
-              <p
-                className="
-                  text-gray-500
-                  mt-4
-                  text-lg
-                "
-              >
-
-                Start the conversation
-                with your team
-
-              </p>
-
+            <div className="h-full flex flex-col items-center justify-center text-center space-y-3 p-8">
+              <MessageSquare size={42} className="text-slate-300" />
+              <h4 className="font-extrabold text-slate-700 text-sm">No Conversations Registered</h4>
+              <p className="text-xs text-slate-400 max-w-xs">Be the first to drop an announcement or ask a question.</p>
             </div>
-
           ) : (
+            messages.map((m, idx) => {
+              const senderId = m.sender?.id || "unknown";
+              const currentUserId = user?._id || user?.id || "local";
+              const isMe = String(senderId) === String(currentUserId);
+              const isHR = m.sender?.role === "HR" || m.sender?.role === "ADMIN";
 
-            messages.map(
-              (message, index) => {
-
-                const isMe =
-                  message?.sender?.name ===
-                  user?.name;
-
-                return (
-
-                  <div
-                    key={index}
-                    className={`
-                      flex
-                      ${
-                        isMe
-                          ? "justify-end"
-                          : "justify-start"
-                      }
-                    `}
-                  >
-
-                    <div
-                      className={`
-                        max-w-[75%]
-                        ${
-                          isMe
-                            ? "items-end"
-                            : "items-start"
-                        }
-                        flex
-                        flex-col
-                      `}
-                    >
-
-                      {/* USER */}
-
-                      <div
-                        className={`
-                          flex
-                          items-center
-                          gap-2
-                          mb-2
-                          px-2
-                        `}
-                      >
-
-                        {!isMe && (
-
-                          <div
-                            className="
-                              h-10
-                              w-10
-                              rounded-full
-                              bg-gradient-to-r
-                              from-cyan-500
-                              to-blue-600
-                              flex
-                              items-center
-                              justify-center
-                              text-white
-                              font-bold
-                            "
-                          >
-
-                            {
-
-                              message
-                                ?.sender
-                                ?.name?.[0] || "U"
-
-                            }
-
-                          </div>
-
-                        )}
-
-                        <span
-                          className="
-                            text-sm
-                            font-bold
-                            text-gray-700
-                          "
-                        >
-
-                          {
-
-                            isMe
-                              ? "You"
-                              : message
-                                  ?.sender
-                                  ?.name
-
-                          }
-
-                        </span>
-
-                      </div>
-
-                      {/* MESSAGE */}
-
-                      <div
-                        className={`
-                          px-6
-                          py-4
-                          rounded-[28px]
-                          shadow-md
-                          ${
-                            isMe
-                              ? `
-                                bg-gradient-to-r
-                                from-cyan-500
-                                to-blue-600
-                                text-white
-                                rounded-br-md
-                              `
-                              : `
-                                bg-white
-                                text-gray-800
-                                rounded-bl-md
-                              `
-                          }
-                        `}
-                      >
-
-                        <p
-                          className="
-                            text-[15px]
-                            leading-7
-                            break-words
-                          "
-                        >
-
-                          {message.text}
-
-                        </p>
-
-                        <div
-                          className={`
-                            flex
-                            items-center
-                            gap-1
-                            mt-3
-                            text-xs
-                            ${
-                              isMe
-                                ? "text-cyan-100"
-                                : "text-gray-400"
-                            }
-                          `}
-                        >
-
-                          <Clock3
-                            size={12}
-                          />
-
-                          {
-
-                            formatTime(
-                              message.createdAt
-                            )
-
-                          }
-
-                        </div>
-
-                      </div>
-
+              return (
+                <div key={m._id || idx} className={`flex w-full ${isMe ? "justify-end" : "justify-start"}`}>
+                  <div className={`flex flex-col max-w-[75%] ${isMe ? "items-end" : "items-start"}`}>
+                    <div className="flex items-center gap-1.5 mb-1 px-1">
+                      <span className="text-[10px] font-bold text-slate-600">{m.sender?.name || "User"}</span>
+                      <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md ${isHR ? "bg-indigo-50 text-indigo-700 border border-indigo-100" : "bg-slate-100 text-slate-600"}`}>
+                        {isHR ? "HR/ADMIN" : "EMPLOYEE"}
+                      </span>
                     </div>
 
+                    <div className={`p-4 rounded-2xl shadow-sm text-xs leading-relaxed ${isMe ? "bg-indigo-600 text-white font-semibold rounded-br-none" : "bg-white border text-slate-700 rounded-bl-none"}`}>
+                      <p className="whitespace-pre-wrap break-words">{m.text}</p>
+                      <div className={`flex items-center gap-1.5 mt-2 justify-end text-[9px] ${isMe ? "text-indigo-200" : "text-slate-400"}`}>
+                        <Clock size={10} />
+                        <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                        {isMe && <CheckCheck size={11} className="text-indigo-200" />}
+                      </div>
+                    </div>
                   </div>
-
-                );
-
-              }
-            )
-
+                </div>
+              );
+            })
           )}
-
           <div ref={messagesEndRef} />
-
         </div>
 
-        {/* INPUT AREA */}
-
-        <div
-          className="
-            border-t
-            border-slate-200
-            bg-white
-            p-6
-          "
-        >
-
-          <div
-            className="
-              flex
-              items-end
-              gap-4
-            "
+        {/* Input Bar Form */}
+        <form onSubmit={sendMessage} className="p-4 bg-white border-t flex gap-3">
+          <input
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Write a message or reply..."
+            className="flex-1 h-12 border rounded-xl px-4 text-xs bg-slate-50/50 outline-none focus:bg-white focus:border-indigo-500 transition-all"
+          />
+          <button
+            type="submit"
+            disabled={!text.trim()}
+            className="h-12 w-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-100 text-white disabled:text-slate-400 flex items-center justify-center transition-all shrink-0 shadow-md"
           >
-
-            <div className="flex-1">
-
-              <textarea
-
-                value={text}
-
-                onChange={(e) =>
-                  setText(
-                    e.target.value
-                  )
-                }
-
-                onKeyDown={handleKeyDown}
-
-                rows={2}
-
-                placeholder="Type your message..."
-
-                className="
-                  w-full
-                  resize-none
-                  rounded-3xl
-                  border
-                  border-slate-300
-                  px-6
-                  py-4
-                  outline-none
-                  focus:border-cyan-500
-                  focus:ring-4
-                  focus:ring-cyan-100
-                  text-gray-700
-                "
-
-              />
-
-            </div>
-
-            <button
-
-              onClick={sendMessage}
-
-              disabled={!text.trim()}
-
-              className="
-                h-16
-                w-16
-                rounded-3xl
-                bg-gradient-to-r
-                from-cyan-500
-                to-blue-600
-                text-white
-                flex
-                items-center
-                justify-center
-                shadow-lg
-                hover:scale-105
-                transition-all
-                duration-300
-                disabled:opacity-50
-                disabled:hover:scale-100
-              "
-
-            >
-
-              <Send size={24} />
-
-            </button>
-
-          </div>
-
-        </div>
-
+            <Send size={16} />
+          </button>
+        </form>
       </div>
-
     </div>
-
   );
-
 }

@@ -14,6 +14,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function ProjectDashboard() {
   const navigate = useNavigate(); 
@@ -42,6 +43,7 @@ export default function ProjectDashboard() {
       setLoading(true);
       const res = await API.get("/projects");
       setProjects(res.data || []);
+      notifier.projectsDashboardViewed();
     } catch (err) {
       console.error(err);
     } finally {

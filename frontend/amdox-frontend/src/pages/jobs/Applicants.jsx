@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import API from "../../services/api";
 import { Mail, CalendarDays, CheckCircle2, XCircle, Clock3, Search, Briefcase, User2, Eye, Loader2 } from "lucide-react";
+import notifier from "../../utils/notifier";
 
 export default function Applicants() {
   const [applicants, setApplicants] = useState([]);
@@ -65,6 +66,7 @@ export default function Applicants() {
       case "ACCEPTED": return "bg-emerald-100 text-emerald-700 border border-emerald-200";
       case "REJECTED": return "bg-red-100 text-red-700 border border-red-200";
       default: return "bg-amber-100 text-amber-700 border border-amber-200";
+      notifier.applicantStatusUpdated(applicant.name, status);
     }
   };
 

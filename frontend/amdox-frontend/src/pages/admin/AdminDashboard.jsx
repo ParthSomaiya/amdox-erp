@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Loader2, Users, Building, ShieldCheck, TrendingUp, Award } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function AdminDashboard() {
   const [employeesCount, setEmployeesCount] = useState(0);
@@ -73,6 +74,8 @@ export default function AdminDashboard() {
         ];
 
         setFinanceData(formattedChart.some(d => d.revenue > 0) ? formattedChart : defaultChart);
+
+        notifier.adminDashboardViewed();
 
       } catch (err) {
         console.error("Failed to load admin stats dynamically:", err);

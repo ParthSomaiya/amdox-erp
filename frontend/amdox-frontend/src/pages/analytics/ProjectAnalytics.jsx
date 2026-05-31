@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2, RefreshCw, Briefcase, CheckCircle } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function ProjectAnalytics() {
   const [data, setData] = useState([]);
@@ -17,6 +18,7 @@ export default function ProjectAnalytics() {
         spent: p.spent || 0
       }));
       setData(formatted);
+      notifier.projectAnalyticsViewed();
     } catch (err) {
       console.error(err);
     } finally {

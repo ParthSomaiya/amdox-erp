@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../../services/api";
+import notifier from "../../utils/notifier";
 
 export default function AuditLogs() {
   const [logs, setLogs] = useState([]);
@@ -21,6 +22,7 @@ export default function AuditLogs() {
       const data = res.data || {};
       setLogs(data.logs || []);
       setPage(data.page || pageNumber);
+      notifier.auditViewed();
     } catch (err) {
       console.error("Audit logs error:", err);
       setError("Failed to load audit logs");

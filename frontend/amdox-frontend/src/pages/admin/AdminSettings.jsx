@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Building2, Mail, Phone, Globe, Save, Shield, Bell, Palette, Settings2, Loader2 } from "lucide-react";
 import API from "../../services/api";
-import notifier from "../utils/notifier";
+import notifier from "../../utils/notifier";
 
 export default function AdminSettings() {
   const [loading, setLoading] = useState(true);

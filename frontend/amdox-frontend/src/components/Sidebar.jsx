@@ -139,8 +139,11 @@ export default function Sidebar() {
                   <Link to="/hr/attendance-heatmap" className={menuClass("/hr/attendance-heatmap")}>
                     🔥 Attendance Heatmap
                   </Link>
-                  <Link to="/hr/employee-profile" className={menuClass("/hr/employee-profile")}>
-                    👤 Employee Profile
+                  <Link to="/hr/interview-scheduler" className={menuClass("/hr/interview-scheduler")}>
+                    ➕ Schedule Interview
+                  </Link>
+                  <Link to="/hr/interviews" className={menuClass("/hr/interviews")}>
+                    📅 Interview Calendar
                   </Link>
                   <Link to="/hr/employee-timeline" className={menuClass("/hr/employee-timeline")}>
                     🕒 Employee Timeline

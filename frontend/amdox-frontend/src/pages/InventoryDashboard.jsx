@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Package, AlertTriangle, Coins, RefreshCw, Loader2, ArrowUpRight, TrendingUp, ShieldCheck } from "lucide-react";
 import API from "../services/api";
+import notifier from "../utils/notifier";
 
 export default function InventoryDashboard() {
   const [stats, setStats] = useState({
@@ -19,6 +20,7 @@ export default function InventoryDashboard() {
       setLoading(true);
       const res = await API.get("/inventory/dashboard");
       setStats(res.data || {});
+      notifier.inventoryDashboardViewed();
     } catch (err) {
       console.error(err);
     } finally {
