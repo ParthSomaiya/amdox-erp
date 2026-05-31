@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-import { Users, Briefcase, CalendarDays, IndianRupee, ArrowUpRight, Clock, Plus, CheckCircle2, Loader2 } from "lucide-react";
+import { Users, Briefcase, CalendarDays, IndianRupee, ArrowUpRight, Clock, Plus, CheckCircle2, Loader2, TrendingUp, BarChart2 } from "lucide-react";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 
@@ -7,11 +8,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  // ================= STATE =================
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState({
-    totalEmployees: 120,
-    activeProjects: 18,
+    totalEmployees: 8,
+    activeProjects: 4,
     attendanceRate: "95%",
     monthlyBudget: "₹8.4L",
     activities: [
@@ -32,12 +32,19 @@ export default function Dashboard() {
     ]
   });
 
-  // ================= DYNAMIC DATA FETCHING =================
+  // મોક આલેખ ડેટા
+  const chartData = [
+    { name: "Mon", productivity: 72 },
+    { name: "Tue", productivity: 85 },
+    { name: "Wed", productivity: 94 },
+    { name: "Thu", productivity: 82 },
+    { name: "Fri", productivity: 88 },
+  ];
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // Try fetching from the master dashboard endpoint
         const res = await API.get("/dashboard");
         if (res.data && res.data.success) {
           setDashboardData(res.data);
@@ -45,22 +52,19 @@ export default function Dashboard() {
           throw new Error("Master dashboard endpoint bypassed");
         }
       } catch (err) {
-        console.warn("Using fallback analytics endpoints to populate metrics:", err.message);
-        
-        // Parallel fallback queries to individual module endpoints
         try {
           const [hrRes, projectRes] = await Promise.all([
-            API.get("/hr/analytics"),
-            API.get("/projects")
+            API.get("/hr/analytics").catch(() => ({ data: { totalEmployees: 8 } })),
+            API.get("/projects").catch(() => ({ data: [] }))
           ]);
 
           setDashboardData((prev) => ({
             ...prev,
-            totalEmployees: hrRes.data?.totalEmployees ?? prev.totalEmployees,
-            activeProjects: Array.isArray(projectRes.data) ? projectRes.data.length : prev.activeProjects,
+            totalEmployees: hrRes.data?.totalEmployees ?? 8,
+            activeProjects: Array.isArray(projectRes.data) ? projectRes.data.length : 4,
           }));
         } catch (subErr) {
-          console.warn("Fallback sub-endpoints not fully reachable:", subErr.message);
+          console.warn("Fallback sub-endpoints not fully reachable");
         }
       } finally {
         setLoading(false);
@@ -70,14 +74,13 @@ export default function Dashboard() {
     fetchDashboardData();
   }, []);
 
-  // ================= MEMOIZED STATS GRID =================
   const stats = useMemo(() => [
     {
       title: "Total Employees",
       value: dashboardData.totalEmployees,
       change: "+4.75%",
       isPositive: true,
-      icon: <Users size={22} className="text-indigo-600" />,
+      icon: <Users size={18} className="text-indigo-600" />,
       bg: "bg-indigo-50",
     },
     {
@@ -85,7 +88,7 @@ export default function Dashboard() {
       value: dashboardData.activeProjects,
       change: "+12.5%",
       isPositive: true,
-      icon: <Briefcase size={22} className="text-sky-600" />,
+      icon: <Briefcase size={18} className="text-sky-600" />,
       bg: "bg-sky-50",
     },
     {
@@ -93,7 +96,7 @@ export default function Dashboard() {
       value: dashboardData.attendanceRate,
       change: "-0.2%",
       isPositive: false,
-      icon: <CalendarDays size={22} className="text-emerald-600" />,
+      icon: <CalendarDays size={18} className="text-emerald-600" />,
       bg: "bg-emerald-50",
     },
     {
@@ -101,7 +104,7 @@ export default function Dashboard() {
       value: dashboardData.monthlyBudget,
       change: "+8.2%",
       isPositive: true,
-      icon: <IndianRupee size={22} className="text-amber-600" />,
+      icon: <IndianRupee size={18} className="text-amber-600" />,
       bg: "bg-amber-50",
     },
   ], [dashboardData]);
@@ -110,22 +113,22 @@ export default function Dashboard() {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-10 w-10 border-t-transparent animate-spin text-indigo-600 mx-auto" />
-          <p className="mt-4 text-slate-500 font-semibold text-sm">Aggregating live analytics...</p>
+          <Loader2 className="h-8 w-8 border-t-transparent animate-spin text-indigo-600 mx-auto" />
+          <p className="mt-4 text-slate-500 font-semibold text-xs">Aggregating live analytics...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8 font-sans">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 p-8 md:p-10 text-white shadow-sm border border-indigo-700/10">
+      <div className="relative overflow-hidden rounded-[24px] sm:rounded-[32px] bg-slate-900 p-6 sm:p-8 md:p-10 text-white border border-slate-800">
         <div className="absolute top-0 right-0 h-48 w-48 rounded-full bg-white/10 blur-3xl pointer-events-none" />
         <div className="relative z-10 space-y-2">
-          <span className="text-xs uppercase tracking-widest text-indigo-200 font-bold">Workspace Overview</span>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight">Welcome back, {user?.name || "Administrator"}</h1>
-          <p className="text-indigo-100 text-sm max-w-xl">
+          <span className="text-[10px] uppercase tracking-widest text-indigo-300 font-bold">Workspace Overview</span>
+          <h1 className="text-xl sm:text-3xl md:text-4xl font-black tracking-tight">Welcome back, {user?.name || "Administrator"}</h1>
+          <p className="text-slate-400 text-xs sm:text-sm max-w-xl">
             Here is what's happening across your AMDOX workspace modules today.
           </p>
         </div>
@@ -134,73 +137,99 @@ export default function Dashboard() {
       {/* Metrics Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((item, idx) => (
-          <div key={idx} className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex items-center justify-between">
-            <div className="space-y-2">
-              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">{item.title}</span>
-              <h3 className="text-2xl font-bold text-slate-800">{item.value}</h3>
-              <div className="flex items-center gap-1.5 text-xs">
+          <div key={idx} className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+            <div className="space-y-1.5">
+              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{item.title}</span>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-800">{item.value}</h3>
+              <div className="flex items-center gap-1.5 text-[10px]">
                 <span className={item.isPositive ? "text-emerald-600 font-bold" : "text-rose-500 font-bold"}>
                   {item.change}
                 </span>
                 <span className="text-slate-400 font-medium">vs last month</span>
               </div>
             </div>
-            <div className={`h-12 w-12 rounded-xl ${item.bg} flex items-center justify-center shadow-inner`}>
+            <div className={`h-11 w-11 rounded-xl ${item.bg} flex items-center justify-center shrink-0`}>
               {item.icon}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Main Grid split */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      {/* Main split */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Recent Activity Logs */}
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div>
-              <h2 className="text-xl font-bold text-slate-800">Workspace Activities</h2>
-              <p className="text-xs text-slate-400 font-medium">Updates occurring across all modules</p>
+        {/* Recent Activity (Left) */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">Workspace Activities</h2>
+                <p className="text-xs text-slate-400 font-medium">Updates occurring across all modules</p>
+              </div>
+              <button className="h-9 w-9 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200 transition">
+                <ArrowUpRight size={16} />
+              </button>
             </div>
-            <button className="h-10 w-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200 transition">
-              <ArrowUpRight size={18} />
-            </button>
+
+            <div className="space-y-4">
+              {dashboardData.activities?.map((activity) => (
+                <div key={activity.id} className="flex flex-col sm:flex-row sm:items-start justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100 gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      activity.type === "plus" ? "bg-indigo-50 text-indigo-600" : "bg-emerald-50 text-emerald-600"
+                    }`}>
+                      {activity.type === "plus" ? <Plus size={16} /> : <CheckCircle2 size={16} />}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-800 text-xs sm:text-sm">{activity.title}</h4>
+                      <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{activity.description}</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1 shrink-0">
+                    <Clock size={11} /> {activity.time}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {dashboardData.activities?.map((activity) => (
-              <div key={activity.id} className="flex items-start justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
-                <div className="flex items-start gap-3">
-                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
-                    activity.type === "plus" ? "bg-indigo-50 text-indigo-600" : "bg-emerald-50 text-emerald-600"
-                  }`}>
-                    {activity.type === "plus" ? <Plus size={18} /> : <CheckCircle2 size={18} />}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-800 text-sm">{activity.title}</h4>
-                    <p className="text-xs text-slate-500 mt-1">{activity.description}</p>
-                  </div>
-                </div>
-                <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
-                  <Clock size={12} /> {activity.time}
-                </span>
-              </div>
-            ))}
+          {/* Productivity Chart Panel */}
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+            <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <BarChart2 size={16} className="text-indigo-600" /> Daily Active Productivity Index
+            </h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorProd" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} />
+                  <YAxis stroke="#94a3b8" fontSize={11} />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="productivity" stroke="#4f46e5" fillOpacity={1} fill="url(#colorProd)" strokeWidth={2.5} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
-        {/* Profile Card */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm text-center space-y-6">
-          <div className="mx-auto h-20 w-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-md shadow-indigo-100">
+        {/* Profile (Right) */}
+        <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm text-center space-y-5">
+          <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-black shadow-md">
             {user?.name?.charAt(0)?.toUpperCase() || "A"}
           </div>
 
           <div className="space-y-1">
-            <h3 className="text-lg font-bold text-slate-800">{user?.name || "Workspace Admin"}</h3>
-            <p className="text-xs text-slate-400 font-medium">{user?.email || "admin@amdox.com"}</p>
+            <h3 className="text-base font-bold text-slate-800">{user?.name || "Workspace Admin"}</h3>
+            <p className="text-[11px] text-slate-400 font-medium">{user?.email || "admin@amdox.com"}</p>
           </div>
 
-          <span className="inline-flex px-3.5 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+          <span className="inline-flex px-3 py-1 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-wider">
             {user?.role || "ADMIN"}
           </span>
         </div>

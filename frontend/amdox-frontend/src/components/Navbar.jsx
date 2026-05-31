@@ -1,21 +1,19 @@
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Bell, Sparkles, LogOut, KeyRound, Check, ShieldCheck, Clock, User, X, Mail, ShieldAlert, CheckCheck } from "lucide-react";
+import { Bell, Sparkles, LogOut, KeyRound, Check, ShieldCheck, Clock, User, X, Mail, ShieldAlert, CheckCheck, Menu } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import io from "socket.io-client";
 import toast, { Toaster } from "react-hot-toast";
 import API from "../services/api";
 
-export default function Navbar() {
+export default function Navbar({ onMenuClick, isJobSeeker }) {
   const navigate = useNavigate();
 
-  // 🔹 લોગઆઉટ ફંક્શન (આ કોડ `useNavigate()` ની બરાબર નીચે મૂકો)
   const logout = () => {
     localStorage.clear();
     navigate("/login");
   };
 
-  // 🔹 ડ્યુઅલ-રેફરન્સર્સ: બગ અને કન્ફ્લિક્ટ અટકાવવા માટે અલગ-અલગ રેફરન્સ સેટ કર્યા
   const profileDropdownRef = useRef(null);
   const notificationDropdownRef = useRef(null);
 
@@ -35,7 +33,6 @@ export default function Navbar() {
   const [newPassword, setNewPassword] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
 
-  // 🚀 ગ્લોબલ નોટિફિકેશન એન્જિન રજીસ્ટ્રાર (હાઇબ્રિડ લોકલ સ્ટોરેજ સિંક સાથે!)
   useEffect(() => {
     window.triggerAmdoxNotification = async (title, message, type = "GENERAL") => {
       try {
@@ -48,23 +45,19 @@ export default function Navbar() {
           createdAt: new Date().toISOString()
         };
 
-        // ૧. નોટિફિકેશનને પહેલા જ લોકલ સ્ટોરેજમાં સેવ કરો
         const localNotifs = JSON.parse(localStorage.getItem("amdox_notifications") || "[]");
         const updatedLocal = [payload, ...localNotifs];
         localStorage.setItem("amdox_notifications", JSON.stringify(updatedLocal));
 
-        // ૨. ડેટાબેઝમાં સેવ કરવા માટે બેકએન્ડ પર મોકલો
         await API.post("/notifications", payload).catch(() => {
           console.warn("Local storage backup engaged.");
         });
 
-        // ૩. ઓડિયો એલર્ટ પ્લેયર
         try {
           const audio = new Audio("/notification.mp3");
           audio.play().catch(() => { });
         } catch (e) { }
 
-        // ૪. મોર્ડન ટોસ્ટ પોપઅપ કાર્ડ
         toast((t) => (
           <div className="flex items-start gap-3 text-left">
             <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 text-xs">
@@ -90,10 +83,7 @@ export default function Navbar() {
           }
         });
 
-        // ૫. લિસ્ટ અપડેટ કરો
         setNotifications((prev) => [payload, ...prev]);
-
-        // ૬. ક્રોસ-પેજ સિંક ટ્રિગર કરો
         window.dispatchEvent(new CustomEvent("amdox_notifications_updated"));
 
       } catch (err) {
@@ -102,7 +92,6 @@ export default function Navbar() {
     };
   }, [notifications]);
 
-  // 🚀 A to Z ઓટોમેટીક એપીઆઈ એક્શન ઇન્ટરસેપ્ટર
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -200,7 +189,6 @@ export default function Navbar() {
     };
     window.addEventListener("amdox_notifications_updated", handleCrossPageSync);
 
-    // 🔹 ડ્યુઅલ-ક્લિક આઉટસાઇડ હેન્ડલર (કન્ફ્લિક્ટ અટકાવશે)
     const handleClickOutside = (e) => {
       if (profileDropdownRef.current && !profileDropdownRef.current.contains(e.target)) {
         setShowProfile(false);
@@ -354,34 +342,39 @@ export default function Navbar() {
   const unreadCount = notifications.filter((item) => !item.isRead).length;
 
   return (
-    <nav className="sticky top-0 z-50 h-20 px-8 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
       <Toaster />
 
-      {/* Logo */}
-      <div className="flex items-center gap-6">
-        <Link to="/" className="flex items-center gap-3 no-underline">
-          <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black text-xl">A</div>
-          <span className="text-xl font-bold text-slate-900 tracking-tight">AMDOX</span>
-        </Link>
+      {/* 🔹 ડાબી બાજુ: લોગો હટાવીને મોબાઇલ હેમબર્ગર મેનૂ બટન સેટ કર્યું */}
+      <div className="flex items-center">
+        {!isJobSeeker && (
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all active:scale-95 cursor-pointer"
+          >
+            <Menu size={20} />
+          </button>
+        )}
       </div>
 
-      {/* Right controls */}
-      <div className="flex items-center gap-4">
+      {/* 🔹 જમણી બાજુ: ૩ આઇકોન્સનું પર્ફેક્ટ મોર્ડન સંરેખણ (Alignment) */}
+      <div className="flex items-center gap-3">
         {isAuthenticated ? (
           <>
-            {/* AI Assistant */}
+            {/* AI Assistant (મોબાઇલ પર આઇકોન અને ડેસ્કટોપ પર ફુલ ટેક્સ્ટ બટન) */}
             <button
               onClick={() => navigate("/ai")}
-              className="hidden md:flex h-11 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold items-center gap-2 shadow-sm transition-all"
+              className="h-11 w-11 md:w-auto md:px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10 transition-all active:scale-95 cursor-pointer"
             >
-              <Sparkles size={16} /> AI Assistant
+              <Sparkles size={18} />
+              <span className="hidden md:inline text-sm">AI Assistant</span>
             </button>
 
             {/* Notification Bell with Dropdown */}
             <div className="relative" ref={notificationDropdownRef}>
               <button
                 onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
-                className="relative h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center hover:bg-slate-100 text-slate-600 transition-all"
+                className="relative h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center hover:bg-slate-100 text-slate-600 transition-all active:scale-95 cursor-pointer"
               >
                 <Bell size={18} />
                 {unreadCount > 0 && <div className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />}
@@ -389,7 +382,7 @@ export default function Navbar() {
 
               {/* 🔔 LIVE NOTIFICATION POPUP DROPDOWN */}
               {showNotifications && (
-                <div className="absolute right-0 mt-3 w-96 bg-white border border-slate-200 shadow-2xl rounded-2xl z-50 overflow-hidden">
+                <div className="absolute right-[-48px] sm:right-0 mt-3 w-[calc(100vw-32px)] sm:w-96 max-w-[360px] sm:max-w-none bg-white border border-slate-200 shadow-2xl rounded-2xl z-50 overflow-hidden">
                   <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                     <h4 className="font-bold text-slate-800 text-sm">Notifications ({unreadCount})</h4>
                     {unreadCount > 0 && (
@@ -437,25 +430,21 @@ export default function Navbar() {
             <div className="relative" ref={profileDropdownRef}>
               <button
                 onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
-                className="flex items-center gap-3 pl-2 border-l border-slate-200 focus:outline-none cursor-pointer"
+                className="flex items-center gap-3 focus:outline-none cursor-pointer active:scale-95 transition-all"
               >
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
                   {user?.name?.charAt(0)?.toUpperCase() || "A"}
-                </div>
-                <div className="hidden sm:block text-left">
-                  <h4 className="text-slate-800 font-semibold text-sm leading-none">{user?.name || "Admin"}</h4>
-                  <p className="text-slate-400 text-[10px] mt-1 font-bold uppercase tracking-wider">{user?.role || "ADMIN"}</p>
                 </div>
               </button>
 
               {showProfile && (
-                <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 shadow-xl rounded-2xl z-50 overflow-hidden">
+                <div className="absolute right-[-16px] sm:right-0 mt-3 w-[calc(100vw-32px)] sm:w-80 max-w-[280px] sm:max-w-none bg-white border border-slate-200 shadow-xl rounded-2xl z-50 overflow-hidden">
                   <div className="p-5 bg-slate-50 border-b border-slate-100 text-center">
                     <div className="h-16 w-16 mx-auto rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-black">
                       {user?.name?.charAt(0)?.toUpperCase() || "A"}
                     </div>
                     <h4 className="font-bold text-slate-800 text-base mt-3">{user?.name}</h4>
-                    <p className="text-xs text-slate-400 font-medium">{user?.email}</p>
+                    <p className="text-xs text-slate-400 font-medium truncate max-w-[240px]">{user?.email}</p>
                   </div>
                   <div className="p-2 space-y-1">
                     <button
@@ -483,8 +472,8 @@ export default function Navbar() {
           </>
         ) : (
           <>
-            <Link to="/login" className="h-11 px-5 rounded-xl text-slate-600 hover:text-slate-900 font-semibold flex items-center gap-2 transition-all">Sign In</Link>
-            <Link to="/register" className="h-11 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center gap-2 shadow-sm transition-all">Get Started</Link>
+            <Link to="/login" className="h-11 px-3 sm:px-5 rounded-xl text-slate-600 hover:text-slate-900 font-semibold flex items-center gap-2 transition-all text-xs sm:text-sm">Sign In</Link>
+            <Link to="/register" className="h-11 px-3 sm:px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center gap-2 shadow-sm transition-all text-xs sm:text-sm">Get Started</Link>
           </>
         )}
       </div>

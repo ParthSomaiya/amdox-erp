@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { IndianRupee, Percent, Plus, FileText, CheckCircle2, Calculator, Loader2, User } from "lucide-react";
+import { useState } from "react";
+import { Plus, Loader2, ShieldCheck } from "lucide-react";
 import API from "../services/api";
 
 export default function CreateInvoice() {
@@ -61,36 +61,39 @@ export default function CreateInvoice() {
   };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 p-8 rounded-[32px] text-white shadow-md">
-        <h1 className="text-3xl font-black flex items-center gap-2">
-          <Plus /> Multi-Currency Invoice Issuer
+    <div className="space-y-6 max-w-6xl mx-auto overflow-x-hidden px-1">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 p-5 sm:p-8 rounded-2xl sm:rounded-[32px] text-white shadow-md">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-black flex items-center gap-2">
+          <Plus className="shrink-0" size={22} /> Multi-Currency Invoice Issuer
         </h1>
-        <p className="text-indigo-100 text-sm mt-1">Issue sales invoices with automatic exchange rate conversion rules.</p>
+        <p className="text-indigo-100 text-xs mt-1.5">Issue sales invoices with automatic exchange rate conversion rules.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-7 bg-white rounded-[32px] border p-8 shadow-sm space-y-5">
-          <form onSubmit={handleCreateInvoice} className="space-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full max-w-full overflow-hidden">
+        
+        {/* Form Panel */}
+        <div className="lg:col-span-7 bg-white rounded-2xl sm:rounded-[32px] border p-4 sm:p-6 shadow-sm space-y-4 sm:space-y-5 w-full max-w-full">
+          <form onSubmit={handleCreateInvoice} className="space-y-4 sm:space-y-5 text-xs font-semibold text-slate-600">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Customer / Client Name</label>
+              <label className="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Customer / Client Name</label>
               <input
                 type="text"
                 required
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 placeholder="e.g. Oracle India Pvt Ltd"
-                className="w-full h-12 rounded-xl border pl-4 pr-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50"
+                className="w-full h-10 sm:h-12 rounded-xl border border-slate-200 pl-4 pr-4 outline-none focus:border-indigo-500 text-xs sm:text-sm bg-slate-50/50"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Select Currency</label>
+                <label className="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Select Currency</label>
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full h-12 border rounded-xl px-3 text-sm outline-none bg-slate-50/50 cursor-pointer font-semibold text-slate-600"
+                  className="w-full h-10 sm:h-12 border border-slate-200 rounded-xl px-2.5 text-xs outline-none bg-slate-50/50 cursor-pointer font-bold text-slate-600"
                 >
                   <option value="INR">INR (₹) - Base</option>
                   <option value="USD">USD ($) - US Dollar</option>
@@ -99,66 +102,72 @@ export default function CreateInvoice() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Invoice Amount</label>
+                <label className="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Invoice Amount</label>
                 <input
                   type="number"
                   required
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full h-12 rounded-xl border px-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50"
+                  className="w-full h-10 sm:h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-indigo-500 text-xs sm:text-sm bg-slate-50/50"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">GST / VAT Rate (%)</label>
+              <label className="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">GST / VAT Rate (%)</label>
               <input
                 type="number"
                 value={gstRate}
                 onChange={(e) => setGstRate(e.target.value)}
-                className="w-full h-12 rounded-xl border px-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50"
+                className="w-full h-10 sm:h-12 rounded-xl border border-slate-200 px-4 outline-none focus:border-indigo-500 text-xs sm:text-sm bg-slate-50/50"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading || !amount}
-              className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition disabled:opacity-50"
+              className="w-full h-10 sm:h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition disabled:opacity-50 cursor-pointer shadow-sm"
             >
-              {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Plus size={16} />}
+              {loading ? <Loader2 className="animate-spin h-3.5 w-3.5" /> : <Plus size={14} />}
               Generate Invoice
             </button>
           </form>
         </div>
 
-        <div className="lg:col-span-5 bg-slate-900 text-slate-200 rounded-[32px] p-6 shadow-xl font-mono border border-slate-800 space-y-6">
-          <div className="text-center pb-4 border-b border-dashed border-slate-800">
-            <h3 className="text-sm font-black tracking-widest text-indigo-400">AMDOX TAX PREVIEW</h3>
+        {/* Tax Preview Terminal */}
+        <div className="lg:col-span-5 bg-slate-900 text-slate-200 rounded-2xl sm:rounded-[32px] p-4 sm:p-6 shadow-xl font-mono border border-slate-800 space-y-4 sm:space-y-6 w-full max-w-full overflow-hidden">
+          <div className="text-center pb-3 border-b border-dashed border-slate-800">
+            <h3 className="text-xs font-black tracking-widest text-indigo-400">AMDOX TAX PREVIEW</h3>
           </div>
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between">
-              <span>Client Name:</span>
-              <span className="text-slate-100 font-bold truncate max-w-[160px]">{clientName || "Pending"}</span>
+          <div className="space-y-3.5 text-xs">
+            <div className="flex justify-between items-center gap-2 min-w-0">
+              <span className="shrink-0 text-slate-400">Client Name:</span>
+              <span className="text-slate-100 font-bold truncate max-w-[130px] sm:max-w-[180px]">{clientName || "Pending"}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Original Amount:</span>
-              <span className="text-slate-300 font-bold">{currency} {Number(amount).toLocaleString()}</span>
+            <div className="flex justify-between items-center gap-2">
+              <span className="text-slate-400">Original Amount:</span>
+              <span className="text-slate-300 font-bold shrink-0">{currency} {Number(amount).toLocaleString()}</span>
             </div>
-            <div className="flex justify-between border-t border-slate-800 pt-3">
-              <span>Base Subtotal (INR):</span>
-              <span>₹{baseInINR.toLocaleString()}</span>
+            <div className="flex justify-between items-center border-t border-slate-800 pt-3 gap-2">
+              <span className="text-slate-400">Base Subtotal (INR):</span>
+              <span className="shrink-0">₹{baseInINR.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Calculated GST ({gstRate}%):</span>
-              <span>₹{gstInINR.toLocaleString()}</span>
+            <div className="flex justify-between items-center gap-2">
+              <span className="text-slate-400">Calculated GST ({gstRate}%):</span>
+              <span className="shrink-0">₹{gstInINR.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between border-t border-dashed border-slate-800 pt-3 text-sm font-black text-indigo-400">
+            <div className="flex justify-between items-center border-t border-dashed border-slate-800 pt-3 text-sm font-black text-indigo-400 gap-2">
               <span>GRAND TOTAL (INR):</span>
-              <span>₹{totalInINR.toLocaleString()}</span>
+              <span className="shrink-0">₹{totalInINR.toLocaleString()}</span>
             </div>
           </div>
         </div>
+
+      </div>
+
+      <div className="flex items-center justify-center gap-1.5 text-[10px] sm:text-xs text-slate-400 font-semibold pt-2">
+        <ShieldCheck size={13} className="text-indigo-600 shrink-0" /> Enterprise Multi-Currency Ledger Active
       </div>
     </div>
   );

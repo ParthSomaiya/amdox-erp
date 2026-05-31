@@ -23,7 +23,7 @@ export default function InvoicePage() {
     notifier.invoiceHistoryAudited();
   }, []);
 
-  // 🔹 "PAID" સ્ટેટસ અપડેટ કરવાનું ફંક્શન
+  // PAID સ્ટેટસ અપડેટ કરવાનું ફંક્શન
   const handleMarkPaid = async (id) => {
     try {
       setUpdatingId(id);
@@ -39,11 +39,13 @@ export default function InvoicePage() {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto overflow-x-hidden px-1">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 p-8 rounded-[32px] text-white shadow-md">
-        <h1 className="text-3xl font-black flex items-center gap-2"><Receipt /> Invoice History</h1>
-        <p className="mt-2 text-indigo-100 text-sm">Review, track, and download compliance invoice structures.</p>
+      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 p-5 sm:p-8 rounded-2xl sm:rounded-[32px] text-white shadow-md">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-black flex items-center gap-2">
+          <Receipt className="shrink-0" size={22} /> Invoice History
+        </h1>
+        <p className="mt-1.5 text-indigo-100 text-xs">Review, track, and download compliance invoice structures.</p>
       </div>
 
       {loading ? (
@@ -51,47 +53,49 @@ export default function InvoicePage() {
           <Loader2 className="animate-spin h-10 w-10 text-indigo-600 mx-auto" />
         </div>
       ) : (
-        <div className="bg-white rounded-3xl border shadow-sm overflow-hidden p-6 space-y-6">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-slate-600">
-              <thead className="bg-slate-50 border-b text-xs uppercase font-bold text-slate-700">
+        <div className="bg-white rounded-2xl sm:rounded-3xl border shadow-sm overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-6 w-full max-w-full">
+          
+          {/* 🔹 ટેબલ હોરિઝોન્ટલ સ્ક્રોલ ગાર્ડ */}
+          <div className="overflow-x-auto w-full scrollbar-none">
+            <table className="w-full text-xs sm:text-sm text-slate-600 min-w-[550px]">
+              <thead className="bg-slate-50 border-b border-slate-100 text-[10px] uppercase font-bold text-slate-700">
                 <tr>
-                  <th className="p-4 text-left">Invoice No</th>
-                  <th className="p-4 text-left">Customer</th>
-                  <th className="p-4 text-left">Amount</th>
-                  <th className="p-4 text-left">Status</th>
-                  <th className="p-4 text-left">Actions</th>
+                  <th className="p-3.5 text-left">Invoice No</th>
+                  <th className="p-3.5 text-left">Customer</th>
+                  <th className="p-3.5 text-left">Amount</th>
+                  <th className="p-3.5 text-left">Status</th>
+                  <th className="p-3.5 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {invoices.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="text-center p-8 text-slate-400">No invoices registered.</td>
+                    <td colSpan="5" className="text-center p-8 text-slate-400 italic">No invoices registered.</td>
                   </tr>
                 ) : (
                   invoices.map((inv) => (
-                    <tr key={inv._id} className="border-b hover:bg-slate-50/50 transition text-slate-700">
-                      <td className="p-4 font-bold">{inv.invoiceNumber || `INV-${inv._id.slice(-6)}`}</td>
-                      <td className="p-4">{inv.clientName || "Customer"}</td>
-                      <td className="p-4 font-black text-emerald-600">₹{inv.amount}</td>
-                      <td className="p-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${inv.status === "PAID" ? "bg-emerald-50 text-emerald-700 border" : "bg-rose-50 text-rose-700 border"
+                    <tr key={inv._id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition text-slate-700">
+                      <td className="p-3.5 font-bold text-slate-800">{inv.invoiceNumber || `INV-${inv._id.slice(-6)}`}</td>
+                      <td className="p-3.5 font-medium">{inv.clientName || "Customer"}</td>
+                      <td className="p-3.5 font-black text-emerald-600">₹{inv.amount}</td>
+                      <td className="p-3.5">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${inv.status === "PAID" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-rose-50 text-rose-700 border border-rose-100"
                           }`}>
                           {inv.status || "UNPAID"}
                         </span>
                       </td>
-                      <td className="p-4">
+                      <td className="p-3.5">
                         {inv.status !== "PAID" ? (
                           <button
                             disabled={updatingId === inv._id}
                             onClick={() => handleMarkPaid(inv._id)}
-                            className="h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50"
+                            className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer shrink-0"
                           >
-                            {updatingId === inv._id ? <Loader2 className="animate-spin h-3 w-3" /> : <CheckCircle2 size={14} />}
+                            {updatingId === inv._id ? <Loader2 className="animate-spin h-3 w-3" /> : <CheckCircle2 size={13} />}
                             Mark Paid
                           </button>
                         ) : (
-                          <span className="text-xs text-slate-400 font-bold uppercase">Completed</span>
+                          <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Completed</span>
                         )}
                       </td>
                     </tr>
@@ -101,11 +105,18 @@ export default function InvoicePage() {
             </table>
           </div>
 
-          <div className="pt-6 border-t">
-            <ReportExportButtons invoices={invoices} />
+          {/* 🔹 કમ્પેક્ટ કરેલ નીચેનું બટન સેક્શન */}
+          <div className="pt-4 border-t border-slate-100 w-full max-w-full overflow-hidden">
+            <div className="scale-[0.93] sm:scale-100 origin-left">
+              <ReportExportButtons invoices={invoices} />
+            </div>
           </div>
         </div>
       )}
+
+      <div className="flex items-center justify-center gap-1.5 text-[10px] sm:text-xs text-slate-400 font-semibold pt-2">
+        <ShieldCheck size={13} className="text-indigo-600 shrink-0" /> Enterprise Financial Invoicing Service Active
+      </div>
     </div>
   );
 }

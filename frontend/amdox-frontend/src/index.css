@@ -49,12 +49,6 @@ body {
     line-height: 1.4 !important;
   }
   
-  /* Force single column layouts */
-  .grid {
-    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
-    gap: 1rem !important;
-  }
-  
   /* Reset large padding to prevent shrink clipping */
   .p-6, .p-8, .p-10, .p-14, .p-16 {
     padding: 1.25rem !important;
@@ -88,22 +82,11 @@ body {
     padding: 1rem !important;
   }
   
-  /* Form components and rows stacking */
-  .flex, .sm\:flex-row, .flex-row {
+  /* 🔹 FIXED: Removed global .flex override to prevent navbar buttons vertical stacking */
+  .sm\:flex-row, .flex-row {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 1rem !important;
-  }
-  .flex.items-center.justify-between, .flex.justify-between {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 1rem !important;
-  }
-  .flex-row-reverse {
-    flex-direction: column-reverse !important;
-  }
-  .shrink-0 {
-    width: 100% !important;
   }
   
   /* Complete table scroll safety constraints */
@@ -136,4 +119,5 @@ body {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(226, 232, 240, 0.8);
-} 
+}
+

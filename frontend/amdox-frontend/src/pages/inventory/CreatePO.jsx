@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Send, Loader2, RefreshCw, ShoppingCart, Calculator, ShieldCheck } from "lucide-react";
+import { Send, Loader2, ShoppingCart, ShieldCheck } from "lucide-react";
 import API from "../../services/api";
 import notifier from "../../utils/notifier";
 
@@ -41,7 +41,7 @@ export default function CreatePO() {
     }
   };
 
-  // 🔹 લાઇવ બજેટ કેલ્ક્યુલેટર
+  // Live price calculations
   const selectedProductPrice = useMemo(() => {
     const prod = productsList.find(p => p._id === selectedProduct);
     return prod ? prod.price : 0;
@@ -91,36 +91,36 @@ export default function CreatePO() {
   };
 
   return (
-    <div className="space-y-8 font-sans max-w-6xl mx-auto">
+    <div className="space-y-6 font-sans max-w-6xl mx-auto overflow-x-hidden px-1">
       {/* Header */}
-      <div className="bg-slate-900 border border-slate-800 p-8 rounded-[32px] text-white relative overflow-hidden">
+      <div className="bg-slate-900 border border-slate-800 p-5 sm:p-8 rounded-2xl sm:rounded-[32px] text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-        <span className="text-[10px] uppercase tracking-widest text-indigo-400 font-bold block mb-2">Procurement Cycle</span>
-        <h1 className="text-3xl font-black mt-1 flex items-center gap-2">
-          <ShoppingCart className="text-indigo-400" /> Create Purchase Order
+        <span className="text-[10px] uppercase tracking-widest text-indigo-400 font-bold block mb-1.5">Procurement Cycle</span>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-black mt-1 flex items-center gap-2">
+          <ShoppingCart className="text-indigo-400 shrink-0" size={22} /> Create Purchase Order
         </h1>
-        <p className="text-slate-400 text-sm mt-2 max-w-xl">Initiate procurement acquisitions from verified supply chain vendors with dynamic budget tracking.</p>
+        <p className="text-slate-400 text-xs mt-1.5 max-w-xl">Initiate procurement acquisitions from verified supply chain vendors with dynamic budget tracking.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full max-w-full overflow-hidden">
         
         {/* LEFT SIDE: Clean Inputs form */}
-        <div className="lg:col-span-7 bg-white rounded-[32px] border p-8 shadow-sm space-y-6">
-          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 pb-4 border-b">
-            <ShoppingCart className="text-indigo-600" size={20} /> Order Specifications
+        <div className="lg:col-span-7 bg-white rounded-2xl sm:rounded-[32px] border p-4 sm:p-6 shadow-sm space-y-4 sm:space-y-6 w-full max-w-full">
+          <h2 className="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-1.5 pb-3 border-b">
+            <ShoppingCart className="text-indigo-600 shrink-0" size={18} /> Order Specifications
           </h2>
 
           {loadingData ? (
             <div className="p-10 text-center"><Loader2 className="animate-spin text-indigo-600 mx-auto" /></div>
           ) : (
-            <form onSubmit={handleCreatePO} className="space-y-5 text-xs font-bold text-slate-500">
+            <form onSubmit={handleCreatePO} className="space-y-4 text-[10px] sm:text-xs font-bold text-slate-500">
               <div>
-                <label className="block mb-2 uppercase tracking-wider">Select Vendor Partner</label>
+                <label className="block mb-1.5 uppercase tracking-wider">Select Vendor Partner</label>
                 <select
                   required
                   value={selectedVendor}
                   onChange={(e) => setSelectedVendor(e.target.value)}
-                  className="w-full h-12 border rounded-xl px-4 text-sm outline-none focus:border-indigo-500 bg-slate-50/50 cursor-pointer font-bold text-slate-700"
+                  className="w-full h-10 sm:h-12 border border-slate-200 rounded-xl px-3 text-xs outline-none focus:border-indigo-500 bg-slate-50/50 cursor-pointer font-bold text-slate-700"
                 >
                   <option value="">-- Choose Vendor --</option>
                   {vendorsList.map((v) => (
@@ -130,12 +130,12 @@ export default function CreatePO() {
               </div>
 
               <div>
-                <label className="block mb-2 uppercase tracking-wider">Target SKU Product</label>
+                <label className="block mb-1.5 uppercase tracking-wider">Target SKU Product</label>
                 <select
                   required
                   value={selectedProduct}
                   onChange={(e) => setSelectedProduct(e.target.value)}
-                  className="w-full h-12 border rounded-xl px-4 text-sm outline-none focus:border-indigo-500 bg-slate-50/50 cursor-pointer font-bold text-slate-700"
+                  className="w-full h-10 sm:h-12 border border-slate-200 rounded-xl px-3 text-xs outline-none focus:border-indigo-500 bg-slate-50/50 cursor-pointer font-bold text-slate-700"
                 >
                   <option value="">-- Choose Product --</option>
                   {productsList.map((p) => (
@@ -145,7 +145,7 @@ export default function CreatePO() {
               </div>
 
               <div>
-                <label className="block mb-2 uppercase tracking-wider">Order Quantity</label>
+                <label className="block mb-1.5 uppercase tracking-wider">Order Quantity</label>
                 <input
                   type="number"
                   placeholder="Enter unit quantity"
@@ -153,16 +153,16 @@ export default function CreatePO() {
                   min="1"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="w-full h-12 border rounded-xl px-4 text-sm outline-none focus:border-indigo-500 bg-slate-50/50 text-slate-800 font-bold"
+                  className="w-full h-10 sm:h-12 border border-slate-200 rounded-xl px-4 text-xs sm:text-sm outline-none focus:border-indigo-500 bg-slate-50/50 text-slate-800 font-bold"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={creating}
-                className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition disabled:opacity-50 shadow-md"
+                className="w-full h-10 sm:h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition disabled:opacity-50 shadow-md cursor-pointer"
               >
-                {creating ? <Loader2 className="animate-spin h-4 w-4" /> : <Send size={16} />}
+                {creating ? <Loader2 className="animate-spin h-3.5 w-3.5" /> : <Send size={14} />}
                 Dispatch Purchase Order
               </button>
             </form>
@@ -170,46 +170,46 @@ export default function CreatePO() {
         </div>
 
         {/* RIGHT SIDE: Real-Time calculated billing card */}
-        <div className="lg:col-span-5 bg-slate-950 text-slate-100 rounded-[32px] p-8 shadow-xl border border-slate-800 relative font-mono">
+        <div className="lg:col-span-5 bg-slate-950 text-slate-100 rounded-2xl sm:rounded-[32px] p-4 sm:p-6 shadow-xl border border-slate-800 relative font-mono w-full max-w-full overflow-hidden">
           <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
           
-          <div className="space-y-6">
-            <div className="text-center pb-4 border-b border-dashed border-slate-800">
-              <h3 className="text-sm font-black tracking-widest text-indigo-400">AMDOX SCM DRAFT</h3>
-              <p className="text-[10px] text-slate-500 mt-1">Automated PO Ledger Matching</p>
+          <div className="space-y-4 sm:space-y-6">
+            <div className="text-center pb-3 border-b border-dashed border-slate-800">
+              <h3 className="text-xs sm:text-sm font-black tracking-widest text-indigo-400">AMDOX SCM DRAFT</h3>
+              <p className="text-[9px] text-slate-500 mt-0.5">Automated PO Ledger Matching</p>
             </div>
 
-            <div className="text-xs space-y-3 pt-2">
-              <div className="flex justify-between">
-                <span className="text-slate-500">VENDOR:</span>
-                <span className="text-slate-200 font-bold">
+            <div className="text-[11px] space-y-3 pt-1">
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-500 shrink-0">VENDOR:</span>
+                <span className="text-slate-200 font-bold truncate max-w-[130px] sm:max-w-[180px]">
                   {vendorsList.find(v => v._id === selectedVendor)?.name || "Unspecified"}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">PRODUCT Unit:</span>
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-500 shrink-0">PRODUCT Unit:</span>
                 <span className="text-slate-300">₹{selectedProductPrice} /unit</span>
               </div>
             </div>
 
-            <div className="border-t border-dashed border-slate-800 pt-4 space-y-3 text-xs">
-              <div className="flex justify-between">
-                <span>Subtotal Price:</span>
+            <div className="border-t border-dashed border-slate-800 pt-3 space-y-3 text-[11px]">
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-slate-400">Subtotal Price:</span>
                 <span className="font-bold text-slate-200">₹{costCalculations.subtotal.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between items-center text-slate-400 gap-2">
                 <span>GST (18% integrated):</span>
                 <span>₹{costCalculations.gst.toLocaleString()}</span>
               </div>
               
-              <div className="flex justify-between border-t border-dashed border-slate-800 pt-4 text-base font-black text-indigo-400">
+              <div className="flex justify-between items-center border-t border-dashed border-slate-800 pt-3 text-sm font-black text-indigo-400 gap-2">
                 <span>ESTIMATED TOTAL:</span>
                 <span>₹{costCalculations.total.toLocaleString()}</span>
               </div>
             </div>
 
-            <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-600 border-t border-dashed border-slate-800 pt-4">
-              <ShieldCheck size={12} className="text-indigo-500/50" />
+            <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-600 border-t border-dashed border-slate-800 pt-3">
+              <ShieldCheck size={11} className="text-indigo-500/50" />
               <span>LOGISTICS BUDGET LOCKED</span>
             </div>
           </div>
