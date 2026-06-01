@@ -352,59 +352,65 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
   const isGuestOrLanding = !isAuthenticated;
 
   return (
-    // 🔹 પેડિંગને મુખ્ય બોડી કન્ટેન્ટની બોર્ડર સાથે સંપૂર્ણ સંરેખિત (px-3 sm:px-6) કર્યું છે
     <nav className="sticky top-0 z-30 h-20 px-3 sm:px-6 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-md w-full">
       <Toaster />
 
-      {/* 🔹 LEFT SIDE */}
-      <div className="flex items-center gap-3">
+      {/* 🔹 LEFT SIDE: Conditional Brand Logo with Responsive Adjustments */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {isGuestOrLanding || isJobSeeker ? (
           <Link 
             to="/" 
             onClick={handleBrandClick} 
-            className="flex items-center gap-3 group transition-all"
+            className="flex items-center gap-2 sm:group transition-all min-w-0"
           >
-            <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-all animate-none">
-              <Globe size={20} className="text-white" />
+            {/* લોગો આઇકોન કદ મોબાઇલ ફ્રેન્ડલી રાખ્યું છે */}
+            <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-all shrink-0">
+              <Globe size={18} className="text-white" />
             </div>
-            <div>
-              <span className="text-lg font-black tracking-tight text-slate-800 group-hover:text-indigo-600 transition-colors">
+            <div className="min-w-0">
+              {/* મોબાઇલ પર હેડિંગ સાઇઝ થોડી નાની (text-base) કરેલી છે */}
+              <span className="text-base sm:text-lg font-black tracking-tight text-slate-800 group-hover:text-indigo-600 transition-colors block leading-tight">
                 AMDOX
               </span>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider leading-none">Enterprise ERP</p>
+              {/* મોબાઇલ સ્ક્રીન પર આ સબટેક્સ્ટ આપમેળે હાઇડ થઈ જશે */}
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider leading-none hidden sm:block">
+                Enterprise ERP
+              </p>
             </div>
           </Link>
         ) : (
           <button
             onClick={onMenuClick}
-            className="lg:hidden h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all active:scale-95 cursor-pointer"
+            className="lg:hidden h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all active:scale-95 cursor-pointer shrink-0"
           >
             <Menu size={20} />
           </button>
         )}
       </div>
 
-      {/* 🔹 RIGHT SIDE */}
-      <div className="flex items-center gap-3 ml-auto">
+      {/* 🔹 RIGHT SIDE: Optimized and Space-Safe Action Buttons */}
+      <div className="flex items-center gap-1.5 sm:gap-3 ml-auto shrink-0">
         {isAuthenticated ? (
           <>
             {!isJobSeeker && (
               <>
+                {/* 1. AI Assistant (મોબાઇલ પર લખાણ અદૃશ્ય રહેશે) */}
                 <button
                   onClick={() => navigate("/ai")}
-                  className="h-11 w-11 md:w-auto md:px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10 transition-all active:scale-95 cursor-pointer shrink-0"
+                  className="h-10 w-10 md:w-auto md:px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10 transition-all active:scale-95 cursor-pointer shrink-0"
                 >
-                  <Sparkles size={18} />
-                  <span className="hidden md:inline text-sm">AI Assistant</span>
+                  <Sparkles size={16} />
+                  <span className="hidden md:inline text-xs sm:text-sm">AI Assistant</span>
                 </button>
 
+                {/* 2. Notification Bell */}
                 <div className="relative shrink-0" ref={notificationDropdownRef}>
                   <button
                     onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
-                    className="relative h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center hover:bg-slate-100 text-slate-600 transition-all active:scale-95 cursor-pointer"
+                    className="relative h-10 w-10 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center hover:bg-slate-100 text-slate-600 transition-all active:scale-95 cursor-pointer"
                   >
-                    <Bell size={18} />
-                    {unreadCount > 0 && <div className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />}
+                    <Bell size={16} />
+                    {unreadCount > 0 && <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />}
                   </button>
 
                   {showNotifications && (
@@ -454,12 +460,13 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
               </>
             )}
 
+            {/* 3. User Avatar Panel */}
             <div className="relative shrink-0" ref={profileDropdownRef}>
               <button
                 onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
                 className="flex items-center gap-3 focus:outline-none cursor-pointer active:scale-95 transition-all"
               >
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-md">
                   {user?.name?.charAt(0)?.toUpperCase() || "A"}
                 </div>
               </button>
@@ -498,16 +505,17 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
             </div>
           </>
         ) : (
-          <div className="flex items-center gap-2">
+          // 🔹 લેન્ડિંગ પેજ ગેસ્ટ બટન્સ (મોબાઇલ પર કમ્પેક્ટ આકાર ધારણ કરશે)
+          <div className="flex items-center gap-1 sm:gap-2">
             <Link 
               to="/login" 
-              className="h-11 px-4 rounded-xl text-slate-600 hover:text-slate-900 font-semibold flex items-center transition-all text-sm"
+              className="h-9 sm:h-11 px-2.5 sm:px-4 rounded-xl text-slate-600 hover:text-slate-900 font-bold flex items-center transition-all text-xs sm:text-sm shrink-0"
             >
               Sign In
             </Link>
             <Link 
               to="/register" 
-              className="h-11 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center gap-2 shadow-sm shadow-indigo-600/15 transition-all text-sm"
+              className="h-9 sm:h-11 px-3 sm:px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-1.5 shadow-sm shadow-indigo-600/15 transition-all text-xs sm:text-sm shrink-0"
             >
               Get Started
             </Link>
