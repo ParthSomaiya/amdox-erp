@@ -22,8 +22,7 @@ import {
   Loader2,
   AlertCircle,
   Calculator,
-  X,
-  Sparkle
+  X
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import axios from "axios";
@@ -36,10 +35,7 @@ export default function Home() {
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
-  // આઉટ ઓફ સ્ટોક માટે પૉપઅપ સ્ટેટ
   const [outOfStockProduct, setOutOfStockProduct] = useState(null);
-
-  // સ્માર્ટ ROI કેલ્ક્યુલેટર પ્લગઈન વિજેટ સ્ટેટ
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [employeeCount, setEmployeeCount] = useState(25);
 
@@ -70,7 +66,6 @@ export default function Home() {
   };
 
   const handlePurchase = async (product) => {
-    // જો આઉટ ઓફ સ્ટોક હોય તો ખરીદી અટકાવો અને અદભુત પૉપઅપ દર્શાવો
     if (!product.quantity || product.quantity < 1) {
       setOutOfStockProduct(product);
       return;
@@ -134,7 +129,6 @@ export default function Home() {
   };
 
   const calculatedSavings = useMemo(() => {
-    // અંદાજિત કલાકો બચાવ્યા પ્રતિ કર્મચારી પ્રતિ વર્ષ * સરેરાશ દર
     return employeeCount * 14 * 1800; 
   }, [employeeCount]);
 
@@ -218,8 +212,8 @@ export default function Home() {
     <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-indigo-500/20 overflow-x-hidden w-full relative">
       <Navbar />
 
-      {/* ================= HERO SECTION (HIGH PERFORMANCE ULTRA RESPONSIVE) ================= */}
-      <section className="relative px-4 sm:px-6 lg:px-8 pt-12 pb-16 md:pt-24 md:pb-32 overflow-hidden w-full max-w-[1440px] mx-auto">
+      {/* ================= HERO SECTION ================= */}
+      <section className="relative px-4 sm:px-6 lg:px-8 pt-10 pb-16 md:pt-24 md:pb-32 overflow-hidden w-full max-w-[1440px] mx-auto">
         <div className="absolute top-0 right-0 w-[550px] h-[550px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 left-[5%] w-[450px] h-[450px] rounded-full bg-cyan-500/5 blur-[100px] pointer-events-none" />
 
@@ -247,7 +241,7 @@ export default function Home() {
               Unify HR modules, financial ledgers, sprint project tracking, and live warehouses into one beautifully aligned software ecosystem.
             </motion.p>
 
-            <div className="flex flex-wrap justify-center lg:justify-start gap-3.5 w-full">
+            <div className="flex flex-wrap justify-center lg:justify-start gap-3 w-full">
               <button onClick={() => navigate("/login")} className="flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-5 sm:px-6 py-3.5 text-sm sm:text-base font-bold shadow-lg shadow-indigo-600/10 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer">
                 Access Workspace
                 <ArrowRight size={16} />
@@ -299,12 +293,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= Minimalist Logo Cloud ================= */}
+      {/* ================= Partner Cloud ================= */}
       <section className="py-8 bg-white border-y border-slate-200/60 text-center w-full">
         <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black mb-4 px-4">
           Powering modern enterprises globally
         </p>
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap justify-center items-center gap-6 sm:gap-10 md:gap-16 opacity-50">
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 items-center justify-items-center opacity-50">
           {mockPartners.map((partner, index) => (
             <span key={index} className="text-slate-500 font-black tracking-tight text-base sm:text-lg">
               {partner}
@@ -316,7 +310,7 @@ export default function Home() {
       {/* ================= LIVE PRODUCTS CATALOG SECTION ================= */}
       <section className="px-4 sm:px-6 py-16 sm:py-24 bg-slate-50 border-b border-slate-200/50 w-full">
         <div className="max-w-7xl mx-auto space-y-10 sm:space-y-12 w-full">
-          <div className="text-center max-w-2xl mx-auto space-y-2 sm:space-y-3">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
             <span className="text-xs uppercase tracking-widest text-indigo-600 font-bold flex items-center justify-center gap-1">
               <Sparkles size={12} className="shrink-0" /> Global Shop
             </span>
@@ -353,7 +347,7 @@ export default function Home() {
                         <div className="h-44 sm:h-48 w-full rounded-xl sm:rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 border shrink-0"><Package size={40} /></div>
                       )}
 
-                      <div className="mt-4 sm:mt-6 space-y-1.5 sm:space-y-2">
+                      <div className="mt-4 sm:mt-6 space-y-1.5">
                         <div className="flex items-center justify-between gap-3">
                           <h4 className="font-extrabold text-slate-800 text-sm sm:text-base truncate">{product.name}</h4>
                           <span className={`text-[8px] sm:text-[10px] font-black px-2 py-0.5 rounded-full border shrink-0 ${hasStock ? "bg-green-50 text-green-700 border-green-100" : "bg-red-50 text-red-700 border-red-100"}`}>
@@ -364,11 +358,11 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="mt-4 sm:mt-6 pt-3.5 sm:pt-4 border-t border-slate-200/60 flex items-center justify-between gap-4">
+                    <div className="mt-4 sm:mt-6 pt-3.5 border-t border-slate-200/60 flex items-center justify-between gap-4">
                       <span className="text-lg sm:text-xl font-black text-slate-900">₹{product.price?.toLocaleString()}</span>
                       <button
                         onClick={() => handlePurchase(product)}
-                        className={`h-10 px-4.5 rounded-xl text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer ${
+                        className={`h-10 px-4 rounded-xl text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer ${
                           hasStock ? "bg-indigo-600 hover:bg-indigo-700" : "bg-rose-500 hover:bg-rose-600"
                         }`}
                       >
@@ -826,7 +820,7 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* ================= 🔮 WORLD-CLASS ROI CALCULATOR PLUG-IN (BOTTOM RIGHT) ================= */}
+      {/* ================= 🔮 WORLD-CLASS ROI CALCULATOR PLUG-IN ================= */}
       <div className="fixed bottom-6 right-6 z-[90] flex flex-col items-end">
         <AnimatePresence>
           {isCalculatorOpen && (
@@ -834,7 +828,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 30, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 30, scale: 0.9 }}
-              className="bg-slate-900 text-white rounded-3xl p-6 shadow-2xl border border-slate-800 w-[310px] sm:w-[350px] mb-4 space-y-4"
+              className="bg-slate-900 text-white rounded-3xl p-6 shadow-2xl border border-slate-800 w-[calc(100vw-32px)] sm:w-[360px] max-w-full mb-4 space-y-4"
             >
               <div className="flex justify-between items-center pb-2 border-b border-slate-800">
                 <div className="flex items-center gap-2">
@@ -852,14 +846,14 @@ export default function Home() {
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase text-indigo-300 tracking-wider">Number of Employees</label>
                 <div className="flex items-center justify-between text-white">
-                  <span className="text-xs font-semibold">1 unit</span>
-                  <span className="text-lg font-black text-indigo-400">{employeeCount} members</span>
-                  <span className="text-xs font-semibold">500+</span>
+                  <span className="text-xs font-semibold font-sans">5 units</span>
+                  <span className="text-base sm:text-lg font-black text-indigo-400">{employeeCount} members</span>
+                  <span className="text-xs font-semibold font-sans">500+</span>
                 </div>
                 <input
                   type="range"
                   min="5"
-                  max="300"
+                  max="500"
                   step="5"
                   value={employeeCount}
                   onChange={(e) => setEmployeeCount(Number(e.target.value))}
@@ -870,7 +864,7 @@ export default function Home() {
               <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800/80 text-center space-y-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Estimated Yearly Savings</span>
                 <p className="text-xl sm:text-2xl font-black text-emerald-400">₹{calculatedSavings.toLocaleString()}</p>
-                <p className="text-[9px] text-slate-500">Based on a 14hr / employee administrative reduction rate.</p>
+                <p className="text-[9px] text-slate-500">Based on administrative efficiency improvement metrics.</p>
               </div>
 
               <button
@@ -886,7 +880,6 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* Floating Toggle Button */}
         <button
           onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
           className="h-14 w-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-2xl transition-all hover:scale-105 active:scale-95 cursor-pointer ring-4 ring-indigo-600/20 relative"
