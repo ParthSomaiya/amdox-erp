@@ -49,12 +49,17 @@ export default function Sidebar() {
         bg-white
         border-r
         border-slate-200/80
-        overflow-y-auto
         z-40
         flex
         flex-col
         justify-between
         py-6
+        overflow-y-auto
+        [&::-webkit-scrollbar]:w-1.5
+        [&::-webkit-scrollbar-track]:bg-transparent
+        [&::-webkit-scrollbar-thumb]:bg-slate-200
+        [&::-webkit-scrollbar-thumb]:rounded-full
+        hover:[&::-webkit-scrollbar-thumb]:bg-slate-300
       "
     >
       <div>
@@ -100,7 +105,6 @@ export default function Sidebar() {
                   <Link to="/dashboard" className={menuClass("/dashboard")}>
                     📊 Admin Dashboard
                   </Link>
-                  {/* 🔹 Business Intelligence */}
                   <Link to="/analytics/bi" className={menuClass("/analytics/bi")}>
                     📊 Business Intelligence (BI)
                   </Link>
@@ -129,7 +133,6 @@ export default function Sidebar() {
                   <Link to="/attendance" className={menuClass("/attendance")}>
                     📅 Attendance Log
                   </Link>
-                  {/* 🔹 ઉમેરેલા નવા એનાલિટિકલ એટેન્ડન્સ રિપોર્ટ્સ */}
                   <Link to="/attendance-report" className={menuClass("/attendance-report")}>
                     📊 Attendance Reports
                   </Link>
@@ -151,7 +154,6 @@ export default function Sidebar() {
                   <Link to="/generate-payroll" className={menuClass("/generate-payroll")}>
                     💰 Generate Payroll
                   </Link>
-                  {/* 🔹 ઉમેરેલા લાઈવ પેરોલ રેકોર્ડ્સ લિસ્ટ */}
                   <Link to="/payroll" className={menuClass("/payroll")}>
                     📋 Payroll Records
                   </Link>
@@ -174,7 +176,6 @@ export default function Sidebar() {
                   <Link to="/apply-leave" className={menuClass("/apply-leave")}>
                     📩 Apply for Leave
                   </Link>
-                  {/* 🔹 કર્મચારી પોતાની સેલરી સ્લિપ્સ જોઈ શકશે */}
                   <Link to="/my-payslip" className={menuClass("/my-payslip")}>
                     🧾 My Salary Slips
                   </Link>
@@ -338,11 +339,9 @@ export default function Sidebar() {
                   <Link to="/admin/audit" className={menuClass("/admin/audit")}>
                     📜 Audit Activity
                   </Link>
-                  {/* 🔹 GDPR અને DSR કમ્પ્લાયન્સ મેનુ લિંક */}
                   <Link to="/admin/gdpr" className={menuClass("/admin/gdpr")}>
                     🇪🇺 GDPR & DSR Compliance
                   </Link>
-                  {/* 🔹 નવું નોટિફિકેશન એન્જિન મેનુ લિંક */}
                   <Link to="/admin/notifications-config" className={menuClass("/admin/notifications-config")}>
                     🔔 Notification & Webhook Engine
                   </Link>

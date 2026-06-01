@@ -20,22 +20,28 @@ import {
   Package,
   ShoppingCart,
   Loader2,
+  AlertCircle,
+  Calculator,
+  X,
+  Sparkle
 } from "lucide-react";
 import Navbar from "../components/Navbar";
-import axios from "axios"; // 🔹 ડાયરેક્ટ પબ્લિક કનેક્શન માટે
+import axios from "axios";
 
 export default function Home() {
   const navigate = useNavigate();
 
-  // Interactive Tab State (Module Spotlight)
   const [activeTab, setActiveTab] = useState("hr");
-
-  // Interactive FAQ State
   const [openFaq, setOpenFaq] = useState(null);
-
-  // Live Products State
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+
+  // આઉટ ઓફ સ્ટોક માટે પૉપઅપ સ્ટેટ
+  const [outOfStockProduct, setOutOfStockProduct] = useState(null);
+
+  // સ્માર્ટ ROI કેલ્ક્યુલેટર પ્લગઈન વિજેટ સ્ટેટ
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [employeeCount, setEmployeeCount] = useState(25);
 
   useEffect(() => {
     fetchProducts();
@@ -44,7 +50,6 @@ export default function Home() {
   const fetchProducts = async () => {
     try {
       setLoadingProducts(true);
-      // પબ્લિક યુઆરએલ દ્વારા ડેટા મેળવવો
       const res = await axios.get("http://localhost:5000/api/inventory/product");
       setProducts(res.data || []);
     } catch (err) {
@@ -54,7 +59,6 @@ export default function Home() {
     }
   };
 
-  // Razorpay સ્ક્રિપ્ટ લોડ કરવાનું હેલ્પર
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
       const script = document.createElement("script");
@@ -65,8 +69,13 @@ export default function Home() {
     });
   };
 
-  // Razorpay ટેસ્ટ પેમેન્ટ હેન્ડલર (ડાયરેક્ટ axios પોસ્ટ કોલ સાથે ગેસ્ટ સપોર્ટ)
   const handlePurchase = async (product) => {
+    // જો આઉટ ઓફ સ્ટોક હોય તો ખરીદી અટકાવો અને અદભુત પૉપઅપ દર્શાવો
+    if (!product.quantity || product.quantity < 1) {
+      setOutOfStockProduct(product);
+      return;
+    }
+
     const isScriptLoaded = await loadRazorpayScript();
     if (!isScriptLoaded) {
       alert("Razorpay SDK failed to load. Are you online?");
@@ -74,7 +83,6 @@ export default function Home() {
     }
 
     try {
-      // ૧. બેકએન્ડ પર ઓર્ડર ક્રિએટ કરવો (ડાયરેક્ટ ક્રોસઓરિજિન બાયપાસ કોલ)
       const res = await axios.post("http://localhost:5000/api/payment/create-order", {
         productId: product._id,
         amount: product.price,
@@ -82,9 +90,8 @@ export default function Home() {
 
       const { id: order_id, amount, currency } = res.data;
 
-      // ૨. Razorpay પોપઅપ કન્ફિગરેશન
       const options = {
-        key: "rzp_test_SvHkUG3LDOpePY", // 🔹 તમારો ટેસ્ટ કી આઈડી ઉમેરો
+        key: "rzp_test_SvHkUG3LDOpePY",
         amount: amount,
         currency: currency,
         name: "AMDOX ERP",
@@ -92,7 +99,6 @@ export default function Home() {
         order_id: order_id,
         handler: async function (response) {
           try {
-            // ૩. બેકએન્ડ વેરિફિકેશન (ડાયરેક્ટ axios કોલ)
             const verifyRes = await axios.post("http://localhost:5000/api/payment/verify-order", {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
@@ -102,7 +108,7 @@ export default function Home() {
 
             if (verifyRes.data.success) {
               alert("🎉 Payment Completed Successfully! Stock and Purchase History updated.");
-              fetchProducts(); // હોમપેજ કેટલોગ અપડેટ કરવા
+              fetchProducts();
             }
           } catch (verifyErr) {
             console.error(verifyErr);
@@ -127,7 +133,11 @@ export default function Home() {
     }
   };
 
-  // Staggered Load Variants
+  const calculatedSavings = useMemo(() => {
+    // અંદાજિત કલાકો બચાવ્યા પ્રતિ કર્મચારી પ્રતિ વર્ષ * સરેરાશ દર
+    return employeeCount * 14 * 1800; 
+  }, [employeeCount]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -205,17 +215,17 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-indigo-500/20 overflow-x-hidden w-full">
+    <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-indigo-500/20 overflow-x-hidden w-full relative">
       <Navbar />
 
-      {/* ================= HERO SECTION ================= */}
-      <section className="relative px-4 sm:px-6 pt-12 pb-16 md:pt-28 md:pb-36 overflow-hidden w-full">
+      {/* ================= HERO SECTION (HIGH PERFORMANCE ULTRA RESPONSIVE) ================= */}
+      <section className="relative px-4 sm:px-6 lg:px-8 pt-12 pb-16 md:pt-24 md:pb-32 overflow-hidden w-full max-w-[1440px] mx-auto">
         <div className="absolute top-0 right-0 w-[550px] h-[550px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 left-[5%] w-[450px] h-[450px] rounded-full bg-cyan-500/5 blur-[100px] pointer-events-none" />
 
-        <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center w-full box-border">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center w-full">
           <motion.div
-            className="lg:col-span-7 space-y-6 sm:space-y-8"
+            className="lg:col-span-7 space-y-6 sm:space-y-8 text-center lg:text-left flex flex-col items-center lg:items-start"
             initial="hidden"
             animate="visible"
             variants={containerVariants}
@@ -233,11 +243,11 @@ export default function Home() {
               </span>
             </motion.h1>
 
-            <motion.p variants={itemVariants} className="text-sm sm:text-lg text-slate-500 leading-relaxed max-w-xl">
+            <motion.p variants={itemVariants} className="text-xs sm:text-base md:text-lg text-slate-500 leading-relaxed max-w-xl">
               Unify HR modules, financial ledgers, sprint project tracking, and live warehouses into one beautifully aligned software ecosystem.
             </motion.p>
 
-            <div className="flex flex-wrap gap-3.5">
+            <div className="flex flex-wrap justify-center lg:justify-start gap-3.5 w-full">
               <button onClick={() => navigate("/login")} className="flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-5 sm:px-6 py-3.5 text-sm sm:text-base font-bold shadow-lg shadow-indigo-600/10 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer">
                 Access Workspace
                 <ArrowRight size={16} />
@@ -256,7 +266,7 @@ export default function Home() {
             transition={{ duration: 0.6, type: "spring", stiffness: 70 }}
           >
             <div className="bg-white rounded-2xl sm:rounded-[32px] border border-slate-200/80 p-5 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 w-full box-border">
-              <div className="flex justify-between items-center mb-6 sm:mb-8 pb-3 sm:pb-4 border-b border-slate-100 gap-3">
+              <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100 gap-3">
                 <div className="min-w-0">
                   <h3 className="text-base sm:text-lg font-bold text-slate-800 truncate">Business Health</h3>
                   <p className="text-[10px] sm:text-xs text-slate-400 font-medium truncate">Real-time parameters</p>
@@ -269,19 +279,19 @@ export default function Home() {
               <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs font-semibold">
                 <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 min-w-0">
                   <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate">Total Revenue</span>
-                  <p className="text-xl sm:text-2xl font-black text-slate-800 mt-1 sm:mt-2 truncate">₹85.4L</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-black text-slate-800 mt-1 truncate">₹85.4L</p>
                 </div>
                 <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 min-w-0">
                   <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate">Employees</span>
-                  <p className="text-xl sm:text-2xl font-black text-slate-800 mt-1 sm:mt-2 truncate">120</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-black text-slate-800 mt-1 truncate">120</p>
                 </div>
                 <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 min-w-0">
                   <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate">Live Efficiency</span>
-                  <p className="text-xl sm:text-2xl font-black text-slate-800 mt-1 sm:mt-2 truncate">96.8%</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-black text-slate-800 mt-1 truncate">96.8%</p>
                 </div>
                 <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 min-w-0">
                   <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate">Active Tasks</span>
-                  <p className="text-xl sm:text-2xl font-black text-slate-800 mt-1 sm:mt-2 truncate">48</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-black text-slate-800 mt-1 truncate">48</p>
                 </div>
               </div>
             </div>
@@ -289,7 +299,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= SECTION 1: MINIMALIST LOGO CLOUD ================= */}
+      {/* ================= Minimalist Logo Cloud ================= */}
       <section className="py-8 bg-white border-y border-slate-200/60 text-center w-full">
         <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black mb-4 px-4">
           Powering modern enterprises globally
@@ -303,7 +313,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= 🔹 NEW LIVE PRODUCTS SECTION (PRODUCTION GRADE) ================= */}
+      {/* ================= LIVE PRODUCTS CATALOG SECTION ================= */}
       <section className="px-4 sm:px-6 py-16 sm:py-24 bg-slate-50 border-b border-slate-200/50 w-full">
         <div className="max-w-7xl mx-auto space-y-10 sm:space-y-12 w-full">
           <div className="text-center max-w-2xl mx-auto space-y-2 sm:space-y-3">
@@ -332,6 +342,8 @@ export default function Home() {
                           : `http://localhost:5000/uploads/${cleanPath}`))
                   : "";
 
+                const hasStock = product.quantity && product.quantity > 0;
+
                 return (
                   <div key={product._id} className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-4 sm:p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-300 w-full box-border">
                     <div className="min-w-0">
@@ -344,8 +356,8 @@ export default function Home() {
                       <div className="mt-4 sm:mt-6 space-y-1.5 sm:space-y-2">
                         <div className="flex items-center justify-between gap-3">
                           <h4 className="font-extrabold text-slate-800 text-sm sm:text-base truncate">{product.name}</h4>
-                          <span className={`text-[8px] sm:text-[10px] font-black px-2 py-0.5 rounded-full border shrink-0 ${product.quantity > 0 ? "bg-green-50 text-green-700 border-green-100" : "bg-red-50 text-red-700 border-red-100"}`}>
-                            {product.quantity > 0 ? "In Stock" : "Out of Stock"}
+                          <span className={`text-[8px] sm:text-[10px] font-black px-2 py-0.5 rounded-full border shrink-0 ${hasStock ? "bg-green-50 text-green-700 border-green-100" : "bg-red-50 text-red-700 border-red-100"}`}>
+                            {hasStock ? "In Stock" : "Out of Stock"}
                           </span>
                         </div>
                         <p className="text-slate-500 text-[10px] sm:text-xs">Stock Remaining: {product.quantity || 0} units</p>
@@ -356,10 +368,11 @@ export default function Home() {
                       <span className="text-lg sm:text-xl font-black text-slate-900">₹{product.price?.toLocaleString()}</span>
                       <button
                         onClick={() => handlePurchase(product)}
-                        disabled={product.quantity < 1}
-                        className="h-10 px-4.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 text-white disabled:text-slate-400 font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+                        className={`h-10 px-4.5 rounded-xl text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer ${
+                          hasStock ? "bg-indigo-600 hover:bg-indigo-700" : "bg-rose-500 hover:bg-rose-600"
+                        }`}
                       >
-                        <ShoppingCart size={13} /> Buy Now
+                        <ShoppingCart size={13} /> {hasStock ? "Buy Now" : "Request Stock"}
                       </button>
                     </div>
                   </div>
@@ -370,10 +383,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= SECTION 2: INTERACTIVE MODULE SPOTLIGHT (TABS) ================= */}
-      <section className="px-4 sm:px-6 py-16 sm:py-24 bg-slate-50 border-b border-slate-200/50 w-full">
+      {/* ================= INTERACTIVE TABS MODULE ================= */}
+      <section className="px-4 sm:px-6 py-16 sm:py-24 bg-white border-b border-slate-200/50 w-full">
         <div className="max-w-7xl mx-auto w-full">
-          <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 space-y-2 sm:space-y-3">
+          <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 space-y-2">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
               One Workspace, Multi-Module Sync
             </h2>
@@ -384,10 +397,10 @@ export default function Home() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full">
             {/* Left Tabs */}
-            <div className="lg:col-span-4 space-y-3.5 w-full">
+            <div className="lg:col-span-4 space-y-3 w-full">
               <button
                 onClick={() => setActiveTab("hr")}
-                className={`w-full p-4 sm:p-5 rounded-xl sm:rounded-2xl text-left border transition-all flex items-start gap-3.5 cursor-pointer ${
+                className={`w-full p-4 rounded-xl text-left border transition-all flex items-start gap-3.5 cursor-pointer ${
                   activeTab === "hr"
                     ? "bg-white border-indigo-200 shadow-md ring-2 ring-indigo-50"
                     : "bg-transparent border-transparent hover:bg-slate-100"
@@ -404,7 +417,7 @@ export default function Home() {
 
               <button
                 onClick={() => setActiveTab("finance")}
-                className={`w-full p-4 sm:p-5 rounded-xl sm:rounded-2xl text-left border transition-all flex items-start gap-3.5 cursor-pointer ${
+                className={`w-full p-4 rounded-xl text-left border transition-all flex items-start gap-3.5 cursor-pointer ${
                   activeTab === "finance"
                     ? "bg-white border-indigo-200 shadow-md ring-2 ring-indigo-50"
                     : "bg-transparent border-transparent hover:bg-slate-100"
@@ -421,7 +434,7 @@ export default function Home() {
 
               <button
                 onClick={() => setActiveTab("projects")}
-                className={`w-full p-4 sm:p-5 rounded-xl sm:rounded-2xl text-left border transition-all flex items-start gap-3.5 cursor-pointer ${
+                className={`w-full p-4 rounded-xl text-left border transition-all flex items-start gap-3.5 cursor-pointer ${
                   activeTab === "projects"
                     ? "bg-white border-indigo-200 shadow-md ring-2 ring-indigo-50"
                     : "bg-transparent border-transparent hover:bg-slate-100"
@@ -438,7 +451,7 @@ export default function Home() {
             </div>
 
             {/* Right tab output panel */}
-            <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-md min-h-[280px] sm:min-h-[350px] flex flex-col justify-between w-full box-border">
+            <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-5 sm:p-8 shadow-md min-h-[250px] flex flex-col justify-between w-full box-border">
               <AnimatePresence mode="wait">
                 {activeTab === "hr" && (
                   <motion.div
@@ -447,7 +460,7 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-4 sm:space-y-6"
+                    className="space-y-4"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] sm:text-xs font-bold shrink-0">HR Workspace</span>
@@ -470,7 +483,7 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-4 sm:space-y-6"
+                    className="space-y-4"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] sm:text-xs font-bold shrink-0">Finance Module</span>
@@ -493,7 +506,7 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-4 sm:space-y-6"
+                    className="space-y-4"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="px-2.5 py-0.5 bg-sky-50 text-sky-600 rounded-lg text-[10px] sm:text-xs font-bold shrink-0">Agile Project Suite</span>
@@ -517,7 +530,7 @@ export default function Home() {
       {/* ================= CORE FEATURES MODULES SECTION ================= */}
       <section className="px-4 sm:px-6 py-16 sm:py-24 bg-white w-full">
         <div className="mx-auto max-w-7xl w-full">
-          <div className="text-center mb-12 sm:mb-20 space-y-2 sm:space-y-3">
+          <div className="text-center mb-12 sm:mb-20 space-y-2">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
               Everything Your Business Needs
             </h2>
@@ -542,7 +555,7 @@ export default function Home() {
                     {feature.icon}
                   </div>
                   <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">{feature.title}</h3>
-                  <p className="text-slate-500 text-xs sm:text-sm mt-2 sm:mt-3 leading-relaxed">{feature.description}</p>
+                  <p className="text-slate-500 text-xs sm:text-sm mt-2 leading-relaxed">{feature.description}</p>
                 </div>
               </motion.div>
             ))}
@@ -550,51 +563,51 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= SECTION 3: SYSTEM METRICS HIGHLIGHT ================= */}
-      <section className="px-4 sm:px-6 py-12 sm:py-16 bg-slate-50 border-y border-slate-200/50 w-full">
+      {/* ================= SYSTEM METRICS HIGHLIGHT ================= */}
+      <section className="px-4 sm:px-6 py-12 bg-slate-50 border-y border-slate-200/50 w-full">
         <div className="max-w-7xl mx-auto w-full">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 w-full">
-            <div className="text-center space-y-1.5 p-4 sm:p-5 bg-white border border-slate-200/60 rounded-xl sm:rounded-2xl shadow-sm min-w-0">
-              <div className="h-9 w-9 mx-auto rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-base shrink-0">
+            <div className="text-center space-y-1.5 p-4 bg-white border border-slate-200/60 rounded-xl shadow-sm">
+              <div className="h-9 w-9 mx-auto rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                 <Activity size={16} />
               </div>
-              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1 sm:mt-2">99.99%</h3>
+              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">99.99%</h3>
               <p className="text-xs font-semibold text-slate-500">Service SLA Uptime</p>
             </div>
 
-            <div className="text-center space-y-1.5 p-4 sm:p-5 bg-white border border-slate-200/60 rounded-xl sm:rounded-2xl shadow-sm min-w-0">
-              <div className="h-9 w-9 mx-auto rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-base shrink-0">
+            <div className="text-center space-y-1.5 p-4 bg-white border border-slate-200/60 rounded-xl shadow-sm">
+              <div className="h-9 w-9 mx-auto rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                 <Database size={16} />
               </div>
-              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1 sm:mt-2">₹45B+</h3>
+              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">₹45B+</h3>
               <p className="text-xs font-semibold text-slate-500">Workspace Invoices Handled</p>
             </div>
 
-            <div className="text-center space-y-1.5 p-4 sm:p-5 bg-white border border-slate-200/60 rounded-xl sm:rounded-2xl shadow-sm min-w-0">
-              <div className="h-9 w-9 mx-auto rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-base shrink-0">
+            <div className="text-center space-y-1.5 p-4 bg-white border border-slate-200/60 rounded-xl shadow-sm">
+              <div className="h-9 w-9 mx-auto rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                 <Lock size={16} />
               </div>
-              <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1 sm:mt-2">MFA / 2FA</h3>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">MFA / 2FA</h3>
               <p className="text-xs font-semibold text-slate-500">Enterprise Access Security</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ================= SECTION 4: TESTIMONIALS SECTION ================= */}
-      <section className="px-4 sm:px-6 py-16 sm:py-24 bg-white w-full">
+      {/* ================= TESTIMONIALS SECTION ================= */}
+      <section className="px-4 sm:px-6 py-16 bg-white w-full">
         <div className="max-w-7xl mx-auto w-full">
-          <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 space-y-2 sm:space-y-3">
+          <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 space-y-2">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">What business leaders say</h2>
             <p className="text-slate-400 text-xs sm:text-sm">Read reviews from executives managing operations through AMDOX.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 w-full">
-            <div className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-slate-50/50 border border-slate-200/80 space-y-3.5 sm:space-y-4 min-w-0 box-border">
+            <div className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-slate-50/50 border border-slate-200/80 space-y-3.5 min-w-0 box-border">
               <p className="text-slate-600 text-xs sm:text-sm italic leading-relaxed">
                 "Consolidating our local office HR processes, payroll spreadsheets, and engineering task board sprints into a single integrated platform has significantly optimized our administrative workflows."
               </p>
-              <div className="flex items-center gap-3 pt-3.5 sm:pt-4 border-t border-slate-200">
+              <div className="flex items-center gap-3 pt-4 border-t border-slate-200">
                 <div className="h-9 w-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
                   VK
                 </div>
@@ -605,11 +618,11 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-slate-50/50 border border-slate-200/80 space-y-3.5 sm:space-y-4 min-w-0 box-border">
+            <div className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-slate-50/50 border border-slate-200/80 space-y-3.5 min-w-0 box-border">
               <p className="text-slate-600 text-xs sm:text-sm italic leading-relaxed">
                 "Having automatic GST calculation matrices directly within accounts receivable ledgers eliminated external calculations. The live dashboard keeps our executives updated on budget utilization."
               </p>
-              <div className="flex items-center gap-3 pt-3.5 sm:pt-4 border-t border-slate-200">
+              <div className="flex items-center gap-3 pt-4 border-t border-slate-200">
                 <div className="h-9 w-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
                   AP
                 </div>
@@ -623,17 +636,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= SECTION 5: PLANS & PRICING PREVIEW ================= */}
-      <section className="px-4 sm:px-6 py-16 sm:py-24 bg-slate-50 border-t border-slate-200/50 w-full">
+      {/* ================= PLANS & PRICING PREVIEW ================= */}
+      <section className="px-4 sm:px-6 py-16 bg-slate-50 border-t border-slate-200/50 w-full">
         <div className="max-w-7xl mx-auto w-full">
-          <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 space-y-2 sm:space-y-3">
+          <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 space-y-2">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Flexible, Transparent Pricing</h2>
             <p className="text-slate-400 text-xs sm:text-sm">Choose the tier that matches your company scale.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto w-full">
-            {/* Startup Plan */}
-            <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-5 sm:p-8 shadow-sm space-y-4 sm:space-y-6 w-full box-border">
+            {/* Growth Plan */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-8 shadow-sm space-y-4 w-full box-border">
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-slate-800">Growth Plan</h3>
                 <p className="text-slate-400 text-[11px] sm:text-xs mt-1">For growing teams</p>
@@ -642,7 +655,7 @@ export default function Home() {
                 <span className="text-3xl sm:text-4xl font-black">₹4,999</span>
                 <span className="text-slate-400 text-xs sm:text-sm font-semibold">/ month</span>
               </div>
-              <ul className="space-y-2.5 sm:space-y-3 text-slate-600 text-xs sm:text-sm font-semibold">
+              <ul className="space-y-2.5 text-slate-600 text-xs sm:text-sm font-semibold">
                 <li className="flex items-center gap-2"><Check size={14} className="text-emerald-500 shrink-0" /> Complete HR Module</li>
                 <li className="flex items-center gap-2"><Check size={14} className="text-emerald-500 shrink-0" /> Basic Finance Ledger</li>
                 <li className="flex items-center gap-2"><Check size={14} className="text-emerald-500 shrink-0" /> Task Management board</li>
@@ -657,7 +670,7 @@ export default function Home() {
             </div>
 
             {/* Enterprise Plan */}
-            <div className="bg-white rounded-2xl sm:rounded-3xl border-2 border-indigo-500 p-5 sm:p-8 shadow-md space-y-4 sm:space-y-6 relative w-full box-border">
+            <div className="bg-white rounded-2xl border-2 border-indigo-500 p-5 sm:p-8 shadow-md space-y-4 relative w-full box-border">
               <div className="absolute top-4 right-4 bg-indigo-50 text-indigo-600 text-[9px] uppercase font-black tracking-wider px-2.5 py-0.5 rounded-full border border-indigo-100 shrink-0">
                 Popular
               </div>
@@ -669,7 +682,7 @@ export default function Home() {
                 <span className="text-3xl sm:text-4xl font-black">₹14,999</span>
                 <span className="text-slate-400 text-xs sm:text-sm font-semibold">/ month</span>
               </div>
-              <ul className="space-y-2.5 sm:space-y-3 text-slate-600 text-xs sm:text-sm font-semibold">
+              <ul className="space-y-2.5 text-slate-600 text-xs sm:text-sm font-semibold">
                 <li className="flex items-center gap-2"><Check size={14} className="text-emerald-500 shrink-0" /> Every single Growth module</li>
                 <li className="flex items-center gap-2"><Check size={14} className="text-emerald-500 shrink-0" /> Advanced AI forecasting panel</li>
                 <li className="flex items-center gap-2"><Check size={14} className="text-emerald-500 shrink-0" /> Complete multi-tenant API control</li>
@@ -686,10 +699,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= SECTION 6: FAQ ACCORDION ================= */}
-      <section className="px-4 sm:px-6 py-16 sm:py-24 bg-white border-t border-slate-200/50 w-full">
+      {/* ================= FAQ ACCORDION ================= */}
+      <section className="px-4 sm:px-6 py-16 bg-white border-t border-slate-200/50 w-full">
         <div className="max-w-4xl mx-auto w-full">
-          <div className="text-center mb-10 sm:mb-16 space-y-2 sm:space-y-3">
+          <div className="text-center mb-10 sm:mb-16 space-y-2">
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Frequently Asked Questions</h2>
             <p className="text-slate-400 text-xs sm:text-sm">Common questions regarding data structures and platforms.</p>
           </div>
@@ -698,7 +711,7 @@ export default function Home() {
             {faqs.map((faq, index) => {
               const isOpen = openFaq === index;
               return (
-                <div key={index} className="border border-slate-200 rounded-xl sm:rounded-2xl overflow-hidden transition bg-slate-50/30 w-full box-border">
+                <div key={index} className="border border-slate-200 rounded-xl overflow-hidden transition bg-slate-50/30 w-full box-border">
                   <button
                     onClick={() => setOpenFaq(isOpen ? null : index)}
                     className="w-full p-4 sm:p-5 flex items-center justify-between font-bold text-left text-slate-800 hover:bg-slate-50 transition text-xs sm:text-sm cursor-pointer gap-4"
@@ -729,27 +742,27 @@ export default function Home() {
       </section>
 
       {/* ================= CALL-TO-ACTION (CTA) ================= */}
-      <section className="px-4 sm:px-6 pb-16 sm:pb-24 bg-white w-full">
+      <section className="px-4 sm:px-6 pb-16 bg-white w-full">
         <div className="mx-auto max-w-5xl rounded-2xl sm:rounded-[32px] bg-gradient-to-r from-indigo-900 to-slate-900 p-6 sm:p-10 md:p-14 text-center text-white shadow-xl relative overflow-hidden border border-indigo-950 w-full box-border">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
           
-          <div className="relative z-10 space-y-4 sm:space-y-6">
+          <div className="relative z-10 space-y-4">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
               Ready to automate your operations?
             </h2>
             <p className="text-slate-300 max-w-2xl mx-auto text-xs sm:text-sm">
               Configure your multi-tenant employee workspace and activate AI-powered resource forecasting instantly.
             </p>
-            <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full">
+            <div className="pt-3 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full">
               <button
                 onClick={() => navigate("/register")}
-                className="h-10 sm:h-12 px-5 sm:px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm transition shadow-md shadow-indigo-600/10 hover:scale-[1.02] cursor-pointer w-full sm:w-auto text-center"
+                className="h-10 sm:h-12 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm transition shadow-md shadow-indigo-600/10 hover:scale-[1.02] cursor-pointer w-full sm:w-auto text-center"
               >
                 Get Started Free
               </button>
               <button
                 onClick={() => navigate("/login")}
-                className="h-10 sm:h-12 px-5 sm:px-6 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs sm:text-sm transition border border-white/10 cursor-pointer w-full sm:w-auto text-center"
+                className="h-10 sm:h-12 px-6 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs sm:text-sm transition border border-white/10 cursor-pointer w-full sm:w-auto text-center"
               >
                 Contact Sales
               </button>
@@ -762,6 +775,126 @@ export default function Home() {
       <footer className="border-t border-slate-200 bg-slate-50 px-4 sm:px-6 py-8 sm:py-10 text-center text-slate-400 text-[10px] sm:text-xs font-semibold w-full box-border">
         © 2026 AMDOX ERP — High-Performance SaaS Architecture
       </footer>
+
+      {/* ================= 🚨 OUT OF STOCK MODAL POPUP ================= */}
+      <AnimatePresence>
+        {outOfStockProduct && (
+          <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-slate-100 shadow-2xl relative text-center space-y-4"
+            >
+              <button
+                onClick={() => setOutOfStockProduct(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="h-14 w-14 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto shrink-0">
+                <AlertCircle size={28} />
+              </div>
+
+              <div className="space-y-1.5">
+                <h3 className="text-lg font-black text-slate-800">Item Currently Unavailable</h3>
+                <p className="text-slate-500 text-xs sm:text-sm">
+                  We apologize, but <span className="font-bold text-slate-700">"{outOfStockProduct.name}"</span> is currently out of stock. We have notified the warehouse administrator.
+                </p>
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  onClick={() => setOutOfStockProduct(null)}
+                  className="flex-1 h-11 border border-slate-200 hover:bg-slate-50 rounded-xl text-slate-600 font-bold text-xs sm:text-sm transition cursor-pointer"
+                >
+                  Go Back
+                </button>
+                <button
+                  onClick={() => {
+                    alert(`Request logged for ${outOfStockProduct.name}! We will update you via email.`);
+                    setOutOfStockProduct(null);
+                  }}
+                  className="flex-1 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs sm:text-sm shadow-md transition cursor-pointer"
+                >
+                  Notify Me
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ================= 🔮 WORLD-CLASS ROI CALCULATOR PLUG-IN (BOTTOM RIGHT) ================= */}
+      <div className="fixed bottom-6 right-6 z-[90] flex flex-col items-end">
+        <AnimatePresence>
+          {isCalculatorOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.9 }}
+              className="bg-slate-900 text-white rounded-3xl p-6 shadow-2xl border border-slate-800 w-[310px] sm:w-[350px] mb-4 space-y-4"
+            >
+              <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <Calculator size={18} className="text-indigo-400" />
+                  <span className="font-extrabold text-sm tracking-tight text-indigo-100">Live ROI Simulator</span>
+                </div>
+                <button
+                  onClick={() => setIsCalculatorOpen(false)}
+                  className="text-slate-400 hover:text-white transition cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-indigo-300 tracking-wider">Number of Employees</label>
+                <div className="flex items-center justify-between text-white">
+                  <span className="text-xs font-semibold">1 unit</span>
+                  <span className="text-lg font-black text-indigo-400">{employeeCount} members</span>
+                  <span className="text-xs font-semibold">500+</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="300"
+                  step="5"
+                  value={employeeCount}
+                  onChange={(e) => setEmployeeCount(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                />
+              </div>
+
+              <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800/80 text-center space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Estimated Yearly Savings</span>
+                <p className="text-xl sm:text-2xl font-black text-emerald-400">₹{calculatedSavings.toLocaleString()}</p>
+                <p className="text-[9px] text-slate-500">Based on a 14hr / employee administrative reduction rate.</p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setIsCalculatorOpen(false);
+                  navigate("/register");
+                }}
+                className="w-full h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
+              >
+                Claim Your Savings <ArrowRight size={12} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Floating Toggle Button */}
+        <button
+          onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
+          className="h-14 w-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-2xl transition-all hover:scale-105 active:scale-95 cursor-pointer ring-4 ring-indigo-600/20 relative"
+        >
+          <div className="absolute inset-0 rounded-full animate-ping bg-indigo-600/10 pointer-events-none" />
+          {isCalculatorOpen ? <X size={22} /> : <Calculator size={22} />}
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,13 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Bell, Sparkles, LogOut, KeyRound, Check, ShieldCheck, Clock, User, X, Mail, ShieldAlert, CheckCheck, Menu } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
+import { Bell, Sparkles, LogOut, KeyRound, Check, ShieldCheck, Clock, User, X, Mail, ShieldAlert, CheckCheck, Menu, Globe } from "lucide-react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import io from "socket.io-client";
 import toast, { Toaster } from "react-hot-toast";
 import API from "../services/api";
 
 export default function Navbar({ onMenuClick, isJobSeeker }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const logout = () => {
     localStorage.clear();
@@ -20,6 +21,7 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "null") || {};
   const isAuthenticated = !!token && !!user.email;
+  const role = user?.role;
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -32,6 +34,14 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
   const [otpInput, setOtpInput] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
+
+  // પેજ રીફ્રેશ હેન્ડલર
+  const handleBrandClick = (e) => {
+    if (location.pathname === "/") {
+      e.preventDefault();
+      window.location.reload();
+    }
+  };
 
   useEffect(() => {
     window.triggerAmdoxNotification = async (title, message, type = "GENERAL") => {
@@ -341,13 +351,34 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
 
   const unreadCount = notifications.filter((item) => !item.isRead).length;
 
+  // ૧. લેન્ડિંગ પેજ અથવા અન-ઓથેન્ટિકેટેડ વિઝિટર કન્ડીશન
+  const isGuestOrLanding = !isAuthenticated;
+
   return (
-    <nav className="sticky top-0 z-50 h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-md w-full">
       <Toaster />
 
-      {/* 🔹 ડાબી બાજુ: લોગો હટાવીને મોબાઇલ હેમબર્ગર મેનૂ બટન સેટ કર્યું */}
-      <div className="flex items-center">
-        {!isJobSeeker && (
+      {/* 🔹 LEFT SIDE: કન્ડિશનલ બ્રાન્ડ લોગો અથવા મોબાઇલ હેમબર્ગર */}
+      <div className="flex items-center gap-3">
+        {isGuestOrLanding || isJobSeeker ? (
+          // લેન્ડિંગ પેજ અથવા જોબ સીકર માટે આંતરરાષ્ટ્રીય સ્તરનો Amdox લોગો
+          <Link 
+            to="/" 
+            onClick={handleBrandClick} 
+            className="flex items-center gap-3 group transition-all"
+          >
+            <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-all">
+              <Globe size={20} className="animate-spin-slow text-white" />
+            </div>
+            <div>
+              <span className="text-lg font-black tracking-tight text-slate-800 group-hover:text-indigo-600 transition-colors">
+                AMDOX
+              </span>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider leading-none">Enterprise ERP</p>
+            </div>
+          </Link>
+        ) : (
+          // એડમિન/કર્મચારી લૉગિન વખતે ડાબી બાજુ લોગો નહીં દેખાય, માત્ર મોબાઇલ હેમબર્ગર બટન દેખાશે
           <button
             onClick={onMenuClick}
             className="lg:hidden h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all active:scale-95 cursor-pointer"
@@ -357,77 +388,81 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
         )}
       </div>
 
-      {/* 🔹 જમણી બાજુ: ૩ આઇકોન્સનું પર્ફેક્ટ મોર્ડન સંરેખણ (Alignment) */}
+      {/* 🔹 RIGHT SIDE: રોલ મુજબ સચોટ ગોઠવેલ આઇકોન અને બટનો */}
       <div className="flex items-center gap-3">
         {isAuthenticated ? (
           <>
-            {/* AI Assistant (મોબાઇલ પર આઇકોન અને ડેસ્કટોપ પર ફુલ ટેક્સ્ટ બટન) */}
-            <button
-              onClick={() => navigate("/ai")}
-              className="h-11 w-11 md:w-auto md:px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10 transition-all active:scale-95 cursor-pointer"
-            >
-              <Sparkles size={18} />
-              <span className="hidden md:inline text-sm">AI Assistant</span>
-            </button>
+            {/* જોબ સીકર સિવાયના તમામ કર્મચારીઓ/એડમિન માટે ૩ આઇકોન સેટ */}
+            {!isJobSeeker && (
+              <>
+                {/* ૧. AI Assistant (મોબાઇલ પર આઇકોન અને ડેસ્કટોપ પર ફુલ ટેક્સ્ટ બટન) */}
+                <button
+                  onClick={() => navigate("/ai")}
+                  className="h-11 w-11 md:w-auto md:px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10 transition-all active:scale-95 cursor-pointer shrink-0"
+                >
+                  <Sparkles size={18} />
+                  <span className="hidden md:inline text-sm">AI Assistant</span>
+                </button>
 
-            {/* Notification Bell with Dropdown */}
-            <div className="relative" ref={notificationDropdownRef}>
-              <button
-                onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
-                className="relative h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center hover:bg-slate-100 text-slate-600 transition-all active:scale-95 cursor-pointer"
-              >
-                <Bell size={18} />
-                {unreadCount > 0 && <div className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />}
-              </button>
+                {/* ૨. Notification Bell with Dropdown */}
+                <div className="relative shrink-0" ref={notificationDropdownRef}>
+                  <button
+                    onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
+                    className="relative h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center hover:bg-slate-100 text-slate-600 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <Bell size={18} />
+                    {unreadCount > 0 && <div className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />}
+                  </button>
 
-              {/* 🔔 LIVE NOTIFICATION POPUP DROPDOWN */}
-              {showNotifications && (
-                <div className="absolute right-[-48px] sm:right-0 mt-3 w-[calc(100vw-32px)] sm:w-96 max-w-[360px] sm:max-w-none bg-white border border-slate-200 shadow-2xl rounded-2xl z-50 overflow-hidden">
-                  <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                    <h4 className="font-bold text-slate-800 text-sm">Notifications ({unreadCount})</h4>
-                    {unreadCount > 0 && (
-                      <button onClick={markAllAsRead} className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
-                        <CheckCheck size={14} /> Mark all read
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="max-h-96 overflow-y-auto divide-y divide-slate-100">
-                    {notifications.length === 0 ? (
-                      <div className="p-8 text-center text-slate-400 text-xs">
-                        No notifications found.
+                  {showNotifications && (
+                    <div className="absolute right-[-48px] sm:right-0 mt-3 w-[calc(100vw-32px)] sm:w-96 max-w-[360px] sm:max-w-none bg-white border border-slate-200 shadow-2xl rounded-2xl z-50 overflow-hidden">
+                      <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                        <h4 className="font-bold text-slate-800 text-sm">Notifications ({unreadCount})</h4>
+                        {unreadCount > 0 && (
+                          <button onClick={markAllAsRead} className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
+                            <CheckCheck size={14} /> Mark all read
+                          </button>
+                        )}
                       </div>
-                    ) : (
-                      notifications.map((n) => (
-                        <div
-                          key={n._id}
-                          onClick={() => handleMarkSingleRead(n._id)}
-                          className={`p-4 text-left transition cursor-pointer hover:bg-slate-50 ${!n.isRead ? "bg-indigo-50/20" : ""}`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <h5 className="font-bold text-slate-800 text-xs">{n.title}</h5>
-                            {!n.isRead && <span className="h-2 w-2 rounded-full bg-indigo-600 shrink-0 mt-1" />}
+
+                      <div className="max-h-96 overflow-y-auto divide-y divide-slate-100">
+                        {notifications.length === 0 ? (
+                          <div className="p-8 text-center text-slate-400 text-xs">
+                            No notifications found.
                           </div>
-                          <p className="text-slate-500 text-[11px] mt-1 leading-relaxed">{n.message}</p>
-                          <span className="text-[9px] text-slate-400 font-semibold block mt-2">
-                            {new Date(n.createdAt).toLocaleTimeString()}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
+                        ) : (
+                          notifications.map((n) => (
+                            <div
+                              key={n._id}
+                              onClick={() => handleMarkSingleRead(n._id)}
+                              className={`p-4 text-left transition cursor-pointer hover:bg-slate-50 ${!n.isRead ? "bg-indigo-50/20" : ""}`}
+                            >
+                              <div className="flex justify-between items-start">
+                                <h5 className="font-bold text-slate-800 text-xs">{n.title}</h5>
+                                {!n.isRead && <span className="h-2 w-2 rounded-full bg-indigo-600 shrink-0 mt-1" />}
+                              </div>
+                              <p className="text-slate-500 text-[11px] mt-1 leading-relaxed">{n.message}</p>
+                              <span className="text-[9px] text-slate-400 font-semibold block mt-2">
+                                {new Date(n.createdAt).toLocaleTimeString()}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
 
-                  <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
-                    <Link to="/notifications" onClick={() => setShowNotifications(false)} className="text-xs font-bold text-indigo-600 hover:underline">
-                      View all activity stream
-                    </Link>
-                  </div>
+                      <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
+                        <Link to="/notifications" onClick={() => setShowNotifications(false)} className="text-xs font-bold text-indigo-600 hover:underline">
+                          View all activity stream
+                        </Link>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
 
-            {/* Profile PopUp */}
-            <div className="relative" ref={profileDropdownRef}>
+            {/* ૩. Profile Avatar (તમામ ઓથેન્ટિકેટેડ યુઝર્સ માટે) */}
+            <div className="relative shrink-0" ref={profileDropdownRef}>
               <button
                 onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
                 className="flex items-center gap-3 focus:outline-none cursor-pointer active:scale-95 transition-all"
@@ -471,16 +506,27 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
             </div>
           </>
         ) : (
-          <>
-            <Link to="/login" className="h-11 px-3 sm:px-5 rounded-xl text-slate-600 hover:text-slate-900 font-semibold flex items-center gap-2 transition-all text-xs sm:text-sm">Sign In</Link>
-            <Link to="/register" className="h-11 px-3 sm:px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center gap-2 shadow-sm transition-all text-xs sm:text-sm">Get Started</Link>
-          </>
+          // મહેમાનો અથવા લેન્ડિંગ પેજ વિઝિટર્સ માટે માત્ર "Sign In" અને "Get Started" બટનો
+          <div className="flex items-center gap-2">
+            <Link 
+              to="/login" 
+              className="h-11 px-4 rounded-xl text-slate-600 hover:text-slate-900 font-semibold flex items-center transition-all text-sm"
+            >
+              Sign In
+            </Link>
+            <Link 
+              to="/register" 
+              className="h-11 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center gap-2 shadow-sm shadow-indigo-600/15 transition-all text-sm"
+            >
+              Get Started
+            </Link>
+          </div>
         )}
       </div>
 
       {showResetModal && createPortal(
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-6">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center pb-3 border-b">
               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                 <ShieldAlert size={20} className="text-indigo-600" /> Change Password
