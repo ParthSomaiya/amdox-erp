@@ -23,7 +23,7 @@ import RegisterChoice from "./pages/RegisterChoice";
 
 // ================= HR =================
 import ApplyLeave from "./pages/ApplyLeave";
-import LeaveManagement from "./pages/LeaveManagement";
+import LeaveManagement from "./pages/hr/LeaveManagement";
 import Attendance from "./pages/Attendance";
 import AttendanceReport from "./pages/AttendanceReport";
 import AttendanceCalendar from "./pages/hr/AttendanceCalendar";
