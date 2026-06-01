@@ -265,7 +265,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-indigo-500/20 overflow-x-hidden w-full relative">
+    <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-indigo-500/20 overflow-x-hidden w-full relative animate-none">
       <Navbar />
 
       {/* ================= HERO SECTION ================= */}
@@ -946,4 +946,4 @@ export default function Home() {
       </div>
     </div>
   );
-}
+} 
