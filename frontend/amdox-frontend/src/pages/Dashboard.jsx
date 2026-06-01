@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Users, Briefcase, CalendarDays, IndianRupee, ArrowUpRight, Clock, Plus, CheckCircle2, Loader2, TrendingUp, BarChart2 } from "lucide-react";
+import { Users, Briefcase, CalendarDays, IndianRupee, ArrowUpRight, Clock, Plus, CheckCircle2, Loader2, BarChart2 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
@@ -32,7 +32,6 @@ export default function Dashboard() {
     ]
   });
 
-  // મોક આલેખ ડેટા
   const chartData = [
     { name: "Mon", productivity: 72 },
     { name: "Tue", productivity: 85 },

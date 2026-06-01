@@ -212,24 +212,24 @@ export default function Home() {
     <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-indigo-500/20 overflow-x-hidden w-full relative">
       <Navbar />
 
-      {/* ================= HERO SECTION ================= */}
-      <section className="relative px-4 sm:px-6 lg:px-8 pt-10 pb-16 md:pt-24 md:pb-32 overflow-hidden w-full max-w-[1440px] mx-auto">
+      {/* ================= HERO SECTION (HIGH PERFORMANCE ULTRA RESPONSIVE) ================= */}
+      <section className="relative px-3 sm:px-6 lg:px-8 pt-6 sm:pt-12 pb-12 sm:pb-20 md:pt-24 md:pb-32 overflow-hidden w-full max-w-[1440px] mx-auto">
         <div className="absolute top-0 right-0 w-[550px] h-[550px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 left-[5%] w-[450px] h-[450px] rounded-full bg-cyan-500/5 blur-[100px] pointer-events-none" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 lg:gap-16 items-center w-full">
           <motion.div
-            className="lg:col-span-7 space-y-6 sm:space-y-8 text-center lg:text-left flex flex-col items-center lg:items-start"
+            className="lg:col-span-7 space-y-5 sm:space-y-8 text-center lg:text-left flex flex-col items-center lg:items-start"
             initial="hidden"
             animate="visible"
             variants={containerVariants}
           >
-            <motion.div variants={itemVariants} className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200/80 bg-indigo-50/50 px-3.5 py-1 text-[11px] sm:text-xs font-semibold text-indigo-700">
-              <Zap size={12} className="animate-pulse shrink-0" />
+            <motion.div variants={itemVariants} className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200/80 bg-indigo-50/50 px-3.5 py-1 text-[10px] sm:text-xs font-semibold text-indigo-700">
+              <Zap size={11} className="animate-pulse shrink-0" />
               SaaS Multi-Tenant ERP Workspace
             </motion.div>
 
-            <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] text-slate-900">
+            <motion.h1 variants={itemVariants} className="text-2xl sm:text-4xl md:text-5xl lg:text-7xl font-black tracking-tight leading-[1.15] text-slate-900">
               Intelligent ERP
               <br />
               <span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
@@ -237,16 +237,16 @@ export default function Home() {
               </span>
             </motion.h1>
 
-            <motion.p variants={itemVariants} className="text-xs sm:text-base md:text-lg text-slate-500 leading-relaxed max-w-xl">
+            <motion.p variants={itemVariants} className="text-[11px] sm:text-base text-slate-500 leading-relaxed max-w-xl">
               Unify HR modules, financial ledgers, sprint project tracking, and live warehouses into one beautifully aligned software ecosystem.
             </motion.p>
 
-            <div className="flex flex-wrap justify-center lg:justify-start gap-3 w-full">
-              <button onClick={() => navigate("/login")} className="flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-5 sm:px-6 py-3.5 text-sm sm:text-base font-bold shadow-lg shadow-indigo-600/10 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer">
+            <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3 w-full sm:w-auto">
+              <button onClick={() => navigate("/login")} className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-5 sm:px-6 py-3.5 text-xs sm:text-sm font-bold shadow-lg shadow-indigo-600/10 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer">
                 Access Workspace
-                <ArrowRight size={16} />
+                <ArrowRight size={14} />
               </button>
-              <button onClick={() => navigate("/register")} className="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-5 sm:px-6 py-3.5 text-sm sm:text-base font-semibold transition-all active:scale-95 cursor-pointer">
+              <button onClick={() => navigate("/register")} className="w-full sm:w-auto rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-5 sm:px-6 py-3.5 text-xs sm:text-sm font-semibold transition-all active:scale-95 cursor-pointer">
                 Create Account
               </button>
             </div>
@@ -259,33 +259,33 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, type: "spring", stiffness: 70 }}
           >
-            <div className="bg-white rounded-2xl sm:rounded-[32px] border border-slate-200/80 p-5 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 w-full box-border">
-              <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100 gap-3">
+            <div className="bg-white rounded-2xl sm:rounded-[32px] border border-slate-200/80 p-4 sm:p-6 md:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 w-full box-border">
+              <div className="flex justify-between items-center mb-4 sm:mb-6 pb-3 border-b border-slate-100 gap-3">
                 <div className="min-w-0">
-                  <h3 className="text-base sm:text-lg font-bold text-slate-800 truncate">Business Health</h3>
-                  <p className="text-[10px] sm:text-xs text-slate-400 font-medium truncate">Real-time parameters</p>
+                  <h3 className="text-sm sm:text-base md:text-lg font-bold text-slate-800 truncate">Business Health</h3>
+                  <p className="text-[9px] sm:text-xs text-slate-400 font-medium truncate">Real-time parameters</p>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                  <TrendingUp size={16} />
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                  <TrendingUp size={15} />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs font-semibold">
-                <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 min-w-0">
-                  <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate">Total Revenue</span>
-                  <p className="text-lg sm:text-xl md:text-2xl font-black text-slate-800 mt-1 truncate">₹85.4L</p>
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-4 text-[10px] sm:text-xs font-semibold">
+                <div className="p-3 rounded-lg sm:rounded-2xl bg-slate-50 border border-slate-100 min-w-0">
+                  <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-wider block truncate">Total Revenue</span>
+                  <p className="text-base sm:text-xl md:text-2xl font-black text-slate-800 mt-0.5 truncate">₹85.4L</p>
                 </div>
-                <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 min-w-0">
-                  <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate">Employees</span>
-                  <p className="text-lg sm:text-xl md:text-2xl font-black text-slate-800 mt-1 truncate">120</p>
+                <div className="p-3 rounded-lg sm:rounded-2xl bg-slate-50 border border-slate-100 min-w-0">
+                  <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-wider block truncate">Employees</span>
+                  <p className="text-base sm:text-xl md:text-2xl font-black text-slate-800 mt-0.5 truncate">120</p>
                 </div>
-                <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 min-w-0">
-                  <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate">Live Efficiency</span>
-                  <p className="text-lg sm:text-xl md:text-2xl font-black text-slate-800 mt-1 truncate">96.8%</p>
+                <div className="p-3 rounded-lg sm:rounded-2xl bg-slate-50 border border-slate-100 min-w-0">
+                  <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-wider block truncate">Live Efficiency</span>
+                  <p className="text-base sm:text-xl md:text-2xl font-black text-slate-800 mt-0.5 truncate">96.8%</p>
                 </div>
-                <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 min-w-0">
-                  <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate">Active Tasks</span>
-                  <p className="text-lg sm:text-xl md:text-2xl font-black text-slate-800 mt-1 truncate">48</p>
+                <div className="p-3 rounded-lg sm:rounded-2xl bg-slate-50 border border-slate-100 min-w-0">
+                  <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-wider block truncate">Active Tasks</span>
+                  <p className="text-base sm:text-xl md:text-2xl font-black text-slate-800 mt-0.5 truncate">48</p>
                 </div>
               </div>
             </div>
@@ -294,13 +294,13 @@ export default function Home() {
       </section>
 
       {/* ================= Partner Cloud ================= */}
-      <section className="py-8 bg-white border-y border-slate-200/60 text-center w-full">
-        <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black mb-4 px-4">
+      <section className="py-6 sm:py-8 bg-white border-y border-slate-200/60 text-center w-full">
+        <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-slate-400 font-black mb-3 px-3">
           Powering modern enterprises globally
         </p>
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 items-center justify-items-center opacity-50">
           {mockPartners.map((partner, index) => (
-            <span key={index} className="text-slate-500 font-black tracking-tight text-base sm:text-lg">
+            <span key={index} className="text-slate-500 font-black tracking-tight text-sm sm:text-base md:text-lg">
               {partner}
             </span>
           ))}
@@ -308,23 +308,23 @@ export default function Home() {
       </section>
 
       {/* ================= LIVE PRODUCTS CATALOG SECTION ================= */}
-      <section className="px-4 sm:px-6 py-16 sm:py-24 bg-slate-50 border-b border-slate-200/50 w-full">
-        <div className="max-w-7xl mx-auto space-y-10 sm:space-y-12 w-full">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
+      <section className="px-3 sm:px-6 py-12 sm:py-20 bg-slate-50 border-b border-slate-200/50 w-full">
+        <div className="max-w-7xl mx-auto space-y-8 sm:space-y-12 w-full">
+          <div className="text-center max-w-2xl mx-auto space-y-1 sm:space-y-2">
             <span className="text-xs uppercase tracking-widest text-indigo-600 font-bold flex items-center justify-center gap-1">
               <Sparkles size={12} className="shrink-0" /> Global Shop
             </span>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Enterprise Tools & Products</h2>
+            <h2 className="text-xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Enterprise Tools & Products</h2>
             <p className="text-slate-500 text-xs sm:text-sm">Purchase modern systems seamlessly with secure Razorpay test gates.</p>
           </div>
 
           {loadingProducts ? (
-            <div className="py-20 text-center">
-              <Loader2 className="animate-spin h-8 w-8 text-indigo-600 mx-auto" />
-              <p className="mt-4 text-slate-500 font-semibold text-xs">Synchronizing live catalog...</p>
+            <div className="py-16 text-center">
+              <Loader2 className="animate-spin h-7 w-7 text-indigo-600 mx-auto" />
+              <p className="mt-3 text-slate-500 font-semibold text-xs">Synchronizing live catalog...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8 w-full">
               {products.map((product) => {
                 const currentPath = product.image || product.imageUrl;
                 const cleanPath = currentPath ? currentPath.replace(/^\//, "") : "";
@@ -339,34 +339,34 @@ export default function Home() {
                 const hasStock = product.quantity && product.quantity > 0;
 
                 return (
-                  <div key={product._id} className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-4 sm:p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-300 w-full box-border">
+                  <div key={product._id} className="bg-white rounded-2xl p-4 sm:p-6 flex flex-col justify-between hover:shadow-xl transition-all duration-300 w-full box-border">
                     <div className="min-w-0">
                       {imgUrl ? (
-                        <img src={imgUrl} alt={product.name} crossOrigin="anonymous" className="h-44 sm:h-48 w-full rounded-xl sm:rounded-2xl object-cover border bg-white" />
+                        <img src={imgUrl} alt={product.name} crossOrigin="anonymous" className="h-40 sm:h-48 w-full rounded-xl object-cover border bg-white" />
                       ) : (
-                        <div className="h-44 sm:h-48 w-full rounded-xl sm:rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 border shrink-0"><Package size={40} /></div>
+                        <div className="h-40 sm:h-48 w-full rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 border shrink-0"><Package size={36} /></div>
                       )}
 
-                      <div className="mt-4 sm:mt-6 space-y-1.5">
+                      <div className="mt-4 space-y-1">
                         <div className="flex items-center justify-between gap-3">
-                          <h4 className="font-extrabold text-slate-800 text-sm sm:text-base truncate">{product.name}</h4>
-                          <span className={`text-[8px] sm:text-[10px] font-black px-2 py-0.5 rounded-full border shrink-0 ${hasStock ? "bg-green-50 text-green-700 border-green-100" : "bg-red-50 text-red-700 border-red-100"}`}>
+                          <h4 className="font-extrabold text-slate-800 text-xs sm:text-sm md:text-base truncate">{product.name}</h4>
+                          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border shrink-0 ${hasStock ? "bg-green-50 text-green-700 border-green-100" : "bg-red-50 text-red-700 border-red-100"}`}>
                             {hasStock ? "In Stock" : "Out of Stock"}
                           </span>
                         </div>
-                        <p className="text-slate-500 text-[10px] sm:text-xs">Stock Remaining: {product.quantity || 0} units</p>
+                        <p className="text-slate-400 text-[10px] sm:text-xs">Stock Remaining: {product.quantity || 0} units</p>
                       </div>
                     </div>
 
-                    <div className="mt-4 sm:mt-6 pt-3.5 border-t border-slate-200/60 flex items-center justify-between gap-4">
-                      <span className="text-lg sm:text-xl font-black text-slate-900">₹{product.price?.toLocaleString()}</span>
+                    <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between gap-3">
+                      <span className="text-base sm:text-lg md:text-xl font-black text-slate-900">₹{product.price?.toLocaleString()}</span>
                       <button
                         onClick={() => handlePurchase(product)}
-                        className={`h-10 px-4 rounded-xl text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer ${
+                        className={`h-9 px-3.5 rounded-lg text-white font-bold text-[10px] sm:text-xs flex items-center gap-1 transition-all shadow-md cursor-pointer ${
                           hasStock ? "bg-indigo-600 hover:bg-indigo-700" : "bg-rose-500 hover:bg-rose-600"
                         }`}
                       >
-                        <ShoppingCart size={13} /> {hasStock ? "Buy Now" : "Request Stock"}
+                        <ShoppingCart size={12} /> {hasStock ? "Buy Now" : "Request Stock"}
                       </button>
                     </div>
                   </div>
@@ -377,11 +377,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= INTERACTIVE TABS MODULE ================= */}
-      <section className="px-4 sm:px-6 py-16 sm:py-24 bg-white border-b border-slate-200/50 w-full">
-        <div className="max-w-7xl mx-auto w-full">
-          <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 space-y-2">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+      {/* ================= INTERACTIVE TABS MODULE (HIGH MOBILE RESPONSIVE TABS) ================= */}
+      <section className="px-3 sm:px-6 py-12 sm:py-20 bg-white border-b border-slate-200/50 w-full max-w-[1440px] mx-auto">
+        <div className="w-full">
+          <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12 space-y-1">
+            <h2 className="text-xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
               One Workspace, Multi-Module Sync
             </h2>
             <p className="text-slate-500 text-xs sm:text-sm">
@@ -389,63 +389,63 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full">
-            {/* Left Tabs */}
-            <div className="lg:col-span-4 space-y-3 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-start w-full">
+            {/* Left Tabs (મોબાઇલ પર આડો સ્ક્રોલબાર અને ડેસ્કટોપ પર વર્ટીકલ મેનૂ સેટ કર્યું) */}
+            <div className="lg:col-span-4 flex lg:flex-col gap-2 overflow-x-auto pb-3 lg:pb-0 scrollbar-none shrink-0 w-full">
               <button
                 onClick={() => setActiveTab("hr")}
-                className={`w-full p-4 rounded-xl text-left border transition-all flex items-start gap-3.5 cursor-pointer ${
+                className={`flex-1 lg:flex-initial p-3 sm:p-4 rounded-xl text-left border transition-all flex items-center lg:items-start gap-2.5 sm:gap-3.5 cursor-pointer shrink-0 min-w-[180px] lg:min-w-0 ${
                   activeTab === "hr"
-                    ? "bg-white border-indigo-200 shadow-md ring-2 ring-indigo-50"
-                    : "bg-transparent border-transparent hover:bg-slate-100"
+                    ? "bg-indigo-50/50 border-indigo-200 shadow-sm ring-2 ring-indigo-50/20"
+                    : "bg-transparent border-transparent hover:bg-slate-50"
                 }`}
               >
-                <div className={`p-2 rounded-lg shrink-0 ${activeTab === "hr" ? "bg-indigo-50 text-indigo-600" : "bg-slate-200 text-slate-500"}`}>
-                  <Users size={18} />
+                <div className={`p-1.5 sm:p-2 rounded-lg shrink-0 ${activeTab === "hr" ? "bg-indigo-50 text-indigo-600" : "bg-slate-200 text-slate-500"}`}>
+                  <Users size={16} />
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-xs sm:text-sm">Onboard & Approve</h4>
-                  <p className="text-[11px] text-slate-400 mt-1">Accept leave applications and compute attendance rates instantly.</p>
+                <div className="min-w-0">
+                  <h4 className="font-bold text-slate-800 text-[11px] sm:text-xs md:text-sm truncate">Onboard & Approve</h4>
+                  <p className="hidden lg:block text-[10px] text-slate-400 mt-0.5 leading-tight">Accept leave applications and compute attendance rates instantly.</p>
                 </div>
               </button>
 
               <button
                 onClick={() => setActiveTab("finance")}
-                className={`w-full p-4 rounded-xl text-left border transition-all flex items-start gap-3.5 cursor-pointer ${
+                className={`flex-1 lg:flex-initial p-3 sm:p-4 rounded-xl text-left border transition-all flex items-center lg:items-start gap-2.5 sm:gap-3.5 cursor-pointer shrink-0 min-w-[180px] lg:min-w-0 ${
                   activeTab === "finance"
-                    ? "bg-white border-indigo-200 shadow-md ring-2 ring-indigo-50"
-                    : "bg-transparent border-transparent hover:bg-slate-100"
+                    ? "bg-indigo-50/50 border-indigo-200 shadow-sm ring-2 ring-indigo-50/20"
+                    : "bg-transparent border-transparent hover:bg-slate-50"
                 }`}
               >
-                <div className={`p-2 rounded-lg shrink-0 ${activeTab === "finance" ? "bg-indigo-50 text-indigo-600" : "bg-slate-200 text-slate-500"}`}>
-                  <Building2 size={18} />
+                <div className={`p-1.5 sm:p-2 rounded-lg shrink-0 ${activeTab === "finance" ? "bg-indigo-50 text-indigo-600" : "bg-slate-200 text-slate-500"}`}>
+                  <Building2 size={16} />
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-xs sm:text-sm">Ledgers & Tax Compliance</h4>
-                  <p className="text-[11px] text-slate-400 mt-1">Review accounts receivable, compute GST, and verify vendor bills.</p>
+                <div className="min-w-0">
+                  <h4 className="font-bold text-slate-800 text-[11px] sm:text-xs md:text-sm truncate">Ledgers & Tax Compliance</h4>
+                  <p className="hidden lg:block text-[10px] text-slate-400 mt-0.5 leading-tight">Review accounts receivable, compute GST, and verify vendor bills.</p>
                 </div>
               </button>
 
               <button
                 onClick={() => setActiveTab("projects")}
-                className={`w-full p-4 rounded-xl text-left border transition-all flex items-start gap-3.5 cursor-pointer ${
+                className={`flex-1 lg:flex-initial p-3 sm:p-4 rounded-xl text-left border transition-all flex items-center lg:items-start gap-2.5 sm:gap-3.5 cursor-pointer shrink-0 min-w-[180px] lg:min-w-0 ${
                   activeTab === "projects"
-                    ? "bg-white border-indigo-200 shadow-md ring-2 ring-indigo-50"
-                    : "bg-transparent border-transparent hover:bg-slate-100"
+                    ? "bg-indigo-50/50 border-indigo-200 shadow-sm ring-2 ring-indigo-50/20"
+                    : "bg-transparent border-transparent hover:bg-slate-50"
                 }`}
               >
-                <div className={`p-2 rounded-lg shrink-0 ${activeTab === "projects" ? "bg-indigo-50 text-indigo-600" : "bg-slate-200 text-slate-500"}`}>
-                  <BarChart3 size={18} />
+                <div className={`p-1.5 sm:p-2 rounded-lg shrink-0 ${activeTab === "projects" ? "bg-indigo-50 text-indigo-600" : "bg-slate-200 text-slate-500"}`}>
+                  <BarChart3 size={16} />
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-xs sm:text-sm">Taskboards & Burn Rates</h4>
-                  <p className="text-[11px] text-slate-400 mt-1">Create agile tasks, schedule projects, and check developer sprint burnouts.</p>
+                <div className="min-w-0">
+                  <h4 className="font-bold text-slate-800 text-[11px] sm:text-xs md:text-sm truncate">Taskboards & Burn Rates</h4>
+                  <p className="hidden lg:block text-[10px] text-slate-400 mt-0.5 leading-tight">Create agile tasks, schedule projects, and check developer sprint burnouts.</p>
                 </div>
               </button>
             </div>
 
             {/* Right tab output panel */}
-            <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-5 sm:p-8 shadow-md min-h-[250px] flex flex-col justify-between w-full box-border">
+            <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm min-h-[180px] sm:min-h-[220px] flex flex-col justify-between w-full box-border">
               <AnimatePresence mode="wait">
                 {activeTab === "hr" && (
                   <motion.div
@@ -454,16 +454,16 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-4"
+                    className="space-y-3"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] sm:text-xs font-bold shrink-0">HR Workspace</span>
-                      <h3 className="text-base sm:text-xl font-bold text-slate-800">Automate Onboarding</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] sm:text-xs font-bold shrink-0">HR Workspace</span>
+                      <h3 className="text-sm sm:text-lg md:text-xl font-bold text-slate-800">Automate Onboarding</h3>
                     </div>
-                    <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">
+                    <p className="text-slate-500 text-xs leading-relaxed sm:text-sm">
                       Whenever a new employee joins the organization, credentials are automatically created, invitations are generated, and background databases initialize safe workspace rows.
                     </p>
-                    <div className="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-100 text-[11px] sm:text-xs font-semibold text-slate-600 flex justify-between items-center gap-4">
+                    <div className="bg-slate-50 p-2.5 sm:p-4 rounded-xl border border-slate-100 text-[10px] sm:text-xs font-semibold text-slate-600 flex justify-between items-center gap-3">
                       <span>✓ Auto-triggered OTP verification emails sent</span>
                       <span className="text-indigo-600 shrink-0">Active</span>
                     </div>
@@ -477,16 +477,16 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-4"
+                    className="space-y-3"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] sm:text-xs font-bold shrink-0">Finance Module</span>
-                      <h3 className="text-base sm:text-xl font-bold text-slate-800">GST Compliance Invoicing</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] sm:text-xs font-bold shrink-0">Finance Module</span>
+                      <h3 className="text-sm sm:text-lg md:text-xl font-bold text-slate-800">GST Compliance Invoicing</h3>
                     </div>
-                    <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">
+                    <p className="text-slate-500 text-xs leading-relaxed sm:text-sm">
                       Every generated invoice automatically computes localized state and central tax rates, saving accounting overhead. Integration with Plaid and Stripe processes payouts instantly.
                     </p>
-                    <div className="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-100 text-[11px] sm:text-xs font-semibold text-slate-600 flex justify-between items-center gap-4">
+                    <div className="bg-slate-50 p-2.5 sm:p-4 rounded-xl border border-slate-100 text-[10px] sm:text-xs font-semibold text-slate-600 flex justify-between items-center gap-3">
                       <span>✓ Invoices automatically recorded in General Ledgers</span>
                       <span className="text-emerald-600 shrink-0">Active</span>
                     </div>
@@ -500,16 +500,16 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-4"
+                    className="space-y-3"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <span className="px-2.5 py-0.5 bg-sky-50 text-sky-600 rounded-lg text-[10px] sm:text-xs font-bold shrink-0">Agile Project Suite</span>
-                      <h3 className="text-base sm:text-xl font-bold text-slate-800">Kanban Board & Sprint Scopes</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 bg-sky-50 text-sky-600 rounded-lg text-[9px] sm:text-xs font-bold shrink-0">Agile Project Suite</span>
+                      <h3 className="text-sm sm:text-lg md:text-xl font-bold text-slate-800">Kanban Board & Sprint Scopes</h3>
                     </div>
-                    <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">
+                    <p className="text-slate-500 text-xs leading-relaxed sm:text-sm">
                       Sync developer activities and milestones directly. Interactive drag-and-drop actions automatically update burndown charts and allocate corporate timesheets.
                     </p>
-                    <div className="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-100 text-[11px] sm:text-xs font-semibold text-slate-600 flex justify-between items-center gap-4">
+                    <div className="bg-slate-50 p-2.5 sm:p-4 rounded-xl border border-slate-100 text-[10px] sm:text-xs font-semibold text-slate-600 flex justify-between items-center gap-3">
                       <span>✓ Agile task progress synchronized with Gantt charts</span>
                       <span className="text-sky-600 shrink-0">Active</span>
                     </div>

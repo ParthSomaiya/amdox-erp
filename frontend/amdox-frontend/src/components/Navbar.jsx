@@ -35,7 +35,6 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
   const [newPassword, setNewPassword] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
 
-  // પેજ રીફ્રેશ હેન્ડલર
   const handleBrandClick = (e) => {
     if (location.pathname === "/") {
       e.preventDefault();
@@ -350,25 +349,23 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
   };
 
   const unreadCount = notifications.filter((item) => !item.isRead).length;
-
-  // ૧. લેન્ડિંગ પેજ અથવા અન-ઓથેન્ટિકેટેડ વિઝિટર કન્ડીશન
   const isGuestOrLanding = !isAuthenticated;
 
   return (
-    <nav className="sticky top-0 z-50 h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-md w-full">
+    // 🔹 પેડિંગને મુખ્ય બોડી કન્ટેન્ટની બોર્ડર સાથે સંપૂર્ણ સંરેખિત (px-3 sm:px-6) કર્યું છે
+    <nav className="sticky top-0 z-30 h-20 px-3 sm:px-6 flex items-center justify-between border-b border-slate-200/80 bg-white/80 backdrop-blur-md w-full">
       <Toaster />
 
-      {/* 🔹 LEFT SIDE: કન્ડિશનલ બ્રાન્ડ લોગો અથવા મોબાઇલ હેમબર્ગર */}
+      {/* 🔹 LEFT SIDE */}
       <div className="flex items-center gap-3">
         {isGuestOrLanding || isJobSeeker ? (
-          // લેન્ડિંગ પેજ અથવા જોબ સીકર માટે આંતરરાષ્ટ્રીય સ્તરનો Amdox લોગો
           <Link 
             to="/" 
             onClick={handleBrandClick} 
             className="flex items-center gap-3 group transition-all"
           >
-            <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-all">
-              <Globe size={20} className="animate-spin-slow text-white" />
+            <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-all animate-none">
+              <Globe size={20} className="text-white" />
             </div>
             <div>
               <span className="text-lg font-black tracking-tight text-slate-800 group-hover:text-indigo-600 transition-colors">
@@ -378,7 +375,6 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
             </div>
           </Link>
         ) : (
-          // એડમિન/કર્મચારી લૉગિન વખતે ડાબી બાજુ લોગો નહીં દેખાય, માત્ર મોબાઇલ હેમબર્ગર બટન દેખાશે
           <button
             onClick={onMenuClick}
             className="lg:hidden h-11 w-11 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all active:scale-95 cursor-pointer"
@@ -388,14 +384,12 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
         )}
       </div>
 
-      {/* 🔹 RIGHT SIDE: રોલ મુજબ સચોટ ગોઠવેલ આઇકોન અને બટનો */}
-      <div className="flex items-center gap-3">
+      {/* 🔹 RIGHT SIDE */}
+      <div className="flex items-center gap-3 ml-auto">
         {isAuthenticated ? (
           <>
-            {/* જોબ સીકર સિવાયના તમામ કર્મચારીઓ/એડમિન માટે ૩ આઇકોન સેટ */}
             {!isJobSeeker && (
               <>
-                {/* ૧. AI Assistant (મોબાઇલ પર આઇકોન અને ડેસ્કટોપ પર ફુલ ટેક્સ્ટ બટન) */}
                 <button
                   onClick={() => navigate("/ai")}
                   className="h-11 w-11 md:w-auto md:px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10 transition-all active:scale-95 cursor-pointer shrink-0"
@@ -404,7 +398,6 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
                   <span className="hidden md:inline text-sm">AI Assistant</span>
                 </button>
 
-                {/* ૨. Notification Bell with Dropdown */}
                 <div className="relative shrink-0" ref={notificationDropdownRef}>
                   <button
                     onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
@@ -415,7 +408,7 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
                   </button>
 
                   {showNotifications && (
-                    <div className="absolute right-[-48px] sm:right-0 mt-3 w-[calc(100vw-32px)] sm:w-96 max-w-[360px] sm:max-w-none bg-white border border-slate-200 shadow-2xl rounded-2xl z-50 overflow-hidden">
+                    <div className="absolute right-0 mt-3 w-[calc(100vw-32px)] sm:w-96 max-w-[360px] sm:max-w-none bg-white border border-slate-200 shadow-2xl rounded-2xl z-50 overflow-hidden">
                       <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                         <h4 className="font-bold text-slate-800 text-sm">Notifications ({unreadCount})</h4>
                         {unreadCount > 0 && (
@@ -461,7 +454,6 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
               </>
             )}
 
-            {/* ૩. Profile Avatar (તમામ ઓથેન્ટિકેટેડ યુઝર્સ માટે) */}
             <div className="relative shrink-0" ref={profileDropdownRef}>
               <button
                 onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
@@ -473,7 +465,7 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
               </button>
 
               {showProfile && (
-                <div className="absolute right-[-16px] sm:right-0 mt-3 w-[calc(100vw-32px)] sm:w-80 max-w-[280px] sm:max-w-none bg-white border border-slate-200 shadow-xl rounded-2xl z-50 overflow-hidden">
+                <div className="absolute right-0 mt-3 w-[calc(100vw-32px)] sm:w-80 max-w-[280px] sm:max-w-none bg-white border border-slate-200 shadow-xl rounded-2xl z-50 overflow-hidden">
                   <div className="p-5 bg-slate-50 border-b border-slate-100 text-center">
                     <div className="h-16 w-16 mx-auto rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-black">
                       {user?.name?.charAt(0)?.toUpperCase() || "A"}
@@ -506,7 +498,6 @@ export default function Navbar({ onMenuClick, isJobSeeker }) {
             </div>
           </>
         ) : (
-          // મહેમાનો અથવા લેન્ડિંગ પેજ વિઝિટર્સ માટે માત્ર "Sign In" અને "Get Started" બટનો
           <div className="flex items-center gap-2">
             <Link 
               to="/login" 
