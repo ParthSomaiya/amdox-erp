@@ -10,6 +10,7 @@ const socket = io("http://localhost:5000", {
 
 export default function LeaveManagement() {
   const [leaves, setLeaves] = useState([]);
+  const [employees, setEmployees] = useState([]); // 🔹 ઓટો-મેપિંગ માટે કર્મચારીઓનો સ્ટેટ
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
@@ -26,13 +27,21 @@ export default function LeaveManagement() {
     };
   }, []);
 
-  // 🚀 સેલ્ફ-હીલિંગ અને પ્રોટેક્ટેડ ડ્યુઅલ લોડર્સ અલ્ગોરિધમ
   const fetchLeaves = async () => {
     try {
       setLoading(true);
+      
+      // ૧. કર્મચારીઓની યાદી લોડ કરો જેથી આઈડીને નામ સાથે મેપ કરી શકાય
+      try {
+        const empRes = await API.get("/hr/employees");
+        setEmployees(empRes.data || []);
+      } catch (err) {
+        console.warn("Could not load employees list for ID mapping.");
+      }
+
       let serverLeaves = [];
 
-      // ૧. પહેલા માસ્ટર એચઆર લિસ્ટ એપીઆઈ કોલ ટ્રાય કરો
+      // ૨. પહેલા માસ્ટર એચઆર લિસ્ટ એપીઆઈ કોલ ટ્રાય કરો
       try {
         const res = await API.get("/hr/leaves");
         if (res.data && Array.isArray(res.data)) {
@@ -42,7 +51,7 @@ export default function LeaveManagement() {
         console.warn("/hr/leaves endpoint was unreachable, falling back to /leave API.");
       }
 
-      // ૨. જો માસ્ટર લિસ્ટ ખાલી હોય અથવા ઉપરનો કોલ નિષ્ફળ ગયો હોય, તો /leave એન્ડપોઇન્ટ ટ્રાય કરો
+      // ૩. વૈકલ્પિક એન્ડપોઇન્ટ ટ્રાય કરો
       if (serverLeaves.length === 0) {
         try {
           const res = await API.get("/leave");
@@ -54,7 +63,7 @@ export default function LeaveManagement() {
         }
       }
 
-      // ૩. લોકલ સ્ટોરેજ સિંક અને રિયલ-ટાઇમ મર્જર પ્રક્રિયા
+      // ૪. લોકલ સ્ટોરેજ સિંક પ્રક્રિયા
       const localLeaves = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
       const mergedLeaves = [...serverLeaves];
 
@@ -64,7 +73,6 @@ export default function LeaveManagement() {
         }
       });
 
-      // ૪. તારીખ મુજબ સચોટ સોર્ટિંગ
       mergedLeaves.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       setLeaves(mergedLeaves);
     } catch (err) {
@@ -76,12 +84,40 @@ export default function LeaveManagement() {
     }
   };
 
+  // 🚀 સેલ્ફ-હીલિંગ આઈડી લિંકર: ફ્લેટ સ્ટ્રિંગ આઈડીને કર્મચારીના વાસ્તવિક નામ સાથે લિંક કરશે
   const resolveEmployeeName = (leave) => {
     if (!leave) return "Employee";
-    if (leave.employeeId?.userId?.name) return leave.employeeId.userId.name;
-    if (leave.employeeId?.name) return leave.employeeId.name;
-    if (leave.userId?.name) return leave.userId.name;
+
+    // A. જો employeeId અથવા userId ફ્લેટ સ્ટ્રિંગ હોય, તો લિસ્ટમાંથી મેપ કરો
+    const empIdStr = typeof leave.employeeId === "object" ? leave.employeeId?._id : leave.employeeId;
+    if (empIdStr && employees.length > 0) {
+      const matchedEmp = employees.find((e) => String(e._id) === String(empIdStr));
+      if (matchedEmp) {
+        return matchedEmp.userId?.name || matchedEmp.name || "Employee";
+      }
+    }
+
+    const userIdStr = typeof leave.userId === "object" ? leave.userId?._id : leave.userId;
+    if (userIdStr && employees.length > 0) {
+      const matchedEmp = employees.find(
+        (e) => String(e.userId?._id || e.userId) === String(userIdStr)
+      );
+      if (matchedEmp) {
+        return matchedEmp.userId?.name || matchedEmp.name || "Employee";
+      }
+    }
+
+    // B. જો ઓબ્જેક્ટ પોપ્યુલેટેડ હોય તો સીધું નામ મેળવો
+    if (leave.employeeId && typeof leave.employeeId === "object") {
+      if (leave.employeeId.userId?.name) return leave.employeeId.userId.name;
+      if (leave.employeeId.name) return leave.employeeId.name;
+    }
+    if (leave.userId && typeof leave.userId === "object") {
+      if (leave.userId.name) return leave.userId.name;
+    }
     if (leave.employeeName) return leave.employeeName;
+    if (leave.name) return leave.name;
+
     return "Employee";
   };
 
@@ -90,7 +126,7 @@ export default function LeaveManagement() {
       const empName = resolveEmployeeName(leave).toLowerCase();
       return empName.includes(search.toLowerCase());
     });
-  }, [leaves, search]);
+  }, [leaves, search, employees]);
 
   const updateStatus = async (leaveId, status) => {
     try {

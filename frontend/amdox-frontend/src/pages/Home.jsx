@@ -188,6 +188,28 @@ export default function Home() {
     }, 1400);
   };
 
+  // 🔹 પ્લગઇન્સ ટૉગલ કરવા અને ક્લેશ અટકાવવા માટે હેલ્પર ફંક્શન્સ
+  const openSecurityPlugin = () => {
+    setIsSecurityOpen(true);
+    setIsCalculatorOpen(false);
+    setIsAiOpen(false);
+    setIsSuiteOpen(false);
+  };
+
+  const openRoiPlugin = () => {
+    setIsCalculatorOpen(true);
+    setIsSecurityOpen(false);
+    setIsAiOpen(false);
+    setIsSuiteOpen(false);
+  };
+
+  const openAiPlugin = () => {
+    setIsAiOpen(true);
+    setIsSecurityOpen(false);
+    setIsCalculatorOpen(false);
+    setIsSuiteOpen(false);
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -876,74 +898,233 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* ================= 🔮 WORLD-CLASS ROI CALCULATOR PLUG-IN ================= */}
-      <div className="fixed bottom-6 right-6 z-[90] flex flex-col items-end">
+      {/* ================= ================= ================= =================
+          🔮 UNIFIED ENTERPRISE COMMAND CENTER (ALL 3 PLUGINS INTEGRATED)
+          ================= ================= ================= ================= */}
+      <div className="fixed bottom-6 right-6 z-[90] flex flex-col items-end gap-3">
+        
+        {/* ૧. Active Modals Showcase (એક સમયે માત્ર ૧ જ મોડલ ઓપન થશે) */}
         <AnimatePresence>
+          {/* Plugin A: Live ROI Savings Planner */}
           {isCalculatorOpen && (
             <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 30, scale: 0.9 }}
-              className="bg-slate-900 text-white rounded-3xl p-6 shadow-2xl border border-slate-800 w-[calc(100vw-32px)] sm:w-[360px] max-w-full mb-4 space-y-4"
+              exit={{ opacity: 0, y: 30, scale: 0.95 }}
+              className="bg-slate-900 text-white rounded-3xl p-6 shadow-2xl border border-slate-800 w-[calc(100vw-32px)] sm:w-[360px] max-w-full space-y-4"
             >
               <div className="flex justify-between items-center pb-2 border-b border-slate-800">
                 <div className="flex items-center gap-2">
-                  <Calculator size={18} className="text-indigo-400" />
-                  <span className="font-extrabold text-sm tracking-tight text-indigo-100">Live ROI Simulator</span>
+                  <Calculator size={18} className="text-emerald-400" />
+                  <span className="font-extrabold text-xs tracking-tight text-slate-100 uppercase">ROI Savings Planner</span>
                 </div>
-                <button
-                  onClick={() => setIsCalculatorOpen(false)}
-                  className="text-slate-400 hover:text-white transition cursor-pointer"
-                >
+                <button onClick={() => setIsCalculatorOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
                   <X size={16} />
                 </button>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase text-indigo-300 tracking-wider">Number of Employees</label>
-                <div className="flex items-center justify-between text-white">
-                  <span className="text-xs font-semibold font-sans">5 units</span>
-                  <span className="text-base sm:text-lg font-black text-indigo-400">{employeeCount} members</span>
-                  <span className="text-xs font-semibold font-sans">500+</span>
+                <div className="flex items-center justify-between text-white text-xs">
+                  <span>5 units</span>
+                  <span className="font-bold text-indigo-400">{employeeCount} members</span>
+                  <span>500+</span>
                 </div>
                 <input
-                  type="range"
-                  min="5"
-                  max="500"
-                  step="5"
-                  value={employeeCount}
-                  onChange={(e) => setEmployeeCount(Number(e.target.value))}
+                  type="range" min="5" max="500" step="5"
+                  value={employeeCount} onChange={(e) => setEmployeeCount(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-indigo-300 tracking-wider">Average Hourly Cost</label>
+                <div className="flex items-center justify-between text-white text-xs">
+                  <span>₹100/hr</span>
+                  <span className="font-bold text-indigo-400">₹{hourlyRate}/hr</span>
+                  <span>₹2,000/hr</span>
+                </div>
+                <input
+                  type="range" min="100" max="2000" step="50"
+                  value={hourlyRate} onChange={(e) => setHourlyRate(Number(e.target.value))}
                   className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                 />
               </div>
 
               <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800/80 text-center space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Estimated Yearly Savings</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Estimated Yearly Savings</span>
                 <p className="text-xl sm:text-2xl font-black text-emerald-400">₹{calculatedSavings.toLocaleString()}</p>
                 <p className="text-[9px] text-slate-500">Based on administrative efficiency improvement metrics.</p>
               </div>
 
               <button
-                onClick={() => {
-                  setIsCalculatorOpen(false);
-                  navigate("/register");
-                }}
+                onClick={() => { setIsCalculatorOpen(false); navigate("/register"); }}
                 className="w-full h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
               >
                 Claim Your Savings <ArrowRight size={12} />
               </button>
             </motion.div>
           )}
+
+          {/* Plugin B: Amdox Guard™ Security & SLA Monitor */}
+          {isSecurityOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.95 }}
+              className="bg-slate-900 text-white rounded-3xl p-5 shadow-2xl border border-slate-800 w-[calc(100vw-32px)] sm:w-[350px] max-w-full space-y-4 font-mono text-left"
+            >
+              <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <Shield size={18} className="text-indigo-400 animate-pulse" />
+                  <span className="font-extrabold text-xs tracking-tight text-indigo-100 uppercase">Amdox Guard™ Security</span>
+                </div>
+                <button onClick={() => setIsSecurityOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="space-y-2.5 text-xs text-slate-400">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5"><Server size={12} /> Server Latency</span>
+                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" /> {latency}ms
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5"><Activity size={12} /> MFA Tunnel</span>
+                  <span className="text-slate-300">Active (TLS 1.3)</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5"><ShieldCheck size={12} /> SOC2 Security</span>
+                  <span className="text-indigo-400 font-bold">Verified Check</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5"><Database size={12} /> Multi-Tenant Shield</span>
+                  <span className="text-emerald-400 font-bold">RLS Partition Active</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Plugin C: Amdox AI Co-Pilot Chat Simulator */}
+          {isAiOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.95 }}
+              className="bg-slate-900 text-white rounded-3xl p-5 shadow-2xl border border-slate-800 w-[calc(100vw-32px)] sm:w-[360px] max-w-full space-y-4 text-left"
+            >
+              <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <BrainCircuit size={18} className="text-indigo-400 animate-bounce" />
+                  <span className="font-extrabold text-xs tracking-tight text-indigo-100 uppercase">Amdox AI Co-Pilot</span>
+                </div>
+                <button onClick={() => setIsAiOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Chat Thread */}
+              <div className="h-44 overflow-y-auto space-y-2 p-3 bg-slate-950 rounded-xl border border-slate-800 text-[10px] sm:text-xs flex flex-col scrollbar-none">
+                {chatMessages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`max-w-[85%] p-2 rounded-xl leading-relaxed ${
+                      msg.sender === "ai" ? "bg-slate-800 text-slate-100 self-start" : "bg-indigo-600 text-white self-end"
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                ))}
+                {isAiTyping && (
+                  <div className="p-2 bg-slate-800 text-slate-400 rounded-xl self-start flex items-center gap-1">
+                    <span className="h-1 w-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="h-1 w-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="h-1 w-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Suggestions */}
+              <div className="space-y-1.5">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Query Co-Pilot Core</span>
+                <div className="flex flex-wrap gap-1">
+                  <button
+                    onClick={() => handleAiPromptClick("tenant", "🛡️ Database Isolation?")}
+                    className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[9px] font-bold rounded-lg transition shrink-0 cursor-pointer"
+                  >
+                    🛡️ Partitioning?
+                  </button>
+                  <button
+                    onClick={() => handleAiPromptClick("invoice", "🧾 Localized Taxes?")}
+                    className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[9px] font-bold rounded-lg transition shrink-0 cursor-pointer"
+                  >
+                    🧾 Taxes?
+                  </button>
+                  <button
+                    onClick={() => handleAiPromptClick("sso", "🔐 SAML 2.0/OIDC SSO?")}
+                    className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[9px] font-bold rounded-lg transition shrink-0 cursor-pointer"
+                  >
+                    🔐 SSO?
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
 
+        {/* ૨. Sliding Tool Dock Menu (મેન બટન પર ક્લિક કરવાથી ૩ પ્લગઇન્સ દેખાશે) */}
+        <AnimatePresence>
+          {isSuiteOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 15 }}
+              className="flex flex-col gap-2.5 mb-2 shrink-0 items-center justify-center"
+            >
+              {/* Button A: Security Guard Monitor */}
+              <button
+                onClick={openSecurityPlugin}
+                title="SLA Security Guard"
+                className="h-11 w-11 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-indigo-400 flex items-center justify-center shadow-lg hover:scale-105 transition-all cursor-pointer"
+              >
+                <Shield size={18} />
+              </button>
+
+              {/* Button B: ROI Planner Calculator */}
+              <button
+                onClick={openRoiPlugin}
+                title="ROI Savings Calculator"
+                className="h-11 w-11 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-emerald-400 flex items-center justify-center shadow-lg hover:scale-105 transition-all cursor-pointer"
+              >
+                <Calculator size={18} />
+              </button>
+
+              {/* Button C: AI Co-Pilot Chatbot */}
+              <button
+                onClick={openAiPlugin}
+                title="Amdox AI Co-Pilot"
+                className="h-11 w-11 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-indigo-300 flex items-center justify-center shadow-lg hover:scale-105 transition-all cursor-pointer"
+              >
+                <MessageSquare size={18} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ૩. Primary Suite Trigger Button (રોટેટ એનિમેશન સાથેનું મુખ્ય બટન) */}
         <button
-          onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
-          className="h-14 w-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-2xl transition-all hover:scale-105 active:scale-95 cursor-pointer ring-4 ring-indigo-600/20 relative"
+          onClick={() => setIsSuiteOpen(!isSuiteOpen)}
+          className="h-14 w-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-2xl transition-all hover:scale-105 active:scale-95 cursor-pointer ring-4 ring-indigo-600/20 relative shrink-0"
         >
           <div className="absolute inset-0 rounded-full animate-ping bg-indigo-600/10 pointer-events-none" />
-          {isCalculatorOpen ? <X size={22} /> : <Calculator size={22} />}
+          <motion.div animate={{ rotate: isSuiteOpen ? 45 : 0 }} transition={{ duration: 0.2 }} className="flex items-center justify-center">
+            {isSuiteOpen ? <X size={22} /> : <Sparkles size={22} className="animate-pulse" />}
+          </motion.div>
         </button>
       </div>
     </div>
   );
-} 
+}
