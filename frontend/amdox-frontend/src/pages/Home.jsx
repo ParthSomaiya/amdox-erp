@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -22,7 +22,10 @@ import {
   Loader2,
   AlertCircle,
   Calculator,
-  X
+  X,
+  Shield,
+  MessageSquare,
+  Server
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import axios from "axios";
@@ -34,14 +37,44 @@ export default function Home() {
   const [openFaq, setOpenFaq] = useState(null);
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
-
   const [outOfStockProduct, setOutOfStockProduct] = useState(null);
+
+  // ================= 🔮 3 CUSTOM PLUGINS SUITE STATE =================
+  const [isSuiteOpen, setIsSuiteOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [isSecurityOpen, setIsSecurityOpen] = useState(false);
+  const [isAiOpen, setIsAiOpen] = useState(false);
+
+  // Plugin 1: ROI Calculator Parameters
   const [employeeCount, setEmployeeCount] = useState(25);
+  const [hourlyRate, setHourlyRate] = useState(450); // Hourly Rate in INR
+
+  // Plugin 2: Security Latency Simulation
+  const [latency, setLatency] = useState(12);
+
+  // Plugin 3: AI Chat Bot State
+  const [chatMessages, setChatMessages] = useState([
+    { sender: "ai", text: "Hello! I am your Amdox Workspace Co-Pilot. Click any prompt below to evaluate my architecture." }
+  ]);
+  const [isAiTyping, setIsAiTyping] = useState(false);
+  const chatEndRef = useRef(null);
 
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  // Latency Simulator
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLatency(Math.floor(Math.random() * 8) + 8);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages, isAiTyping]);
 
   const fetchProducts = async () => {
     try {
@@ -128,9 +161,32 @@ export default function Home() {
     }
   };
 
+  // ROI calculation formula: Staff * Hours Saved (14) * Hourly Rate * 12 Months
   const calculatedSavings = useMemo(() => {
-    return employeeCount * 14 * 1800; 
-  }, [employeeCount]);
+    return employeeCount * 14 * hourlyRate * 12; 
+  }, [employeeCount, hourlyRate]);
+
+  // AI Assistant simulated response generator
+  const handleAiPromptClick = (id, promptText) => {
+    if (isAiTyping) return;
+
+    setChatMessages((prev) => [...prev, { sender: "user", text: promptText }]);
+    setIsAiTyping(true);
+
+    setTimeout(() => {
+      let answerText = "";
+      if (id === "tenant") {
+        answerText = "Amdox utilizes Logical Database Isolation combined with dynamic Row-Level Security (RLS) keys to guarantee absolute data segregation at the persistence tier.";
+      } else if (id === "invoice") {
+        answerText = "Invoices compiled on our Ledger automatically calculate central and state localized taxes (such as dynamic GST matrices) based on the business region key.";
+      } else {
+        answerText = "Yes! Amdox supports SAML 2.0 and OpenID Connect to securely map user profiles dynamically from Okta, Azure AD, and Google Workspace SSO directories.";
+      }
+
+      setChatMessages((prev) => [...prev, { sender: "ai", text: answerText }]);
+      setIsAiTyping(false);
+    }, 1400);
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -212,7 +268,7 @@ export default function Home() {
     <div className="min-h-screen bg-slate-50 text-slate-800 selection:bg-indigo-500/20 overflow-x-hidden w-full relative">
       <Navbar />
 
-      {/* ================= HERO SECTION (HIGH PERFORMANCE ULTRA RESPONSIVE) ================= */}
+      {/* ================= HERO SECTION ================= */}
       <section className="relative px-3 sm:px-6 lg:px-8 pt-6 sm:pt-12 pb-12 sm:pb-20 md:pt-24 md:pb-32 overflow-hidden w-full max-w-[1440px] mx-auto">
         <div className="absolute top-0 right-0 w-[550px] h-[550px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 left-[5%] w-[450px] h-[450px] rounded-full bg-cyan-500/5 blur-[100px] pointer-events-none" />
@@ -390,7 +446,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-start w-full">
-            {/* Left Tabs (મોબાઇલ પર આડો સ્ક્રોલબાર અને ડેસ્કટોપ પર વર્ટીકલ મેનૂ સેટ કર્યું) */}
+            {/* Left Tabs */}
             <div className="lg:col-span-4 flex lg:flex-col gap-2 overflow-x-auto pb-3 lg:pb-0 scrollbar-none shrink-0 w-full">
               <button
                 onClick={() => setActiveTab("hr")}
@@ -445,7 +501,7 @@ export default function Home() {
             </div>
 
             {/* Right tab output panel */}
-            <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm min-h-[180px] sm:min-h-[220px] flex flex-col justify-between w-full box-border">
+            <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 md:p-8 shadow-md min-h-[180px] sm:min-h-[220px] flex flex-col justify-between w-full box-border">
               <AnimatePresence mode="wait">
                 {activeTab === "hr" && (
                   <motion.div
