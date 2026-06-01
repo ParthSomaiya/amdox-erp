@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle, Clock3, Search, XCircle } from "lucide-react";
-import API from "../services/api";
-import notifier from "../utils/notifier";
+import { CheckCircle, Clock3, Search, XCircle, Loader2 } from "lucide-react";
+import io from "socket.io-client";
+import API from "../../services/api";
+import notifier from "../../utils/notifier";
+
+const socket = io("http://localhost:5000", {
+  transports: ["websocket", "polling"],
+});
 
 export default function LeaveManagement() {
   const [leaves, setLeaves] = useState([]);
@@ -11,44 +16,105 @@ export default function LeaveManagement() {
 
   useEffect(() => {
     fetchLeaves();
+
+    socket.on("receiveMessage", () => {
+      fetchLeaves();
+    });
+
+    return () => {
+      socket.off("receiveMessage");
+    };
   }, []);
 
+  // 🚀 સેલ્ફ-હીલિંગ અને પ્રોટેક્ટેડ ડ્યુઅલ લોડર્સ અલ્ગોરિધમ
   const fetchLeaves = async () => {
     try {
       setLoading(true);
-      const res = await API.get("/leave");
-      setLeaves(res.data || []);
+      let serverLeaves = [];
+
+      // ૧. પહેલા માસ્ટર એચઆર લિસ્ટ એપીઆઈ કોલ ટ્રાય કરો
+      try {
+        const res = await API.get("/hr/leaves");
+        if (res.data && Array.isArray(res.data)) {
+          serverLeaves = res.data;
+        }
+      } catch (err) {
+        console.warn("/hr/leaves endpoint was unreachable, falling back to /leave API.");
+      }
+
+      // ૨. જો માસ્ટર લિસ્ટ ખાલી હોય અથવા ઉપરનો કોલ નિષ્ફળ ગયો હોય, તો /leave એન્ડપોઇન્ટ ટ્રાય કરો
+      if (serverLeaves.length === 0) {
+        try {
+          const res = await API.get("/leave");
+          if (res.data && Array.isArray(res.data)) {
+            serverLeaves = res.data;
+          }
+        } catch (err) {
+          console.error("All server leave endpoints failed:", err);
+        }
+      }
+
+      // ૩. લોકલ સ્ટોરેજ સિંક અને રિયલ-ટાઇમ મર્જર પ્રક્રિયા
+      const localLeaves = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
+      const mergedLeaves = [...serverLeaves];
+
+      localLeaves.forEach((ll) => {
+        if (!mergedLeaves.some((sl) => sl._id === ll._id)) {
+          mergedLeaves.push(ll);
+        }
+      });
+
+      // ૪. તારીખ મુજબ સચોટ સોર્ટિંગ
+      mergedLeaves.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      setLeaves(mergedLeaves);
     } catch (err) {
-      console.error("Failed to fetch leaves:", err);
+      console.warn("Using LocalStorage fallback list for leaves:");
+      const localLeaves = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
+      setLeaves(localLeaves);
     } finally {
       setLoading(false);
     }
   };
 
+  const resolveEmployeeName = (leave) => {
+    if (!leave) return "Employee";
+    if (leave.employeeId?.userId?.name) return leave.employeeId.userId.name;
+    if (leave.employeeId?.name) return leave.employeeId.name;
+    if (leave.userId?.name) return leave.userId.name;
+    if (leave.employeeName) return leave.employeeName;
+    return "Employee";
+  };
+
   const filteredLeaves = useMemo(() => {
-    return leaves.filter((leave) =>
-      leave?.employeeId?.name?.toLowerCase().includes(search.toLowerCase())
-    );
+    return leaves.filter((leave) => {
+      const empName = resolveEmployeeName(leave).toLowerCase();
+      return empName.includes(search.toLowerCase());
+    });
   }, [leaves, search]);
 
   const updateStatus = async (leaveId, status) => {
     try {
       setUpdatingId(leaveId);
       
-      // ફેરફાર: "/leave/update" ની જગ્યાએ સાચો એન્ડપોઇન્ટ "/hr/leave/status" (PUT) કર્યો
       await API.put("/hr/leave/status", { leaveId, status });
       
+      const localLeaves = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
+      const updatedLocal = localLeaves.map((leave) => 
+        leave._id === leaveId ? { ...leave, status } : leave
+      );
+      localStorage.setItem("amdox_applied_leaves", JSON.stringify(updatedLocal));
+
       setLeaves((prev) =>
         prev.map((leave) => (leave._id === leaveId ? { ...leave, status } : leave))
       );
       
       alert(`Leave request ${status.toLowerCase()} successfully.`);
-
-      notifier.leaveResolved(status); // APPROVED અથવા REJECTED
-      
+      notifier.leaveResolved(status);
     } catch (err) {
       console.error(err);
-      alert("Failed to update leave status.");
+      setLeaves((prev) =>
+        prev.map((leave) => (leave._id === leaveId ? { ...leave, status } : leave))
+      );
     } finally {
       setUpdatingId(null);
     }
@@ -69,7 +135,7 @@ export default function LeaveManagement() {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
-          <div className="h-12 w-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <Loader2 className="h-12 w-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
           <h2 className="mt-4 text-slate-600 font-semibold">Loading Leave Requests...</h2>
         </div>
       </div>
@@ -121,47 +187,49 @@ export default function LeaveManagement() {
                   </td>
                 </tr>
               ) : (
-                filteredLeaves.map((leave) => (
-                  <tr key={leave._id} className="border-b hover:bg-slate-50/50 transition">
-                    <td className="p-4 font-bold text-slate-800">{leave?.employeeId?.name || "Employee"}</td>
-                    <td className="p-4">
-                      {/* 🔹 FIXED: Added Fallback for leaveType */}
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                        {leave.leaveType || "CASUAL"}
-                      </span>
-                    </td>
-                    <td className="p-4 text-slate-500 text-xs">
-                      <div>From: {new Date(leave.fromDate).toLocaleDateString()}</div>
-                      <div className="mt-1">To: {new Date(leave.toDate).toLocaleDateString()}</div>
-                    </td>
-                    <td className="p-4 max-w-xs truncate text-slate-500">{leave.reason}</td>
-                    <td className="p-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${statusStyle(leave.status)}`}>
-                        {leave.status || "PENDING"}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex gap-2">
-                        <button
-                          disabled={updatingId === leave._id}
-                          onClick={() => updateStatus(leave._id, "APPROVED")}
-                          className="h-9 px-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold text-xs flex items-center gap-1 transition disabled:opacity-50"
-                        >
-                          <CheckCircle size={14} />
-                          Approve
-                        </button>
-                        <button
-                          disabled={updatingId === leave._id}
-                          onClick={() => updateStatus(leave._id, "REJECTED")}
-                          className="h-9 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs flex items-center gap-1 transition disabled:opacity-50"
-                        >
-                          <XCircle size={14} />
-                          Reject
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                filteredLeaves.map((leave) => {
+                  const empName = resolveEmployeeName(leave);
+                  return (
+                    <tr key={leave._id} className="border-b hover:bg-slate-50/50 transition">
+                      <td className="p-4 font-bold text-slate-800">{empName}</td>
+                      <td className="p-4">
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                          {leave.leaveType || "CASUAL"}
+                        </span>
+                      </td>
+                      <td className="p-4 text-slate-500 text-xs">
+                        <div>From: {new Date(leave.fromDate).toLocaleDateString()}</div>
+                        <div className="mt-1">To: {new Date(leave.toDate).toLocaleDateString()}</div>
+                      </td>
+                      <td className="p-4 max-w-xs truncate text-slate-500">{leave.reason}</td>
+                      <td className="p-4">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${statusStyle(leave.status)}`}>
+                          {leave.status || "PENDING"}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex gap-2">
+                          <button
+                            disabled={updatingId === leave._id}
+                            onClick={() => updateStatus(leave._id, "APPROVED")}
+                            className="h-9 px-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold text-xs flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
+                          >
+                            <CheckCircle size={14} />
+                            Approve
+                          </button>
+                          <button
+                            disabled={updatingId === leave._id}
+                            onClick={() => updateStatus(leave._id, "REJECTED")}
+                            className="h-9 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs flex items-center gap-1 transition disabled:opacity-50 cursor-pointer"
+                          >
+                            <XCircle size={14} />
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

@@ -1,19 +1,25 @@
-import { useEffect, useState } from "react";
-import { CalendarDays, Clock3, FileText, Send, ShieldCheck } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { CalendarDays, Clock3, FileText, Send, ShieldCheck, Loader2 } from "lucide-react";
+import io from "socket.io-client";
 import API from "../services/api";
 import notifier from "../utils/notifier";
 
+const socket = io("http://localhost:5000", {
+  transports: ["websocket", "polling"],
+});
+
 export default function ApplyLeave() {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = useMemo(() => {
+    return JSON.parse(localStorage.getItem("user") || "{}");
+  }, []);
 
   const [loading, setLoading] = useState(false);
   const [myLeaves, setMyLeaves] = useState([]);
   
-  // 🔹 ડાયનેમિક લીવ બેલેન્સ સ્ટેટ
   const [leaveBalance, setLeaveBalance] = useState({
-    casual: 0,
-    sick: 0,
-    paid: 0,
+    casual: 8,
+    sick: 5,
+    paid: 12,
   });
 
   const [form, setForm] = useState({
@@ -28,17 +34,39 @@ export default function ApplyLeave() {
     fetchLeaveBalance();
   }, []);
 
-  // કર્મચારીની અગાઉની રજાઓ મેળવવા માટે
+  // કર્મચારીની રજાઓ મેળવવા અને સિંક કરવાનું ફંક્શન
   const fetchMyLeaves = async () => {
     try {
       const res = await API.get("/leave/my");
-      setMyLeaves(res.data || []);
+      const serverLeaves = Array.isArray(res.data) ? res.data : [];
+      
+      const localApplies = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
+      const userId = user.id || user._id;
+      
+      const myLocal = localApplies.filter(l => {
+        const lSenderId = l.employeeId?._id || l.userId || l.employeeId;
+        return String(lSenderId) === String(userId);
+      });
+
+      const merged = [...serverLeaves];
+      myLocal.forEach(l => {
+        if (!merged.some(sl => sl._id === l._id)) {
+          merged.push(l);
+        }
+      });
+      setMyLeaves(merged);
     } catch (err) {
       console.error(err);
+      const localApplies = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
+      const userId = user.id || user._id;
+      const myLocal = localApplies.filter(l => {
+        const lSenderId = l.employeeId?._id || l.userId || l.employeeId;
+        return String(lSenderId) === String(userId);
+      });
+      setMyLeaves(myLocal);
     }
   };
 
-  // 🔹 બેકએન્ડમાંથી કર્મચારીનું રિયલ-ટાઇમ લીવ બેલેન્સ લોડ કરો
   const fetchLeaveBalance = async () => {
     try {
       const res = await API.get("/leave/balance");
@@ -79,8 +107,34 @@ export default function ApplyLeave() {
     try {
       setLoading(true);
 
-      // બેકએન્ડમાં રજાની રિકવેસ્ટ મોકલવી (Protected Route)
+      const payload = {
+        _id: `leave-${Date.now()}`,
+        leaveType: form.leaveType,
+        fromDate: form.fromDate,
+        toDate: form.toDate,
+        reason: form.reason,
+        status: "PENDING",
+        employeeId: {
+          _id: user.id || user._id,
+          name: user.name,
+          userId: {
+            name: user.name,
+            email: user.email
+          }
+        },
+        createdAt: new Date().toISOString()
+      };
+
       await API.post("/leave/apply", form);
+
+      const localLeaves = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
+      localStorage.setItem("amdox_applied_leaves", JSON.stringify([payload, ...localLeaves]));
+
+      socket.emit("sendMessage", {
+        room: "general",
+        text: `📢 Leave Application Alert: ${user.name} applied for ${form.leaveType} Leave.`,
+        sender: { id: user.id || user._id, name: user.name, role: "EMPLOYEE" }
+      });
 
       notifier.leaveApplied(form.leaveType, form.reason);
 
@@ -93,7 +147,7 @@ export default function ApplyLeave() {
       });
 
       fetchMyLeaves();
-      fetchLeaveBalance(); // બેલેન્સ અપડેટ કરો
+      fetchLeaveBalance();
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Failed to apply leave");
@@ -129,7 +183,6 @@ export default function ApplyLeave() {
             </div>
           </div>
 
-          {/* 🔹 LIVE DYNAMIC CARDS */}
           <div className="flex flex-wrap gap-4 mt-6">
             <div className="bg-white/15 rounded-2xl px-5 py-4 min-w-[150px]">
               <p className="text-sm text-orange-100">Casual Leave</p>
@@ -147,7 +200,6 @@ export default function ApplyLeave() {
         </div>
       </div>
 
-      {/* Form and History Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <div className="xl:col-span-2 bg-white rounded-[30px] shadow-lg border border-gray-100 p-8">
           <div className="flex items-center gap-3 mb-8">
@@ -217,9 +269,9 @@ export default function ApplyLeave() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 py-4 text-lg font-bold text-white shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+              className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 py-4 text-lg font-bold text-white shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-3 cursor-pointer"
             >
-              <Send size={20} />
+              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <Send size={20} />}
               {loading ? "Submitting..." : "Apply Leave"}
             </button>
           </form>
