@@ -4,6 +4,7 @@ import API from "../services/api";
 
 export default function Attendance() {
   const [attendance, setAttendance] = useState([]);
+  const [employees, setEmployees] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [marking, setMarking] = useState(false);
@@ -11,9 +12,23 @@ export default function Attendance() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const isEmployee = user?.role === "EMPLOYEE";
 
-  const fetchAttendance = async () => {
+  const fetchAttendanceAndEmployees = async () => {
     try {
       setLoading(true);
+      
+      // એમ્પ્લોયી લિસ્ટ લોડ કરો
+      const empRes = await API.get("/hr/employees").catch(() => null);
+      const serverEmps = empRes && Array.isArray(empRes.data) ? empRes.data : [];
+      const localEmps = JSON.parse(localStorage.getItem("amdox_employees") || "[]");
+      const mergedEmps = [...serverEmps];
+      localEmps.forEach((item) => {
+        if (!mergedEmps.some((m) => m._id === item._id)) {
+          mergedEmps.push(item);
+        }
+      });
+      setEmployees(mergedEmps);
+
+      // હાજરી ડેટા લોડ કરો
       const endpoint = isEmployee ? "/attendance/my" : "/attendance";
       const res = await API.get(endpoint);
       const serverData = Array.isArray(res.data?.data || res.data) ? (res.data?.data || res.data) : [];
@@ -36,8 +51,36 @@ export default function Attendance() {
   };
 
   useEffect(() => {
-    fetchAttendance();
+    fetchAttendanceAndEmployees();
   }, []);
+
+  // 🧠 ચોક્કસ નેમ રીઝોલ્યુશન (Typo અને Fallback ફિક્સ)
+  const resolveEmployeeName = (item) => {
+    if (!item) return "Staff Member";
+
+    if (item.employeeId && typeof item.employeeId === "object") {
+      if (item.employeeId.name && item.employeeId.name !== "Employee" && item.employeeId.name !== "Staff") {
+        return item.employeeId.name;
+      }
+      if (item.employeeId.userId?.name) return item.employeeId.userId.name;
+    }
+
+    const empIdStr = typeof item.employeeId === "string" ? item.employeeId : item.employeeId?._id;
+    if (empIdStr && employees.length > 0) {
+      const matched = employees.find(
+        (e) => String(e._id) === String(empIdStr) || String(e.userId?._id) === String(empIdStr)
+      );
+      if (matched) {
+        return matched.userId?.name || matched.name || "Staff Member";
+      }
+    }
+
+    if (isEmployee) {
+      return user.name || "Staff Member";
+    }
+
+    return "Staff Member";
+  };
 
   const todayRecord = useMemo(() => {
     const todayStr = new Date().toISOString().split("T")[0];
@@ -49,21 +92,24 @@ export default function Attendance() {
       setMarking(true);
       const newRecord = {
         _id: `at-${Date.now()}`,
-        employeeId: { name: user.name || "Employee" },
+        employeeId: { 
+          _id: user.id || user._id, 
+          name: user.name || "Employee" 
+        },
         date: new Date().toISOString().split("T")[0],
         checkIn: new Date().toISOString(),
         checkOut: null
       };
 
-      await API.post("/attendance/check-in").catch(() => {
-        const updated = [newRecord, ...attendance];
-        setAttendance(updated);
-        localStorage.setItem("amdox_simulated_attendance", JSON.stringify(updated));
-      });
+      // ૧. રિકવેસ્ટ સક્સેસ થાય કે ફેઇલ, ડેટા લોકલી સુરક્ષિત સેવ કરી લો
+      const existing = JSON.parse(localStorage.getItem("amdox_simulated_attendance") || "[]");
+      localStorage.setItem("amdox_simulated_attendance", JSON.stringify([newRecord, ...existing]));
+
+      await API.post("/attendance/check-in");
 
       window.triggerAmdoxNotification?.("Attendance Check-In", `${user.name} clocked-in successfully.`, "GENERAL");
       alert("Checked-in successfully!");
-      fetchAttendance();
+      fetchAttendanceAndEmployees();
     } catch (err) {
       console.error(err);
     } finally {
@@ -74,20 +120,22 @@ export default function Attendance() {
   const handleCheckOut = async () => {
     try {
       setMarking(true);
-      await API.post("/attendance/check-out").catch(() => {
-        const updated = attendance.map(item => {
-          if (item._id === todayRecord._id) {
-            return { ...item, checkOut: new Date().toISOString() };
-          }
-          return item;
-        });
-        setAttendance(updated);
-        localStorage.setItem("amdox_simulated_attendance", JSON.stringify(updated));
+      
+      // ૨. ચેક-આઉટ વખતે પણ લોકલ ડેટા અપડેટ કરી લો
+      const localData = JSON.parse(localStorage.getItem("amdox_simulated_attendance") || "[]");
+      const updatedLocal = localData.map(item => {
+        if ((item.date || "").slice(0, 10) === new Date().toISOString().split("T")[0]) {
+          return { ...item, checkOut: new Date().toISOString() };
+        }
+        return item;
       });
+      localStorage.setItem("amdox_simulated_attendance", JSON.stringify(updatedLocal));
+
+      await API.post("/attendance/check-out");
 
       window.triggerAmdoxNotification?.("Attendance Check-Out", `${user.name} clocked-out successfully.`, "GENERAL");
       alert("Checked-out successfully!");
-      fetchAttendance();
+      fetchAttendanceAndEmployees();
     } catch (err) {
       console.error(err);
     } finally {
@@ -100,7 +148,6 @@ export default function Attendance() {
     const start = new Date(checkInStr);
     let end = checkOutStr ? new Date(checkOutStr) : new Date();
     
-    // જો શિફ્ટ એક્ટિવ હોય પણ ગઈકાલની હોય, તો ઓટો-ક્લોઝ કરી 8 કલાક ગણવા
     const todayStr = new Date().toISOString().split("T")[0];
     const recDateStr = (recordDate || "").slice(0, 10);
     if (!checkOutStr && recDateStr !== todayStr) {
@@ -138,12 +185,12 @@ export default function Attendance() {
   const filteredAttendance = useMemo(() => {
     return attendance.filter((item) => {
       if (!isEmployee) {
-        const empName = item?.employeeId?.name || "";
+        const empName = resolveEmployeeName(item);
         return empName.toLowerCase().includes(search.toLowerCase());
       }
       return true;
     });
-  }, [attendance, search, isEmployee]);
+  }, [attendance, search, isEmployee, employees]);
 
   return (
     <div className="space-y-6">
@@ -213,9 +260,10 @@ export default function Attendance() {
             <tbody>
               {filteredAttendance.map((item) => {
                 const { totalHrs, otHrs } = computeOvertime(item.checkIn, item.checkOut, item.date);
+                const resolvedName = resolveEmployeeName(item);
                 return (
                   <tr key={item._id} className="border-b hover:bg-slate-50/50 transition">
-                    <td className="p-4 font-bold text-slate-800">{isEmployee ? user.name : (item.employeeId?.name || "Staff")}</td>
+                    <td className="p-4 font-bold text-slate-800">{resolvedName}</td>
                     <td className="p-4">{new Date(item.date).toLocaleDateString("en-IN")}</td>
                     <td className="p-4 text-green-600 font-semibold">{item.checkIn ? new Date(item.checkIn).toLocaleTimeString() : "-"}</td>
                     <td className="p-4 text-rose-600 font-semibold">{item.checkOut ? new Date(item.checkOut).toLocaleTimeString() : "-"}</td>
@@ -234,6 +282,6 @@ export default function Attendance() {
           </table>
         </div>
       </div>
-    </div>
+    </div>  
   );
 }

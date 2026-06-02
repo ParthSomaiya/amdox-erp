@@ -1,21 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Loader2, Flame, Info, ShieldAlert, User } from "lucide-react";
 import API from "../../services/api";
 
 export default function AttendanceHeatmap() {
   const [data, setData] = useState([]);
+  const [employees, setEmployees] = useState([]); 
   const [loading, setLoading] = useState(true);
 
-  const fetchHeatmapData = async () => {
+  const fetchHeatmapAndEmployees = async () => {
     try {
       setLoading(true);
+      
+      // એમ્પ્લોયી લિસ્ટ લોડ કરો
+      const empRes = await API.get("/hr/employees").catch(() => null);
+      const serverEmps = empRes && Array.isArray(empRes.data) ? empRes.data : [];
+      const localEmps = JSON.parse(localStorage.getItem("amdox_employees") || "[]");
+      const mergedEmps = [...serverEmps];
+      localEmps.forEach((item) => {
+        if (!mergedEmps.some((m) => m._id === item._id)) {
+          mergedEmps.push(item);
+        }
+      });
+      setEmployees(mergedEmps);
+
+      // હાજરી ડેટા લોડ કરો
       const res = await API.get("/attendance");
       const records = res.data?.data || res.data || [];
-      
       const serverData = Array.isArray(records) ? records : [];
       const localData = JSON.parse(localStorage.getItem("amdox_simulated_attendance") || "[]");
       const merged = [...serverData];
-
       localData.forEach((item) => {
         if (!merged.some((m) => m._id === item._id)) {
           merged.push(item);
@@ -24,7 +37,6 @@ export default function AttendanceHeatmap() {
 
       setData(merged);
     } catch (err) {
-      console.warn("Fallback to Local Storage logs for Heatmap:");
       const localData = JSON.parse(localStorage.getItem("amdox_simulated_attendance") || "[]");
       setData(localData);
     } finally {
@@ -33,13 +45,42 @@ export default function AttendanceHeatmap() {
   };
 
   useEffect(() => {
-    fetchHeatmapData();
+    fetchHeatmapAndEmployees();
   }, []);
 
-  const calculateHours = (checkInStr, checkOutStr) => {
+  const resolveEmployeeName = (item) => {
+    if (!item) return "Employee";
+
+    if (item.employeeId && typeof item.employeeId === "object") {
+      if (item.employeeId.name) return item.employeeId.name;
+      if (item.employeeId.userId?.name) return item.employeeId.userId.name;
+    }
+
+    const empIdStr = typeof item.employeeId === "string" ? item.employeeId : item.employeeId?._id;
+    if (empIdStr && employees.length > 0) {
+      const matched = employees.find(
+        (e) => String(e._id) === String(empIdStr) || String(e.userId?._id) === String(empIdStr)
+      );
+      if (matched) {
+        return matched.userId?.name || matched.name || "Employee";
+      }
+    }
+
+    return "Employee";
+  };
+
+  const calculateHours = (checkInStr, checkOutStr, recordDate) => {
     if (!checkInStr) return 0;
-    const end = checkOutStr ? new Date(checkOutStr) : new Date();
-    const diffMs = end - new Date(checkInStr);
+    const start = new Date(checkInStr);
+    let end = checkOutStr ? new Date(checkOutStr) : new Date();
+
+    const todayStr = new Date().toISOString().split("T")[0];
+    const recDateStr = (recordDate || "").slice(0, 10);
+    if (!checkOutStr && recDateStr !== todayStr) {
+      return 8.0;
+    }
+
+    const diffMs = end - start;
     return Number((diffMs / (1000 * 60 * 60)).toFixed(2));
   };
 
@@ -71,7 +112,7 @@ export default function AttendanceHeatmap() {
       <div className="min-h-[50vh] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="animate-spin h-10 w-10 text-indigo-600 mx-auto" />
-          <p className="mt-4 text-slate-500 text-sm font-semibold">Generating attendance heatmap...</p>
+          <p className="mt-4 text-slate-500 text-sm font-semibold">Generating warehouse heatmap...</p>
         </div>
       </div>
     );
@@ -79,83 +120,48 @@ export default function AttendanceHeatmap() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="bg-gradient-to-r from-orange-500 via-red-500 to-indigo-700 p-8 rounded-[32px] text-white shadow-md relative overflow-hidden">
         <div className="absolute top-0 right-0 h-48 w-48 rounded-full bg-white/10 blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div className="space-y-2">
             <span className="text-xs uppercase tracking-widest text-orange-100 font-bold">Workforce Density</span>
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight flex items-center gap-2">
-              <Flame className="animate-pulse" /> Attendance Heatmap
-            </h1>
-            <p className="text-orange-100 text-sm max-w-xl">
-              Visual overview of logged shift hours. Instantly monitor employee work durations.
-            </p>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight flex items-center gap-2"><Flame className="animate-pulse" /> Attendance Heatmap</h1>
+            <p className="text-orange-100 text-sm max-w-xl">Visual overview of logged shift hours. Instantly monitor employee work durations.</p>
           </div>
         </div>
       </div>
 
-      {/* Legend Guide */}
       <div className="bg-white border rounded-3xl p-5 shadow-sm space-y-3">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <Info size={14} /> Work Duration Color Guide
-        </h3>
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Info size={14} /> Work Duration Color Guide</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs font-bold text-emerald-700">
-            <span className="h-3.5 w-3.5 rounded-full bg-emerald-500 shrink-0" />
-            <span>Full Shift (≥ 8 hours)</span>
-          </div>
-          <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-2xl text-xs font-bold text-amber-700">
-            <span className="h-3.5 w-3.5 rounded-full bg-amber-500 shrink-0" />
-            <span>Half Shift (5 - 7 hours)</span>
-          </div>
-          <div className="flex items-center gap-3 p-3 bg-rose-50 border border-rose-100 rounded-2xl text-xs font-bold text-rose-700">
-            <span className="h-3.5 w-3.5 rounded-full bg-rose-500 shrink-0" />
-            <span>Short Shift (&lt; 5 hours)</span>
-          </div>
+          <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs font-bold text-emerald-700"><span className="h-3.5 w-3.5 rounded-full bg-emerald-500 shrink-0" /><span>Full Shift (≥ 8 hours)</span></div>
+          <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-2xl text-xs font-bold text-amber-700"><span className="h-3.5 w-3.5 rounded-full bg-amber-500 shrink-0" /><span>Half Shift (5 - 7 hours)</span></div>
+          <div className="flex items-center gap-3 p-3 bg-rose-50 border border-rose-100 rounded-2xl text-xs font-bold text-rose-700"><span className="h-3.5 w-3.5 rounded-full bg-rose-500 shrink-0" /><span>Short Shift (&lt; 5 hours)</span></div>
         </div>
       </div>
 
-      {/* Heatmap Grid */}
       {data.length === 0 ? (
         <div className="bg-white rounded-[32px] p-20 text-center space-y-4 border shadow-sm">
-          <ShieldAlert size={48} className="mx-auto text-slate-300" />
-          <h3 className="text-xl font-bold text-slate-700">No Attendance Logs Found</h3>
-          <p className="text-slate-400 text-sm">Please clock-in from the portal to view data.</p>
+          <ShieldAlert size={48} className="mx-auto text-slate-300" /><h3 className="text-xl font-bold text-slate-700">No Attendance Logs Found</h3><p className="text-slate-400 text-sm">Please clock-in from the portal to view data.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {data.map((a) => {
-            const hrs = calculateHours(a.checkIn, a.checkOut);
+            const hrs = calculateHours(a.checkIn, a.checkOut, a.date);
             const heat = getHeatLevel(hrs);
+            const empName = resolveEmployeeName(a);
 
             return (
-              <div
-                key={a._id}
-                className="bg-white border rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border-slate-200/80 flex flex-col justify-between"
-              >
-                {/* Visual Top Bar */}
+              <div key={a._id} className="bg-white border rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border-slate-200/80 flex flex-col justify-between">
                 <div className="h-16 bg-slate-50 border-b relative flex items-center justify-center">
-                  <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                    <User size={16} />
-                  </div>
-                  {/* Status Badge */}
-                  <span className={`absolute top-2.5 right-3 px-2 py-0.5 rounded-md text-[8px] font-black tracking-wide uppercase ${heat.badgeClass}`}>
-                    {heat.status}
-                  </span>
+                  <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><User size={16} /></div>
+                  <span className={`absolute top-2.5 right-3 px-2.5 py-0.5 rounded-md text-[8px] font-black tracking-wide uppercase ${heat.badgeClass}`}>{heat.status}</span>
                 </div>
-
-                {/* Content */}
                 <div className="p-4 space-y-3">
-                  <h4 className="font-extrabold text-slate-800 text-sm truncate" title={a.employeeId?.name || "Employee"}>
-                    {a.employeeId?.name || "Employee"}
-                  </h4>
-
+                  <h4 className="font-extrabold text-slate-800 text-sm truncate" title={empName}>{empName}</h4>
                   <div className="flex items-center justify-between pt-2.5 border-t text-xs">
                     <span className="text-slate-400 font-bold">{a.date ? new Date(a.date).toLocaleDateString("en-IN") : ""}</span>
-                    <span className={`px-2.5 py-1 rounded-xl font-black text-[11px] border ${heat.bg}`}>
-                      {hrs.toFixed(1)} Hrs
-                    </span>
+                    <span className={`px-2.5 py-1 rounded-xl font-black text-[11px] border ${heat.bg}`}>{hrs.toFixed(1)} Hrs</span>
                   </div>
                 </div>
               </div>

@@ -4,22 +4,35 @@ import API from "../../services/api";
 
 export default function AttendanceCalendar() {
   const [attendance, setAttendance] = useState([]);
+  const [employees, setEmployees] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
   const monthsList = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-  const fetchAttendance = async () => {
+  const fetchAttendanceAndEmployees = async () => {
     try {
       setLoading(true);
+      
+      // એમ્પ્લોયી લિસ્ટ લોડ કરો
+      const empRes = await API.get("/hr/employees").catch(() => null);
+      const serverEmps = empRes && Array.isArray(empRes.data) ? empRes.data : [];
+      const localEmps = JSON.parse(localStorage.getItem("amdox_employees") || "[]");
+      const mergedEmps = [...serverEmps];
+      localEmps.forEach((item) => {
+        if (!mergedEmps.some((m) => m._id === item._id)) {
+          mergedEmps.push(item);
+        }
+      });
+      setEmployees(mergedEmps);
+
+      // હાજરી ડેટા લોડ કરો
       const res = await API.get("/attendance");
       const data = res.data?.data || res.data || [];
-      
       const serverData = Array.isArray(data) ? data : [];
       const localData = JSON.parse(localStorage.getItem("amdox_simulated_attendance") || "[]");
       const merged = [...serverData];
-
       localData.forEach((item) => {
         if (!merged.some((m) => m._id === item._id)) {
           merged.push(item);
@@ -36,8 +49,29 @@ export default function AttendanceCalendar() {
   };
 
   useEffect(() => {
-    fetchAttendance();
+    fetchAttendanceAndEmployees();
   }, []);
+
+  const resolveEmployeeName = (item) => {
+    if (!item) return "Staff Member";
+
+    if (item.employeeId && typeof item.employeeId === "object") {
+      if (item.employeeId.name) return item.employeeId.name;
+      if (item.employeeId.userId?.name) return item.employeeId.userId.name;
+    }
+
+    const empIdStr = typeof item.employeeId === "string" ? item.employeeId : item.employeeId?._id;
+    if (empIdStr && employees.length > 0) {
+      const matched = employees.find(
+        (e) => String(e._id) === String(empIdStr) || String(e.userId?._id) === String(empIdStr)
+      );
+      if (matched) {
+        return matched.userId?.name || matched.name || "Staff Member";
+      }
+    }
+
+    return "Staff Member";
+  };
 
   const calculateHours = (checkInStr, checkOutStr, recordDate) => {
     if (!checkInStr) return 0;
@@ -54,7 +88,6 @@ export default function AttendanceCalendar() {
     return Number((diffMs / (1000 * 60 * 60)).toFixed(2));
   };
 
-  // ડાયનેમિક કેલેન્ડર ફિલ્ટરિંગ લોજિક
   const filteredAttendance = useMemo(() => {
     return attendance.filter((item) => {
       if (!item.date) return false;
@@ -99,7 +132,7 @@ export default function AttendanceCalendar() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredAttendance.map((a) => {
-            const empName = a.employeeId?.name || "Staff Member";
+            const empName = resolveEmployeeName(a);
             const hrs = calculateHours(a.checkIn, a.checkOut, a.date);
             const isFullShift = hrs >= 8;
 
