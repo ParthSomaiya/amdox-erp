@@ -1,42 +1,67 @@
 import { useEffect, useState } from "react";
-import { Loader2, Flame, Info, Clock, ShieldAlert, User } from "lucide-react";
+import { Loader2, Flame, Info, ShieldAlert, User } from "lucide-react";
 import API from "../../services/api";
-import notifier from "../../utils/notifier";
 
 export default function AttendanceHeatmap() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchHeatmapData = async () => {
+    try {
+      setLoading(true);
+      const res = await API.get("/attendance");
+      const records = res.data?.data || res.data || [];
+      
+      const serverData = Array.isArray(records) ? records : [];
+      const localData = JSON.parse(localStorage.getItem("amdox_simulated_attendance") || "[]");
+      const merged = [...serverData];
+
+      localData.forEach((item) => {
+        if (!merged.some((m) => m._id === item._id)) {
+          merged.push(item);
+        }
+      });
+
+      setData(merged);
+    } catch (err) {
+      console.warn("Fallback to Local Storage logs for Heatmap:");
+      const localData = JSON.parse(localStorage.getItem("amdox_simulated_attendance") || "[]");
+      setData(localData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    API.get("/attendance")
-      .then((res) => {
-        const records = res.data?.data || res.data || [];
-        setData(Array.isArray(records) ? records : []);
-      })
-      .catch((err) => console.error("Heatmap fetch error:", err))
-      .finally(() => setLoading(false));
-    notifier.attendanceHeatmapAnalyzed();
+    fetchHeatmapData();
   }, []);
+
+  const calculateHours = (checkInStr, checkOutStr) => {
+    if (!checkInStr) return 0;
+    const end = checkOutStr ? new Date(checkOutStr) : new Date();
+    const diffMs = end - new Date(checkInStr);
+    return Number((diffMs / (1000 * 60 * 60)).toFixed(2));
+  };
 
   const getHeatLevel = (hours) => {
     const hrs = Number(hours || 0);
     if (hrs >= 8) {
       return {
         bg: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
-        badge: "bg-emerald-500 text-white",
+        badgeClass: "bg-emerald-500 text-white", 
         status: "Full Shift (8+ Hrs)",
       };
     }
     if (hrs >= 5) {
       return {
         bg: "bg-amber-500/10 text-amber-700 border-amber-200",
-        badge: "bg-amber-500 text-white",
+        badgeClass: "bg-amber-500 text-white", 
         status: "Half Shift (5-7 Hrs)",
       };
     }
     return {
       bg: "bg-rose-500/10 text-rose-700 border-rose-200",
-      badge: "bg-rose-500 text-white",
+      badgeClass: "bg-rose-500 text-white", 
       status: "Short Shift (<5 Hrs)",
     };
   };
@@ -54,7 +79,7 @@ export default function AttendanceHeatmap() {
 
   return (
     <div className="space-y-8">
-      {/* 🚀 Header */}
+      {/* Header */}
       <div className="bg-gradient-to-r from-orange-500 via-red-500 to-indigo-700 p-8 rounded-[32px] text-white shadow-md relative overflow-hidden">
         <div className="absolute top-0 right-0 h-48 w-48 rounded-full bg-white/10 blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
@@ -70,10 +95,10 @@ export default function AttendanceHeatmap() {
         </div>
       </div>
 
-      {/* 🚀 Legend Guide */}
+      {/* Legend Guide */}
       <div className="bg-white border rounded-3xl p-5 shadow-sm space-y-3">
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <Info size={14} /> Work Duration color Guide
+          <Info size={14} /> Work Duration Color Guide
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs font-bold text-emerald-700">
@@ -91,7 +116,7 @@ export default function AttendanceHeatmap() {
         </div>
       </div>
 
-      {/* 🚀 Heatmap Grid */}
+      {/* Heatmap Grid */}
       {data.length === 0 ? (
         <div className="bg-white rounded-[32px] p-20 text-center space-y-4 border shadow-sm">
           <ShieldAlert size={48} className="mx-auto text-slate-300" />
@@ -101,7 +126,7 @@ export default function AttendanceHeatmap() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {data.map((a) => {
-            const hrs = a.totalHours || 0;
+            const hrs = calculateHours(a.checkIn, a.checkOut);
             const heat = getHeatLevel(hrs);
 
             return (

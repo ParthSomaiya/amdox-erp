@@ -25,9 +25,9 @@ export default function Attendance() {
         setAttendance(saved);
       } else {
         const dummy = [
-          { _id: "at-1", employeeId: { name: "Jaydeep Patel" }, date: "2026-05-28", checkIn: "2026-05-28T09:00:00", checkOut: "2026-05-28T18:30:00" }, // 9.5 hours
-          { _id: "at-2", employeeId: { name: "Dharmik Kotecha" }, date: "2026-05-28", checkIn: "2026-05-28T09:00:00", checkOut: "2026-05-28T17:00:00" }, // 8 hours
-          { _id: "at-3", employeeId: { name: "Hardik Patel" }, date: "2026-05-28", checkIn: "2026-05-28T09:00:00", checkOut: "2026-05-28T20:00:00" }  // 11 hours
+          { _id: "at-1", employeeId: { name: "Jaydeep Patel" }, date: "2026-05-28", checkIn: "2026-05-28T09:00:00", checkOut: "2026-05-28T18:30:00" }, 
+          { _id: "at-2", employeeId: { name: "Dharmik Kotecha" }, date: "2026-05-28", checkIn: "2026-05-28T09:00:00", checkOut: "2026-05-28T17:00:00" }, 
+          { _id: "at-3", employeeId: { name: "Hardik Patel" }, date: "2026-05-28", checkIn: "2026-05-28T09:00:00", checkOut: "2026-05-28T20:00:00" }  
         ];
         setAttendance(dummy);
         localStorage.setItem("amdox_simulated_attendance", JSON.stringify(dummy));
@@ -50,7 +50,6 @@ export default function Attendance() {
     try {
       setMarking(true);
       await API.post("/attendance/check-in").catch(() => {
-        // Fallback local update
         const newRecord = {
           _id: `at-${Date.now()}`,
           employeeId: { name: user.name || "Employee" },
@@ -77,7 +76,6 @@ export default function Attendance() {
     try {
       setMarking(true);
       await API.post("/attendance/check-out").catch(() => {
-        // Fallback local update
         const updated = attendance.map(item => {
           if (item._id === todayRecord._id) {
             return { ...item, checkOut: new Date().toISOString() };
@@ -99,21 +97,21 @@ export default function Attendance() {
   };
 
   const computeOvertime = (checkInStr, checkOutStr) => {
-    if (!checkInStr || !checkOutStr) return { totalHrs: 0, otHrs: 0 };
-    const diffMs = new Date(checkOutStr) - new Date(checkInStr);
+    if (!checkInStr) return { totalHrs: 0, otHrs: 0 };
+    const end = checkOutStr ? new Date(checkOutStr) : new Date();
+    const diffMs = end - new Date(checkInStr);
     const totalHrs = Number((diffMs / (1000 * 60 * 60)).toFixed(2));
     const otHrs = totalHrs > 8 ? Number((totalHrs - 8).toFixed(2)) : 0;
     return { totalHrs, otHrs };
   };
 
-  // 📈 Live Statistics Computation
   const summary = useMemo(() => {
     let shifts = 0;
     let totalHours = 0;
     let totalOT = 0;
 
     attendance.forEach(item => {
-      if (item.checkIn && item.checkOut) {
+      if (item.checkIn) {
         shifts++;
         const { totalHrs, otHrs } = computeOvertime(item.checkIn, item.checkOut);
         totalHours += totalHrs;
@@ -125,7 +123,7 @@ export default function Attendance() {
       shifts,
       totalHours: Number(totalHours.toFixed(1)),
       totalOT: Number(totalOT.toFixed(1)),
-      estimatedPay: Number((totalOT * 500).toFixed(0)) // ₹500/hour for OT
+      estimatedPay: Number((totalOT * 500).toFixed(0))
     };
   }, [attendance]);
 
@@ -154,11 +152,11 @@ export default function Attendance() {
           {isEmployee && (
             <div className="flex gap-3 z-10">
               {!todayRecord ? (
-                <button onClick={handleCheckIn} disabled={marking} className="h-11 px-6 bg-white hover:bg-slate-50 text-emerald-600 rounded-xl font-bold text-sm shadow-sm transition">
+                <button onClick={handleCheckIn} disabled={marking} className="h-11 px-6 bg-white hover:bg-slate-50 text-emerald-600 rounded-xl font-bold text-sm shadow-sm transition cursor-pointer">
                   Check-In
                 </button>
               ) : !todayRecord.checkOut ? (
-                <button onClick={handleCheckOut} disabled={marking} className="h-11 px-6 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-sm shadow-sm transition">
+                <button onClick={handleCheckOut} disabled={marking} className="h-11 px-6 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-sm shadow-sm transition cursor-pointer">
                   Check-Out
                 </button>
               ) : (
@@ -243,7 +241,11 @@ export default function Attendance() {
                     <td className="p-4">{new Date(item.date).toLocaleDateString("en-IN")}</td>
                     <td className="p-4 text-green-600 font-semibold">{item.checkIn ? new Date(item.checkIn).toLocaleTimeString() : "-"}</td>
                     <td className="p-4 text-rose-600 font-semibold">{item.checkOut ? new Date(item.checkOut).toLocaleTimeString() : "-"}</td>
-                    <td className="p-4 font-bold text-slate-700">{totalHrs > 0 ? `${totalHrs} Hrs` : "-"}</td>
+                    <td className="p-4 font-bold text-slate-700">
+                      {item.checkIn ? (
+                        item.checkOut ? `${totalHrs} Hrs` : `${totalHrs} Hrs (Active)`
+                      ) : "-"}
+                    </td>
                     <td className="p-4">
                       {otHrs > 0 ? (
                         <span className="px-3 py-1 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-black rounded-full">

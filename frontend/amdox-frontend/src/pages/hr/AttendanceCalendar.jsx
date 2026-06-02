@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Calendar, UserCheck, Clock, Loader2, ArrowLeft, RefreshCw, Activity, Layers } from "lucide-react";
+import { Calendar, UserCheck, Clock, Loader2, Layers } from "lucide-react";
 import API from "../../services/api";
 
 export default function AttendanceCalendar() {
@@ -10,18 +10,45 @@ export default function AttendanceCalendar() {
 
   const monthsList = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+  const fetchAttendance = async () => {
+    try {
+      setLoading(true);
+      const res = await API.get("/attendance");
+      const data = res.data?.data || res.data || [];
+      
+      const serverData = Array.isArray(data) ? data : [];
+      const localData = JSON.parse(localStorage.getItem("amdox_simulated_attendance") || "[]");
+      const merged = [...serverData];
+
+      localData.forEach((item) => {
+        if (!merged.some((m) => m._id === item._id)) {
+          merged.push(item);
+        }
+      });
+
+      setAttendance(merged);
+    } catch (err) {
+      console.warn("Fallback to Local Storage logs for Calendar:");
+      const localData = JSON.parse(localStorage.getItem("amdox_simulated_attendance") || "[]");
+      setAttendance(localData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    API.get("/attendance")
-      .then((res) => {
-        const data = res.data?.data || res.data || [];
-        setAttendance(Array.isArray(data) ? data : []);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
+    fetchAttendance();
   }, []);
 
+  const calculateHours = (checkInStr, checkOutStr) => {
+    if (!checkInStr) return 0;
+    const end = checkOutStr ? new Date(checkOutStr) : new Date();
+    const diffMs = end - new Date(checkInStr);
+    return Number((diffMs / (1000 * 60 * 60)).toFixed(2));
+  };
+
   const totalShiftCompleted = useMemo(() => {
-    return attendance.filter(a => (a.totalHours || 0) >= 8).length;
+    return attendance.filter(a => calculateHours(a.checkIn, a.checkOut) >= 8).length;
   }, [attendance]);
 
   return (
@@ -33,7 +60,7 @@ export default function AttendanceCalendar() {
         <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
           <Calendar /> Attendance Calendar View
         </h1>
-        <p className="mt-2 text-emerald-500/10 text-sm max-w-xl">Monitor daily shifts, log times, and analyze completion rates for local office departments.</p>
+        <p className="mt-2 text-emerald-100 text-sm max-w-xl">Monitor daily shifts, log times, and analyze completion rates for local office departments.</p>
       </div>
 
       {/* Filter toolbar */}
@@ -73,7 +100,7 @@ export default function AttendanceCalendar() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {attendance.map((a) => {
             const empName = a.employeeId?.name || "Staff Member";
-            const hrs = a.totalHours || 0;
+            const hrs = calculateHours(a.checkIn, a.checkOut);
             const isFullShift = hrs >= 8;
 
             return (
@@ -109,7 +136,7 @@ export default function AttendanceCalendar() {
                   </div>
                   <div className="flex justify-between border-t pt-2.5 font-bold text-slate-800">
                     <span>Net Active:</span>
-                    <span>{hrs.toFixed(2)} Hours</span>
+                    <span className="text-indigo-600 font-black">{hrs.toFixed(2)} Hours {!a.checkOut && "(Active)"}</span>
                   </div>
                 </div>
               </div>

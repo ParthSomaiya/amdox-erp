@@ -10,7 +10,7 @@ const socket = io("http://localhost:5000", {
 
 export default function LeaveManagement() {
   const [leaves, setLeaves] = useState([]);
-  const [employees, setEmployees] = useState([]); // 🔹 ઓટો-મેપિંગ માટે કર્મચારીઓનો સ્ટેટ
+  const [employees, setEmployees] = useState([]); // State for employee-ID mapping
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [updatingId, setUpdatingId] = useState(null);
@@ -31,7 +31,7 @@ export default function LeaveManagement() {
     try {
       setLoading(true);
       
-      // ૧. કર્મચારીઓની યાદી લોડ કરો જેથી આઈડીને નામ સાથે મેપ કરી શકાય
+      // Load active employees list to map IDs to real names
       try {
         const empRes = await API.get("/hr/employees");
         setEmployees(empRes.data || []);
@@ -41,7 +41,7 @@ export default function LeaveManagement() {
 
       let serverLeaves = [];
 
-      // ૨. પહેલા માસ્ટર એચઆર લિસ્ટ એપીઆઈ કોલ ટ્રાય કરો
+      // Try master HR endpoint first
       try {
         const res = await API.get("/hr/leaves");
         if (res.data && Array.isArray(res.data)) {
@@ -51,7 +51,7 @@ export default function LeaveManagement() {
         console.warn("/hr/leaves endpoint was unreachable, falling back to /leave API.");
       }
 
-      // ૩. વૈકલ્પિક એન્ડપોઇન્ટ ટ્રાય કરો
+      // Try alternative endpoint if first is empty
       if (serverLeaves.length === 0) {
         try {
           const res = await API.get("/leave");
@@ -63,7 +63,7 @@ export default function LeaveManagement() {
         }
       }
 
-      // ૪. લોકલ સ્ટોરેજ સિંક પ્રક્રિયા
+      // Merge with local storage fallback
       const localLeaves = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
       const mergedLeaves = [...serverLeaves];
 
@@ -84,11 +84,11 @@ export default function LeaveManagement() {
     }
   };
 
-  // 🚀 સેલ્ફ-હીલિંગ આઈડી લિંકર: ફ્લેટ સ્ટ્રિંગ આઈડીને કર્મચારીના વાસ્તવિક નામ સાથે લિંક કરશે
+  // Maps flat string user IDs to actual employee names
   const resolveEmployeeName = (leave) => {
     if (!leave) return "Employee";
 
-    // A. જો employeeId અથવા userId ફ્લેટ સ્ટ્રિંગ હોય, તો લિસ્ટમાંથી મેપ કરો
+    // Lookup by employeeId or userId flat string
     const empIdStr = typeof leave.employeeId === "object" ? leave.employeeId?._id : leave.employeeId;
     if (empIdStr && employees.length > 0) {
       const matchedEmp = employees.find((e) => String(e._id) === String(empIdStr));
@@ -107,7 +107,7 @@ export default function LeaveManagement() {
       }
     }
 
-    // B. જો ઓબ્જેક્ટ પોપ્યુલેટેડ હોય તો સીધું નામ મેળવો
+    // Direct object lookup
     if (leave.employeeId && typeof leave.employeeId === "object") {
       if (leave.employeeId.userId?.name) return leave.employeeId.userId.name;
       if (leave.employeeId.name) return leave.employeeId.name;

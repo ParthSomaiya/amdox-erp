@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Clock, User, Mail, Briefcase, Link, Loader2, Send, ShieldCheck } from "lucide-react";
+import { Clock, User, Mail, Briefcase, Link as LinkIcon, Loader2, Send } from "lucide-react";
 import API from "../../services/api";
 
 export default function InterviewScheduler() {
@@ -37,7 +37,7 @@ export default function InterviewScheduler() {
         localStorage.setItem("amdox_scheduled_interviews", JSON.stringify([payload, ...existing]));
       });
 
-      // trigger live global notification
+      // Trigger live global notification
       window.triggerAmdoxNotification?.(
         "Interview Scheduled", 
         `Technical interview booked for ${form.candidateName}.`, 
@@ -45,7 +45,7 @@ export default function InterviewScheduler() {
       );
 
       alert("Interview successfully scheduled & synced to recruitment calendar!");
-      navigate("/hr/interviews");
+      navigate("/calendar");
     } catch (err) {
       console.error(err);
       alert("Failed to save schedule.");
@@ -115,13 +115,13 @@ export default function InterviewScheduler() {
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Meeting Link</label>
               <div className="relative">
-                <Link className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
                 <input type="url" name="meetingLink" required value={form.meetingLink} onChange={handleChange} placeholder="https://meet.google.com/abc-xyz" className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none text-sm bg-slate-50/50" />
               </div>
             </div>
           </div>
 
-          <button type="submit" disabled={loading} className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-md">
+          <button type="submit" disabled={loading} className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-md cursor-pointer">
             {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Send size={16} />}
             Schedule Interview
           </button>

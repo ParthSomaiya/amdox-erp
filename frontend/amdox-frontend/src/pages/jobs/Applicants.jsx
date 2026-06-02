@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import API from "../../services/api";
 import { Mail, CalendarDays, CheckCircle2, XCircle, Clock3, Search, Briefcase, User2, Eye, Loader2 } from "lucide-react";
-import notifier from "../../utils/notifier";
 
 export default function Applicants() {
   const [applicants, setApplicants] = useState([]);
@@ -17,9 +16,21 @@ export default function Applicants() {
     try {
       setLoading(true);
       const res = await API.get("/jobs/applicants");
-      setApplicants(Array.isArray(res.data) ? res.data : []);
+      const serverData = Array.isArray(res.data) ? res.data : [];
+      
+      const localData = JSON.parse(localStorage.getItem("amdox_applicants") || "[]");
+      const merged = [...serverData];
+
+      localData.forEach((item) => {
+        if (!merged.some((m) => m._id === item._id)) {
+          merged.push(item);
+        }
+      });
+      setApplicants(merged);
     } catch (error) {
-      console.error("Applicants Fetch Error:", error);
+      console.warn("Applicants Fallback read active:");
+      const localData = JSON.parse(localStorage.getItem("amdox_applicants") || "[]");
+      setApplicants(localData);
     } finally {
       setLoading(false);
     }
@@ -27,10 +38,27 @@ export default function Applicants() {
 
   const updateStatus = async (id, status) => {
     try {
-      await API.put(`/jobs/applicant/${id}`, { status });
+      await API.put(`/jobs/applicant/${id}`, { status }).catch(() => {
+        // Fallback local sync
+        const localData = JSON.parse(localStorage.getItem("amdox_applicants") || "[]");
+        const updatedLocal = localData.map((item) =>
+          item._id === id ? { ...item, status } : item
+        );
+        localStorage.setItem("amdox_applicants", JSON.stringify(updatedLocal));
+      });
+
       setApplicants((prev) =>
         prev.map((item) => (item._id === id ? { ...item, status } : item))
       );
+
+      const applicantObj = applicants.find(item => item._id === id);
+      if (applicantObj) {
+        window.triggerAmdoxNotification?.(
+          "Applicant Resolved", 
+          `Application for ${applicantObj.name} has been ${status.toLowerCase()}.`, 
+          "HR"
+        );
+      }
     } catch (error) {
       console.error("Status Update Error:", error);
       alert("Failed to update application status");
@@ -41,7 +69,7 @@ export default function Applicants() {
     return applicants.filter((item) => {
       const candidateName = item?.name?.toLowerCase() || "";
       const candidateEmail = item?.email?.toLowerCase() || "";
-      const jobTitle = item?.jobId?.title?.toLowerCase() || "";
+      const jobTitle = item?.jobId?.title?.toLowerCase() || item?.position?.toLowerCase() || "";
       const searchText = search.toLowerCase();
 
       const matchesSearch = candidateName.includes(searchText) || candidateEmail.includes(searchText) || jobTitle.includes(searchText);
@@ -66,7 +94,6 @@ export default function Applicants() {
       case "ACCEPTED": return "bg-emerald-100 text-emerald-700 border border-emerald-200";
       case "REJECTED": return "bg-red-100 text-red-700 border border-red-200";
       default: return "bg-amber-100 text-amber-700 border border-amber-200";
-      notifier.applicantStatusUpdated(applicant.name, status);
     }
   };
 
@@ -173,7 +200,7 @@ export default function Applicants() {
                         <span className="text-xs text-slate-400 font-medium">{applicant.email}</span>
                       </div>
                     </td>
-                    <td className="p-4 font-semibold text-slate-700">{applicant.jobId?.title || "Job Position"}</td>
+                    <td className="p-4 font-semibold text-slate-700">{applicant.jobId?.title || applicant.position || "Job Position"}</td>
                     <td className="p-4">{new Date(applicant.createdAt).toLocaleDateString()}</td>
                     <td className="p-4">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${getStatusStyle(applicant.status)}`}>
@@ -181,19 +208,23 @@ export default function Applicants() {
                       </span>
                     </td>
                     <td className="p-4">
-                      <a
-                        href={`http://localhost:5000/${applicant.resume}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="h-9 px-3 rounded-lg bg-indigo-50 border text-indigo-600 text-xs font-bold flex items-center gap-1.5 w-fit"
-                      >
-                        <Eye size={14} /> View
-                      </a>
+                      {applicant.resume ? (
+                        <a
+                          href={applicant.resume.startsWith("http") ? applicant.resume : `http://localhost:5000/${applicant.resume}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="h-9 px-3 rounded-lg bg-indigo-50 border text-indigo-600 text-xs font-bold flex items-center gap-1.5 w-fit"
+                        >
+                          <Eye size={14} /> View
+                        </a>
+                      ) : (
+                        <span className="text-slate-400 text-xs italic">No Resume Uploaded</span>
+                      )}
                     </td>
                     <td className="p-4">
                       <div className="flex gap-2">
-                        <button onClick={() => updateStatus(applicant._id, "ACCEPTED")} className="h-9 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">Accept</button>
-                        <button onClick={() => updateStatus(applicant._id, "REJECTED")} className="h-9 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs">Reject</button>
+                        <button onClick={() => updateStatus(applicant._id, "ACCEPTED")} className="h-9 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer">Accept</button>
+                        <button onClick={() => updateStatus(applicant._id, "REJECTED")} className="h-9 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs cursor-pointer">Reject</button>
                       </div>
                     </td>
                   </tr>
