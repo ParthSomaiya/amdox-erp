@@ -1,168 +1,83 @@
 import mongoose from "mongoose"; // 🔹 ૧. સૌથી ઉપર મોડ્યુલ ઇમ્પોર્ટ કર્યું (Crucial Fix)
-import Attendance from "../models/Attendance.js";
 import User from "../models/User.js";
 import { syncBiometricAttendance } from "../services/biometricService.js";
 
-// ================= UTILITY =================
-const getTodayDate = () => {
-  const today = new Date();
-  return today.toISOString().split("T")[0];
-};
+import Attendance from "../models/Attendance.js";
 
-// ================= 🟢 CHECK IN (100% Bulletproof Fix) =================
+// ૧. કર્મચારી ચેક-ઇન કરે
 export const checkIn = async (req, res) => {
   try {
-    const today = getTodayDate();
-
-    // check existing attendance
-    const existingAttendance = await Attendance.findOne({
+    const todayStr = new Date().toISOString().split("T")[0];
+    
+    // ચકાસો કે આજે પહેલેથી જ ચેક-ઇન કરેલું છે કે નહીં
+    const existing = await Attendance.findOne({
       employeeId: req.user.id,
-      date: today,
+      date: todayStr
     });
 
-    if (existingAttendance) {
-      return res.status(400).json({
-        success: false,
-        message: "You have already checked in today",
-      });
+    if (existing) {
+      return res.status(400).json({ message: "Already checked in today" });
     }
 
-    // 🔹 ડાયનેમિક કંપની આઈડી રીસોલ્યુશન
-    let companyId = req.user?.companyId;
-
-    if (!companyId) {
-      const userObj = await User.findById(req.user.id || req.user._id);
-      companyId = userObj?.companyId;
-    }
-
-    if (!companyId) {
-      const fallbackAdmin = await User.findOne({ role: "ADMIN" });
-      companyId = fallbackAdmin?.companyId;
-    }
-
-    // 🔹 ૨. અલ્ટીમેટ ફોલબેક (જો બધું જ નલ હોય, તો ઓટોમેટિક નવો આઈડી જનરેટ કરશે જેથી સ્કીમા વેલિડેશન પાસ થઈ જાય)
-    if (!companyId) {
-      companyId = new mongoose.Types.ObjectId();
-    }
-
-    const newAttendance = await Attendance.create({
+    const record = await Attendance.create({
       employeeId: req.user.id,
-      companyId,
-      date: today,
-      checkIn: new Date(),
+      date: todayStr,
+      checkIn: new Date().toISOString(),
+      checkOut: null
     });
 
-    return res.status(201).json({
-      success: true,
-      message: "Check-in successful",
-      data: newAttendance,
-    });
+    res.json({ success: true, data: record });
   } catch (err) {
     console.error("Check-in error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Check-in failed: " + err.message,
-    });
+    res.status(500).json({ message: "Check-in error" });
   }
-
-  await Timeline.create({
-    employee: req.user.id,
-    action: `Employee Checked-In today at ${new Date().toLocaleTimeString()}`,
-    companyId: req.user.companyId,
-  });
 };
 
-// ================= 🔴 CHECK OUT =================
+// ૨. કર્મચારી ચેક-આઉટ કરે
 export const checkOut = async (req, res) => {
   try {
-    const today = getTodayDate();
-
-    const attendance = await Attendance.findOne({
+    const todayStr = new Date().toISOString().split("T")[0];
+    
+    const record = await Attendance.findOne({
       employeeId: req.user.id,
-      date: today,
+      date: todayStr,
+      checkOut: null
     });
 
-    if (!attendance) {
-      return res.status(400).json({
-        success: false,
-        message: "No check-in record found",
-      });
+    if (!record) {
+      return res.status(400).json({ message: "No active check-in found for today" });
     }
 
-    if (attendance.checkOut) {
-      return res.status(400).json({
-        success: false,
-        message: "Already checked out",
-      });
-    }
+    record.checkOut = new Date().toISOString();
+    await record.save();
 
-    const checkOutTime = new Date();
-    const checkInTime = new Date(attendance.checkIn);
-
-    const hoursWorked =
-      (checkOutTime.getTime() - checkInTime.getTime()) /
-      (1000 * 60 * 60);
-
-    attendance.checkOut = checkOutTime;
-    attendance.totalHours = Number(hoursWorked.toFixed(2));
-
-    await attendance.save();
-
-    return res.json({
-      success: true,
-      message: "Check-out successful",
-      data: attendance,
-    });
+    res.json({ success: true, data: record });
   } catch (err) {
     console.error("Check-out error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Check-out failed: " + err.message,
-    });
+    res.status(500).json({ message: "Check-out error" });
   }
 };
 
-// ================= 👨‍💼 GET ALL ATTENDANCE (HR) =================
-export const getAllAttendance = async (req, res) => {
-  try {
-    const data = await Attendance.find({
-      companyId: req.user.companyId,
-    })
-      .populate("employeeId", "name email")
-      .sort({ createdAt: -1 });
-
-    return res.json({
-      success: true,
-      count: data.length,
-      data,
-    });
-  } catch (err) {
-    console.error("Get all attendance error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch attendance: " + err.message,
-    });
-  }
-};
-
-// ================= 👤 GET MY ATTENDANCE =================
+// ૩. લોગિન થયેલા એમ્પ્લોયીનો પોતાનો ડેટા મેળવવો
 export const getMyAttendance = async (req, res) => {
   try {
-    const data = await Attendance.find({
-      employeeId: req.user.id,
-    }).sort({ createdAt: -1 });
-
-    return res.json({
-      success: true,
-      count: data.length,
-      data,
-    });
+    const data = await Attendance.find({ employeeId: req.user.id }).sort({ createdAt: -1 });
+    res.json(data);
   } catch (err) {
-    console.error("Get my attendance error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch your attendance: " + err.message,
-    });
+    res.status(500).json({ message: "Error fetching attendance" });
+  }
+};
+
+// ૪. એડમિન/HR માટે તમામ કર્મચારીઓની હાજરી મેળવવી
+export const getAllAttendance = async (req, res) => {
+  try {
+    // યુઝર કલેક્શનમાંથી કર્મચારીનું નામ લોડ કરવા પોપ્યુલેટ કરો
+    const data = await Attendance.find()
+      .populate("employeeId", "name email")
+      .sort({ createdAt: -1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching all attendance" });
   }
 };
 
