@@ -14,10 +14,10 @@ export default function Applicants() {
 
       // ડાયરેક્ટ સાચા એપીઆઈ પર હિટ કરો
       const res = await API.get("/applications");
-      const serverData = Array.isArray(res.data) 
-        ? res.data 
+      const serverData = Array.isArray(res.data)
+        ? res.data
         : (Array.isArray(res.data?.data) ? res.data.data : []);
-      
+
       let localData = JSON.parse(localStorage.getItem("amdox_applicants") || "[]");
 
       // ઇનિશિયલાઇઝેશન
@@ -83,10 +83,25 @@ export default function Applicants() {
       );
 
       const applicantObj = applicants.find(item => item._id === id);
+
+      // 🧠 એક્સેપ્ટ થતાની સાથે જ કેન્ડિડેટને "Approved Candidates List" માં મોકલો (Scheduler માટે)
+      if (status === "ACCEPTED" && applicantObj) {
+        const approvedCandidate = {
+          _id: applicantObj._id,
+          name: applicantObj.name,
+          email: applicantObj.email,
+          position: applicantObj.position || applicantObj.jobId?.title || "Frontend Developer"
+        };
+        const existingApproved = JSON.parse(localStorage.getItem("amdox_approved_candidates") || "[]");
+        if (!existingApproved.some(c => c._id === approvedCandidate._id)) {
+          localStorage.setItem("amdox_approved_candidates", JSON.stringify([approvedCandidate, ...existingApproved]));
+        }
+      }
+
       if (applicantObj) {
         window.triggerAmdoxNotification?.(
-          "Applicant Resolved", 
-          `Application for ${applicantObj.name} has been ${status.toLowerCase()}.`, 
+          "Applicant Resolved",
+          `Application for ${applicantObj.name} has been ${status.toLowerCase()}.`,
           "HR"
         );
       }

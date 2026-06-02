@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Clock, User, Mail, Briefcase, Link as LinkIcon, Loader2, Send } from "lucide-react";
+import { Clock, User, Mail, Briefcase, Link as LinkIcon, Loader2, Send, Users } from "lucide-react";
 import API from "../../services/api";
 
 export default function InterviewScheduler() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [approvedCandidates, setApprovedCandidates] = useState([]); // Approved કેન્ડિડેટ્સ સ્ટેટ
+
   const [form, setForm] = useState({
     candidateName: "",
     candidateEmail: "",
@@ -17,8 +19,30 @@ export default function InterviewScheduler() {
     type: "TECHNICAL"
   });
 
+  // ૧. એક્સેપ્ટ થયેલા કેન્ડિડેટ્સ લિસ્ટ લોડ કરો (ડ્રોપ ડાઉન માટે)
+  useEffect(() => {
+    const savedApproved = JSON.parse(localStorage.getItem("amdox_approved_candidates") || "[]");
+    setApprovedCandidates(savedApproved);
+  }, []);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // 🧠 ડ્રોપ-ડાઉનમાંથી સિલેક્ટ કરતા જ ઓટો-ફીલ લોજીક
+  const handleSelectApprovedCandidate = (e) => {
+    const candidateId = e.target.value;
+    if (!candidateId) return;
+
+    const matched = approvedCandidates.find(c => c._id === candidateId);
+    if (matched) {
+      setForm(prev => ({
+        ...prev,
+        candidateName: matched.name,
+        candidateEmail: matched.email,
+        position: matched.position
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -31,13 +55,11 @@ export default function InterviewScheduler() {
         createdAt: new Date().toISOString()
       };
 
-      // POST request with live fallback persistence
       await API.post("/jobs/interview", payload).catch(() => {
         const existing = JSON.parse(localStorage.getItem("amdox_scheduled_interviews") || "[]");
         localStorage.setItem("amdox_scheduled_interviews", JSON.stringify([payload, ...existing]));
       });
 
-      // Trigger live global notification
       window.triggerAmdoxNotification?.(
         "Interview Scheduled", 
         `Technical interview booked for ${form.candidateName}.`, 
@@ -61,14 +83,31 @@ export default function InterviewScheduler() {
         <p className="text-indigo-100 text-sm mt-1">Configure candidate screening times, target positions, and meeting links.</p>
       </div>
 
-      <div className="bg-white rounded-[32px] border p-8 shadow-sm">
+      <div className="bg-white rounded-[32px] border p-8 shadow-sm space-y-6">
+        
+        {/* 🧠 SELECT APPROVED CANDIDATE DROPDOWN */}
+        {approvedCandidates.length > 0 && (
+          <div className="p-4 bg-indigo-50/40 border border-indigo-100 rounded-2xl space-y-2">
+            <label className="block text-xs font-bold text-indigo-700 uppercase flex items-center gap-1"><Users size={14} /> Quick Select Approved Candidate</label>
+            <select 
+              onChange={handleSelectApprovedCandidate}
+              className="w-full h-11 border border-indigo-200 bg-white rounded-xl px-3 text-xs font-bold text-indigo-800 outline-none cursor-pointer"
+            >
+              <option value="">-- Choose Candidate to Auto-Fill form --</option>
+              {approvedCandidates.map(c => (
+                <option key={c._id} value={c._id}>{c.name} ({c.position})</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Candidate Full Name</label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
-                <input type="text" name="candidateName" required value={form.candidateName} onChange={handleChange} placeholder="e.g. Jaydeep Patel" className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none text-sm bg-slate-50/50" />
+                <input type="text" name="candidateName" required value={form.candidateName} onChange={handleChange} placeholder="e.g. Jaydeep Patel" className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none text-sm bg-slate-50/50 focus:bg-white" />
               </div>
             </div>
 
@@ -76,7 +115,7 @@ export default function InterviewScheduler() {
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Candidate Email</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
-                <input type="email" name="candidateEmail" required value={form.candidateEmail} onChange={handleChange} placeholder="candidate@email.com" className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none text-sm bg-slate-50/50" />
+                <input type="email" name="candidateEmail" required value={form.candidateEmail} onChange={handleChange} placeholder="candidate@email.com" className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none text-sm bg-slate-50/50 focus:bg-white" />
               </div>
             </div>
 
@@ -84,7 +123,7 @@ export default function InterviewScheduler() {
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Target Position</label>
               <div className="relative">
                 <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
-                <input type="text" name="position" required value={form.position} onChange={handleChange} placeholder="React Developer" className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none text-sm bg-slate-50/50" />
+                <input type="text" name="position" required value={form.position} onChange={handleChange} placeholder="React Developer" className="w-full h-12 rounded-xl border pl-11 pr-4 outline-none text-sm bg-slate-50/50 focus:bg-white" />
               </div>
             </div>
 

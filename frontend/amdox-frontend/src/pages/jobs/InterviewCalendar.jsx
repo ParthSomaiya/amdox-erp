@@ -15,16 +15,20 @@ export default function InterviewCalendar() {
   const fetchInterviews = async () => {
     try {
       setLoading(true);
-      const res = await API.get("/jobs/interviews").catch(() => {
-        const localData = JSON.parse(localStorage.getItem("amdox_scheduled_interviews") || "[]");
-        return { data: localData };
+      const res = await API.get("/jobs/interviews").catch(() => null);
+      const serverList = res && Array.isArray(res.data) ? res.data : [];
+
+      const localData = JSON.parse(localStorage.getItem("amdox_scheduled_interviews") || "[]");
+      const merged = [...serverList];
+      localData.forEach((item) => {
+        if (!merged.some((m) => m._id === item._id)) {
+          merged.push(item);
+        }
       });
 
-      const list = res.data || [];
-      setRawInterviews(list);
+      setRawInterviews(merged);
 
-      // Map to Calendar format with safe date parsing
-      const formatted = list.map(item => {
+      const formatted = merged.map(item => {
         const startDateTime = new Date(`${item.date}T${item.time || "10:00"}`);
         return {
           id: item._id,
@@ -44,7 +48,8 @@ export default function InterviewCalendar() {
   const handleCancelInterview = (id) => {
     if (!window.confirm("Are you sure you want to cancel this scheduled interview?")) return;
     
-    const updated = rawInterviews.filter(item => item._id !== id);
+    const localData = JSON.parse(localStorage.getItem("amdox_scheduled_interviews") || "[]");
+    const updated = localData.filter(item => item._id !== id);
     localStorage.setItem("amdox_scheduled_interviews", JSON.stringify(updated));
     fetchInterviews();
 
@@ -68,7 +73,6 @@ export default function InterviewCalendar() {
         .rbc-header { font-weight: bold !important; color: #475569 !important; padding: 6px !important; font-size: 11px !important; }
       `}</style>
 
-      {/* Header */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-5 sm:p-8 rounded-2xl sm:rounded-[32px] text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
         <div className="relative z-10 space-y-1">
@@ -85,8 +89,6 @@ export default function InterviewCalendar() {
         <div className="p-20 text-center"><Loader2 className="animate-spin h-10 w-10 text-indigo-600 mx-auto" /></div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full max-w-full overflow-hidden">
-          
-          {/* Calendar View Container */}
           <div className="lg:col-span-8 bg-white rounded-2xl sm:rounded-[32px] border p-4 sm:p-6 shadow-sm min-h-[420px] sm:min-h-[500px] w-full overflow-hidden">
             <div className="w-full overflow-x-auto">
               <div className="min-w-[480px] sm:min-w-0">
@@ -101,10 +103,8 @@ export default function InterviewCalendar() {
             </div>
           </div>
 
-          {/* Cancel/Join Interactive Side Panel */}
           <div className="lg:col-span-4 bg-white border rounded-2xl sm:rounded-[32px] p-4 sm:p-6 shadow-sm space-y-4 sm:space-y-6 w-full max-w-full overflow-hidden">
             <h3 className="font-extrabold text-slate-800 text-sm sm:text-base border-b pb-2.5">Active Scheduled Slots</h3>
-            
             <div className="space-y-3.5 max-h-[380px] overflow-y-auto pr-1">
               {rawInterviews.length === 0 ? (
                 <p className="text-xs text-slate-400 italic text-center py-8">No interviews scheduled yet.</p>
@@ -123,7 +123,6 @@ export default function InterviewCalendar() {
                         <Trash2 size={13} />
                       </button>
                     </div>
-
                     <div className="flex items-center justify-between border-t pt-2 text-[9px] text-slate-400 font-bold uppercase">
                       <span>{item.date} @ {item.time}</span>
                       <a href={item.meetingLink} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline flex items-center gap-1 shrink-0">
@@ -135,7 +134,6 @@ export default function InterviewCalendar() {
               )}
             </div>
           </div>
-
         </div>
       )}
     </div>
