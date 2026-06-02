@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Search, UserCheck, UserX, Clock3, RefreshCw } from "lucide-react";
+import { CalendarDays, Search, UserCheck, UserX, Clock3, RefreshCw, Loader2 } from "lucide-react";
 import API from "../services/api";
 
 export default function AttendanceReport() {
@@ -8,48 +8,79 @@ export default function AttendanceReport() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    fetchReports();
-  }, []);
-
   const fetchReports = async () => {
     try {
       setLoading(true);
-      const res = await API.get("/attendance/report");
-      const list = Array.isArray(res.data) ? res.data : [];
+      
+      // ૧. એક્ટિવ કર્મચારીઓની યાદી મેળવો
+      const empRes = await API.get("/hr/employees").catch(() => null);
+      const serverEmps = empRes && Array.isArray(empRes.data) ? empRes.data : [];
+      const localEmps = JSON.parse(localStorage.getItem("amdox_employees") || "[]");
+      const mergedEmps = [...serverEmps];
+      localEmps.forEach((item) => {
+        if (!mergedEmps.some((m) => m._id === item._id)) {
+          mergedEmps.push(item);
+        }
+      });
 
-      if (list.length > 0) {
-        setRecords(list);
-      } else {
-        throw new Error("Empty report list");
-      }
-    } catch (err) {
-      console.warn("Report Fetch Fallback compiling dynamic stats...");
-      const savedAttendance = JSON.parse(localStorage.getItem("amdox_simulated_attendance") || "[]");
-      const formatted = savedAttendance.map((item) => {
-        const checkIn = item.checkIn ? new Date(item.checkIn) : null;
-        const checkOut = item.checkOut ? new Date(item.checkOut) : null;
-        let status = "ABSENT";
-        if (checkIn) {
-          if (checkOut) {
-            const diff = (checkOut - checkIn) / (1000 * 60 * 60);
-            status = diff >= 8 ? "PRESENT" : "HALF_DAY";
+      // ૨. હાજરી લોગ ડેટા મેળવો
+      const attRes = await API.get("/attendance").catch(() => null);
+      const serverAtt = attRes && Array.isArray(attRes.data) ? attRes.data : [];
+      const localAtt = JSON.parse(localStorage.getItem("amdox_simulated_attendance") || "[]");
+      const mergedAtt = [...serverAtt];
+      localAtt.forEach((item) => {
+        if (!mergedAtt.some((m) => m._id === item._id)) {
+          mergedAtt.push(item);
+        }
+      });
+
+      // ૩. હાજરી કલાકો ગણીને ડાયનેમિકલી રિપોર્ટ તૈયાર કરો
+      const compiledReports = mergedAtt.map((item) => {
+        let empName = "Staff Member";
+        if (item.employeeId && typeof item.employeeId === "object") {
+          empName = item.employeeId.name || item.employeeId.userId?.name || "Staff Member";
+        } else {
+          const empIdStr = typeof item.employeeId === "string" ? item.employeeId : item.employeeId?._id;
+          const matched = mergedEmps.find(e => String(e._id) === String(empIdStr) || String(e.userId?._id) === String(empIdStr));
+          if (matched) {
+            empName = matched.userId?.name || matched.name || "Staff Member";
+          }
+        }
+
+        let status = "PRESENT";
+        if (item.checkIn) {
+          const start = new Date(item.checkIn);
+          const end = item.checkOut ? new Date(item.checkOut) : new Date();
+          const diffHrs = (end - start) / (1000 * 60 * 60);
+          
+          if (item.checkOut && diffHrs < 5) {
+            status = "HALF_DAY";
           } else {
             status = "PRESENT";
           }
+        } else {
+          status = "ABSENT";
         }
+
         return {
           _id: item._id,
-          userId: { name: item.employeeId?.name || "Staff Member" },
-          status,
-          createdAt: item.date || new Date().toISOString(),
+          name: empName,
+          date: item.date || new Date().toISOString().split("T")[0],
+          status: status
         };
       });
-      setRecords(formatted);
+
+      setRecords(compiledReports);
+    } catch (err) {
+      console.error("Error compiling reports:", err);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
 
   const refreshReports = async () => {
     try {
@@ -62,7 +93,7 @@ export default function AttendanceReport() {
 
   const filteredRecords = useMemo(() => {
     return records.filter((item) =>
-      (item?.userId?.name || "").toLowerCase().includes(search.toLowerCase())
+      (item?.name || "").toLowerCase().includes(search.toLowerCase())
     );
   }, [records, search]);
 
@@ -82,14 +113,10 @@ export default function AttendanceReport() {
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case "PRESENT":
-        return "bg-emerald-100 text-emerald-700 border border-emerald-200";
-      case "ABSENT":
-        return "bg-red-100 text-red-700 border border-red-200";
-      case "HALF_DAY":
-        return "bg-amber-100 text-amber-700 border border-amber-200";
-      default:
-        return "bg-slate-100 text-slate-700 border border-slate-200";
+      case "PRESENT": return "bg-emerald-100 text-emerald-700 border border-emerald-200";
+      case "ABSENT": return "bg-red-100 text-red-700 border border-red-200";
+      case "HALF_DAY": return "bg-amber-100 text-amber-700 border border-amber-200";
+      default: return "bg-slate-100 text-slate-700 border border-slate-200";
     }
   };
 
@@ -104,7 +131,6 @@ export default function AttendanceReport() {
 
   return (
     <div className="space-y-8">
-      {/* Hero Banner */}
       <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 p-8 md:p-10 text-white shadow-2xl">
         <div className="absolute top-0 right-0 h-56 w-56 rounded-full bg-white/10 blur-3xl pointer-events-none" />
         <div className="relative z-10">
@@ -118,7 +144,6 @@ export default function AttendanceReport() {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="rounded-[28px] border border-slate-200 bg-white p-7 shadow-lg">
           <div className="flex items-center justify-between">
@@ -157,7 +182,6 @@ export default function AttendanceReport() {
         </div>
       </div>
 
-      {/* Toolbar */}
       <div className="flex flex-col gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-lg lg:flex-row lg:items-center lg:justify-between">
         <div className="relative w-full lg:max-w-md">
           <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -180,7 +204,6 @@ export default function AttendanceReport() {
         </button>
       </div>
 
-      {/* Table Container */}
       <div className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-2xl">
         <div className="grid grid-cols-12 gap-4 border-b border-slate-200 bg-slate-100 px-8 py-5 text-sm font-black uppercase tracking-wide text-slate-600">
           <div className="col-span-4">Employee</div>
@@ -191,8 +214,8 @@ export default function AttendanceReport() {
         {loading ? (
           <div className="flex min-h-[350px] items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto mb-5 h-14 w-14 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-              <h2 className="text-2xl font-black text-slate-700">Loading Reports...</h2>
+              <Loader2 className="mx-auto mb-5 h-14 w-14 animate-spin text-indigo-600" />
+              <h2 className="text-xl font-black text-slate-700">Loading Reports...</h2>
             </div>
           </div>
         ) : filteredRecords.length === 0 ? (
@@ -207,16 +230,16 @@ export default function AttendanceReport() {
             <div key={item._id} className="grid grid-cols-12 gap-4 border-b border-slate-100 px-8 py-5 transition-all hover:bg-slate-50">
               <div className="col-span-4 flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 text-lg font-black text-white uppercase">
-                  {(item?.userId?.name || "E").charAt(0)}
+                  {item.name.charAt(0)}
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">{item?.userId?.name || "Staff Member"}</h3>
+                  <h3 className="text-base font-bold text-slate-800">{item.name}</h3>
                   <p className="text-sm text-slate-500">Employee Attendance</p>
                 </div>
               </div>
 
               <div className="col-span-4 flex items-center text-sm font-semibold text-slate-600">
-                {formatDate(item.createdAt)}
+                {formatDate(item.date)}
               </div>
 
               <div className="col-span-4 flex items-center">

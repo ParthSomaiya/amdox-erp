@@ -26,10 +26,22 @@ export default function CareerPortal() {
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const res = await API.get("/jobs");
-      setJobs(res.data || []);
+      const res = await API.get("/jobs").catch(() => null);
+      const serverJobs = res && Array.isArray(res.data) ? res.data : [];
+
+      const localJobs = JSON.parse(localStorage.getItem("amdox_jobs") || "[]");
+      const merged = [...serverJobs];
+      localJobs.forEach((item) => {
+        if (!merged.some((m) => m._id === item._id)) {
+          merged.push(item);
+        }
+      });
+
+      setJobs(merged);
     } catch (err) {
       console.error("Failed to fetch jobs:", err);
+      const localJobs = JSON.parse(localStorage.getItem("amdox_jobs") || "[]");
+      setJobs(localJobs);
     } finally {
       setLoading(false);
     }
@@ -70,7 +82,7 @@ export default function CareerPortal() {
       {/* Hero Banner */}
       <div className="relative overflow-hidden rounded-2xl sm:rounded-[32px] bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-950 text-white p-5 sm:p-10 md:p-14 shadow-xl border border-slate-800 flex justify-between items-center w-full box-border">
         <div className="absolute top-0 right-0 w-[450px] h-[450px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none" />
-        
+
         {/* Left Side Info */}
         <div className="relative z-10 max-w-2xl space-y-4">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-400/20 bg-indigo-500/10 px-3.5 py-1 text-[10px] font-bold text-indigo-300">
@@ -113,7 +125,7 @@ export default function CareerPortal() {
 
       {/* 🚀 Main Split Layout (Ultimate Flexbox fix for mobile devices) */}
       <div className="flex flex-col lg:flex-row gap-6 items-start w-full box-border">
-        
+
         {/* 🔍 LEFT SIDE FILTERS PANEL */}
         <aside className="w-full lg:w-[300px] bg-white border border-slate-200 rounded-2xl sm:rounded-[28px] p-4 sm:p-6 shadow-sm space-y-5 shrink-0 box-border">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -203,7 +215,7 @@ export default function CareerPortal() {
             <div className="space-y-4 w-full box-border">
               {filteredJobs.map((job) => (
                 <div key={job._id} className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-4 sm:p-6 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all duration-300 hover:-translate-y-1 flex flex-col md:flex-row justify-between gap-4 w-full box-border overflow-hidden">
-                  
+
                   {/* Left Metadata Info */}
                   <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
                     <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center text-base sm:text-lg uppercase shrink-0">
@@ -217,7 +229,7 @@ export default function CareerPortal() {
                           Urgently hiring
                         </span>
                       </div>
-                      
+
                       <p className="text-[10px] sm:text-xs font-bold text-slate-400">AMDOX Corporate Suite</p>
                       <p className="text-slate-500 text-xs leading-relaxed pt-1.5 line-clamp-2">{job.description}</p>
 
@@ -255,7 +267,7 @@ export default function CareerPortal() {
 
       {/* Footer */}
       <div className="flex items-center justify-center gap-1 text-[9px] sm:text-xs text-slate-400 font-semibold pt-2 text-center px-4">
-        <ShieldCheck size={12} className="text-indigo-600 shrink-0" /> 
+        <ShieldCheck size={12} className="text-indigo-600 shrink-0" />
         <span className="truncate">Secure AMDOX Careers Portal Verification Active</span>
       </div>
     </div>

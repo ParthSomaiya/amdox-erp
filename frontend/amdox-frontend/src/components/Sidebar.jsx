@@ -121,6 +121,9 @@ export default function Sidebar() {
                   <Link to="/employees" className={menuClass("/employees")}>
                     👥 Employees List
                   </Link>
+                  <Link to="/hr/employee-profile" className={menuClass("/hr/employee-profile")}>
+                    👥 Employee Profiles
+                  </Link>
                   <Link to="/admin/applicants" className={menuClass("/admin/applicants")}>
                     👥 Job Applicants
                   </Link>
@@ -389,7 +392,7 @@ export default function Sidebar() {
         >
           Sign Out
         </button>
-      </div>  
+      </div>
     </aside>
   );
 }

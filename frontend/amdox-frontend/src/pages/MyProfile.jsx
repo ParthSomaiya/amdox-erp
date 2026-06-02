@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
-import { User, Mail, Shield, CheckCircle, FileText, Upload, Briefcase, Globe, Loader2, Calendar } from "lucide-react";
+import { User, Mail, Shield, CheckCircle, FileText, Upload, Briefcase, Globe, Loader2, Calendar, Video, Clock } from "lucide-react";
 import API from "../services/api";
 
 export default function MyProfile() {
   const [user, setUser] = useState({});
   const [applications, setApplications] = useState([]);
+  const [interviews, setInterviews] = useState([]); // ઈન્ટરવ્યુ સ્ટેટ
   const [loading, setLoading] = useState(true);
   const [resumeFile, setResumeFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -14,19 +15,43 @@ export default function MyProfile() {
     setUser(storedUser);
     
     if (storedUser.role === "JOB_SEEKER") {
-      fetchApplications();
+      fetchApplicationsAndInterviews(storedUser.email);
     } else {
       setLoading(false);
     }
   }, []);
 
-  const fetchApplications = async () => {
+  const fetchApplicationsAndInterviews = async (email) => {
     try {
       setLoading(true);
-      const res = await API.get("/jobs/applicants"); // 🔹 સિંક્ડ એન્ડપોઇન્ટ
-      // ફિલ્ટર ફક્ત લોગિન થયેલા જોબ સીકરની એપ્લિકેશન
-      const myApps = (res.data || []).filter(app => app.email === user.email);
-      setApplications(myApps);
+      
+      // ૧. અરજીઓ લોડ કરો
+      const res = await API.get("/jobs/applicants").catch(() => null);
+      const serverApps = res && Array.isArray(res.data) ? res.data : [];
+      const localApps = JSON.parse(localStorage.getItem("amdox_applicants") || "[]");
+      const mergedApps = [...serverApps];
+      localApps.forEach((item) => {
+        if (!mergedApps.some((m) => m._id === item._id)) {
+          mergedApps.push(item);
+        }
+      });
+      setApplications(mergedApps.filter(app => app.email === email));
+
+      // ૨. ઈન્ટરવ્યુ શિડ્યુલર લાઈવ લોડ લોજિક (ઇમેઇલ દ્વારા મેચ થશે)
+      const intRes = await API.get("/jobs/interviews").catch(() => null);
+      const serverInts = intRes && Array.isArray(intRes.data) ? intRes.data : [];
+      const localInts = JSON.parse(localStorage.getItem("amdox_scheduled_interviews") || "[]");
+      const mergedInts = [...serverInts];
+      localInts.forEach((item) => {
+        if (!mergedInts.some((m) => m._id === item._id)) {
+          mergedInts.push(item);
+        }
+      });
+
+      // માત્ર આ ચોક્કસ જોબ સીકર માટેનો જ શિડ્યુલ ઇન્ટરવ્યુ બતાવો
+      const myScheduled = mergedInts.filter(i => i.candidateEmail?.toLowerCase() === email?.toLowerCase());
+      setInterviews(myScheduled);
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -43,7 +68,6 @@ export default function MyProfile() {
       const formData = new FormData();
       formData.append("resume", resumeFile);
 
-      // 🔹 ફિક્સ: અપલોડ પાથ બદલીને બેકએન્ડના સાચા રૂટ પર કનેક્ટ કર્યો
       await API.put(`/hr/profile/resume`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -60,7 +84,6 @@ export default function MyProfile() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      {/* Hero Banner */}
       <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 p-8 text-white shadow-xl">
         <div className="absolute top-0 right-0 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
         <div className="relative z-10 flex items-center gap-6">
@@ -76,11 +99,10 @@ export default function MyProfile() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Profile details & Resume uploader (Left Side) */}
+        {/* Profile Card */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white border rounded-3xl p-6 shadow-sm space-y-5">
             <h3 className="font-extrabold text-slate-800 text-base">Account Identity</h3>
-            
             <div className="space-y-3">
               <div className="p-3 bg-slate-50 rounded-xl border flex items-center gap-3">
                 <User size={16} className="text-indigo-600" />
@@ -89,7 +111,6 @@ export default function MyProfile() {
                   <span className="text-xs font-bold text-slate-800">{user.name}</span>
                 </div>
               </div>
-
               <div className="p-3 bg-slate-50 rounded-xl border flex items-center gap-3">
                 <Mail size={16} className="text-indigo-600" />
                 <div className="truncate">
@@ -97,7 +118,6 @@ export default function MyProfile() {
                   <span className="text-xs font-bold text-slate-800 truncate block max-w-[180px]">{user.email}</span>
                 </div>
               </div>
-
               <div className="p-3 bg-slate-50 rounded-xl border flex items-center gap-3">
                 <Shield size={16} className="text-indigo-600" />
                 <div>
@@ -108,30 +128,22 @@ export default function MyProfile() {
             </div>
           </div>
 
-          {/* Dynamic Resume Uploader */}
           {user.role === "JOB_SEEKER" && (
             <div className="bg-white border rounded-3xl p-6 shadow-sm space-y-4">
               <h3 className="font-extrabold text-slate-800 text-base">Profile Management</h3>
-              <p className="text-xs text-slate-400">Keep your latest Resume/CV updated for employer reviews.</p>
-              
+              <p className="text-xs text-slate-400">Keep your latest Resume/CV updated.</p>
               <form onSubmit={handleResumeUpload} className="space-y-4">
                 <label className="h-20 border-2 border-dashed border-indigo-200 hover:border-indigo-500 rounded-xl flex flex-col items-center justify-center cursor-pointer bg-slate-50/50 hover:bg-indigo-50/10 transition">
                   <Upload size={20} className="text-indigo-600" />
                   <span className="text-xs font-bold text-slate-700 mt-1">Select Resume</span>
                   <input type="file" hidden accept=".pdf,.doc,.docx" onChange={(e) => setResumeFile(e.target.files[0])} />
                 </label>
-
                 {resumeFile && (
                   <div className="p-2.5 bg-indigo-50 border rounded-lg text-xs font-semibold text-indigo-700 flex items-center gap-1.5">
                     <FileText size={14} /> {resumeFile.name}
                   </div>
                 )}
-
-                <button
-                  type="submit"
-                  disabled={uploading || !resumeFile}
-                  className="w-full h-10 bg-indigo-600 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50"
-                >
+                <button type="submit" disabled={uploading || !resumeFile} className="w-full h-10 bg-indigo-600 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer">
                   {uploading ? <Loader2 className="animate-spin h-3.5 w-3.5" /> : <Upload size={14} />}
                   Update Resume
                 </button>
@@ -140,47 +152,70 @@ export default function MyProfile() {
           )}
         </div>
 
-        {/* Applied Jobs Track Area (Right Side) */}
+        {/* Dynamic Applications & Interview Scheduler */}
         {user.role === "JOB_SEEKER" && (
-          <div className="lg:col-span-2 bg-white border rounded-3xl p-6 shadow-sm space-y-6">
-            <div>
-              <h3 className="font-extrabold text-slate-800 text-base">My Applied Vacancies</h3>
-              <p className="text-xs text-slate-400">Real-time tracker for your candidate pipeline applications</p>
-            </div>
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* 🚀 LATEST SHEDULED INTERVIEWS LISTING CARD */}
+            {interviews.length > 0 && (
+              <div className="bg-white border rounded-[30px] p-6 shadow-sm space-y-4">
+                <div>
+                  <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-[10px] font-bold">Live Calender Match</span>
+                  <h3 className="font-extrabold text-slate-800 text-base mt-2">My Scheduled Interviews</h3>
+                </div>
 
-            {loading ? (
-              <div className="p-10 text-center">
-                <Loader2 className="animate-spin h-8 w-8 text-indigo-600 mx-auto" />
-              </div>
-            ) : applications.length === 0 ? (
-              <div className="p-16 border rounded-2xl text-center space-y-2">
-                <Briefcase className="mx-auto text-slate-300" size={36} />
-                <h4 className="font-bold text-slate-700 text-sm">No Active Applications</h4>
-                <p className="text-slate-400 text-xs">Browse job openings in Career portal and apply now.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {applications.map((app) => (
-                  <div key={app._id} className="p-5 border rounded-2xl bg-slate-50/50 hover:bg-white hover:border-indigo-100 transition flex justify-between items-center">
-                    <div>
-                      <h4 className="font-extrabold text-slate-800 text-sm">{app.jobId?.title || "Hired Role"}</h4>
-                      <p className="text-xs text-slate-400 mt-1 flex items-center gap-1"><Calendar size={12} /> Applied: {new Date(app.createdAt).toLocaleDateString()}</p>
+                <div className="space-y-3">
+                  {interviews.map((item) => (
+                    <div key={item._id} className="p-4 bg-indigo-50/30 border border-indigo-100 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <h4 className="font-bold text-slate-800 text-sm">{item.position} • {item.type}</h4>
+                        <p className="text-xs text-slate-500 font-medium">Panel: {item.interviewer}</p>
+                        <p className="text-[10px] text-slate-400 font-bold flex items-center gap-1 pt-1">
+                          <Clock size={12} /> {item.date} @ {item.time}
+                        </p>
+                      </div>
+                      <a href={item.meetingLink} target="_blank" rel="noreferrer" className="h-8.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shrink-0 shadow-sm">
+                        <Video size={12} /> Join Meeting
+                      </a>
                     </div>
-
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${
-                      app.status === "ACCEPTED" ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
-                      app.status === "REJECTED" ? "bg-rose-50 text-rose-700 border-rose-100" :
-                      "bg-amber-50 text-amber-700 border-amber-100"
-                    }`}>
-                      {app.status || "PENDING"}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
+
+            {/* Applications */}
+            <div className="bg-white border rounded-[30px] p-6 shadow-sm space-y-6">
+              <div>
+                <h3 className="font-extrabold text-slate-800 text-base">My Applied Vacancies</h3>
+                <p className="text-xs text-slate-400">Real-time tracker for your candidate pipeline applications</p>
+              </div>
+
+              {applications.length === 0 ? (
+                <div className="p-16 border rounded-2xl text-center space-y-2">
+                  <Briefcase className="mx-auto text-slate-300" size={36} />
+                  <h4 className="font-bold text-slate-700 text-sm">No Active Applications</h4>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {applications.map((app) => (
+                    <div key={app._id} className="p-5 border rounded-2xl bg-slate-50/50 hover:bg-white hover:border-indigo-100 transition flex justify-between items-center">
+                      <div>
+                        <h4 className="font-extrabold text-slate-800 text-sm">{app.position || "Hired Role"}</h4>
+                        <p className="text-xs text-slate-400 mt-1 flex items-center gap-1"><Calendar size={12} /> Applied: {new Date(app.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${
+                        app.status === "ACCEPTED" ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                        app.status === "REJECTED" ? "bg-rose-50 text-rose-700 border-rose-100" :
+                        "bg-amber-50 text-amber-700 border-amber-100"
+                      }`}>{app.status || "PENDING"}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         )}
-
       </div>
     </div>
   );
