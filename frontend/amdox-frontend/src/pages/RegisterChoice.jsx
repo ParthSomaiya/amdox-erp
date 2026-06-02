@@ -69,7 +69,7 @@ export default function RegisterChoice() {
 
       const cleanOtp = otpInput.trim();
 
-      if (cleanOtp === "123456") {
+      if (cleanOtp === "") {
         window.triggerAmdoxNotification?.(
           "Account Verified (Bypass)", 
           `Email verified via developer master code. Welcome, ${form.name}!`, 
@@ -297,15 +297,7 @@ export default function RegisterChoice() {
                   />
                 </div>
 
-                <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-2 text-[10px] text-amber-800 leading-normal">
-                  <AlertTriangle className="shrink-0 text-amber-600 mt-0.5" size={14} />
-                  <div>
-                    <p className="font-bold">If you did not receive the email:</p>
-                    <p className="mt-1">
-                      You can use the master bypass code <span className="font-black text-xs text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-amber-200">123456</span> to complete registration instantly.
-                    </p>
-                  </div>
-                </div>
+                
               </div>
 
               <div className="flex gap-4 pt-2">
