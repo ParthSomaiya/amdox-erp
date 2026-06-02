@@ -8,19 +8,47 @@ export default function Applicants() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
-  useEffect(() => {
-    fetchApplicants();
-  }, []);
-
   const fetchApplicants = async () => {
     try {
       setLoading(true);
-      const res = await API.get("/jobs/applicants");
-      const serverData = Array.isArray(res.data) ? res.data : [];
-      
-      const localData = JSON.parse(localStorage.getItem("amdox_applicants") || "[]");
-      const merged = [...serverData];
 
+      // ડાયરેક્ટ સાચા એપીઆઈ પર હિટ કરો
+      const res = await API.get("/applications");
+      const serverData = Array.isArray(res.data) 
+        ? res.data 
+        : (Array.isArray(res.data?.data) ? res.data.data : []);
+      
+      let localData = JSON.parse(localStorage.getItem("amdox_applicants") || "[]");
+
+      // ઇનિશિયલાઇઝેશન
+      if (serverData.length === 0 && localData.length === 0) {
+        const defaultMockApplicants = [
+          {
+            _id: "app-default-1",
+            name: "Dharmik Kotecha",
+            email: "dharmikkotecha@gmail.com",
+            phone: "+91 98765 43210",
+            position: "Frontend Developer",
+            status: "PENDING",
+            resume: "uploads/Dharmik_Kotecha_Resume.pdf",
+            createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            _id: "app-default-2",
+            name: "Jaydeep Patel",
+            email: "jaydeep.patel@gmail.com",
+            phone: "+91 91234 56789",
+            position: "Backend Engineer",
+            status: "ACCEPTED",
+            resume: "uploads/Jaydeep_Patel_Resume.pdf",
+            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ];
+        localStorage.setItem("amdox_applicants", JSON.stringify(defaultMockApplicants));
+        localData = defaultMockApplicants;
+      }
+
+      const merged = [...serverData];
       localData.forEach((item) => {
         if (!merged.some((m) => m._id === item._id)) {
           merged.push(item);
@@ -36,10 +64,13 @@ export default function Applicants() {
     }
   };
 
+  useEffect(() => {
+    fetchApplicants();
+  }, []);
+
   const updateStatus = async (id, status) => {
     try {
       await API.put(`/jobs/applicant/${id}`, { status }).catch(() => {
-        // Fallback local sync
         const localData = JSON.parse(localStorage.getItem("amdox_applicants") || "[]");
         const updatedLocal = localData.map((item) =>
           item._id === id ? { ...item, status } : item
