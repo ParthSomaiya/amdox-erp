@@ -5,7 +5,7 @@ import API from "../services/api";
 export default function MyProfile() {
   const [user, setUser] = useState({});
   const [applications, setApplications] = useState([]);
-  const [interviews, setInterviews] = useState([]); // ઈન્ટરવ્યુ સ્ટેટ
+  const [interviews, setInterviews] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [resumeFile, setResumeFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -35,9 +35,9 @@ export default function MyProfile() {
           mergedApps.push(item);
         }
       });
-      setApplications(mergedApps.filter(app => app.email === email));
+      setApplications(mergedApps.filter(app => app.email?.toLowerCase() === email?.toLowerCase()));
 
-      // ૨. ઈન્ટરવ્યુ શિડ્યુલર લાઈવ લોડ લોજિક (ઇમેઇલ દ્વારા મેચ થશે)
+      // ૨. ઇન્ટરવ્યુ શિડ્યુલર લાઈવ લોડ લોજિક (સેફ ડેટ કન્સ્ટ્રક્ટર સાથે સિંક)
       const intRes = await API.get("/jobs/interviews").catch(() => null);
       const serverInts = intRes && Array.isArray(intRes.data) ? intRes.data : [];
       const localInts = JSON.parse(localStorage.getItem("amdox_scheduled_interviews") || "[]");
@@ -48,7 +48,7 @@ export default function MyProfile() {
         }
       });
 
-      // માત્ર આ ચોક્કસ જોબ સીકર માટેનો જ શિડ્યુલ ઇન્ટરવ્યુ બતાવો
+      // માત્ર લોગિન થયેલા સાચા કેન્ડિડેટનો જ ઇન્ટરવ્યુ બતાવો
       const myScheduled = mergedInts.filter(i => i.candidateEmail?.toLowerCase() === email?.toLowerCase());
       setInterviews(myScheduled);
 
@@ -156,11 +156,11 @@ export default function MyProfile() {
         {user.role === "JOB_SEEKER" && (
           <div className="lg:col-span-2 space-y-6">
             
-            {/* 🚀 LATEST SHEDULED INTERVIEWS LISTING CARD */}
+            {/* LATEST SHEDULED INTERVIEWS LISTING CARD */}
             {interviews.length > 0 && (
               <div className="bg-white border rounded-[30px] p-6 shadow-sm space-y-4">
                 <div>
-                  <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-[10px] font-bold">Live Calender Match</span>
+                  <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-[10px] font-bold">Live Calendar Match</span>
                   <h3 className="font-extrabold text-slate-800 text-base mt-2">My Scheduled Interviews</h3>
                 </div>
 

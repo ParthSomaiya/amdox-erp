@@ -28,13 +28,23 @@ export default function InterviewCalendar() {
 
       setRawInterviews(merged);
 
+      // 🧠 બ્રાઉઝર-ફ્રેન્ડલી અને સેફ ડેટ પાર્સિંગ મેથડ
       const formatted = merged.map(item => {
-        const startDateTime = new Date(`${item.date}T${item.time || "10:00"}`);
+        let startDateTime = new Date();
+        if (item.date) {
+          const [year, month, day] = item.date.split("-").map(Number);
+          const [hours, minutes] = (item.time || "10:00").split(":").map(Number);
+          // JS Date માં મંથ 0-ઇન્ડેક્સથી શરૂ થાય છે (Jan = 0)
+          startDateTime = new Date(year, month - 1, day, hours, minutes);
+        }
+        
+        const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000); // ૧ કલાકનો ઇન્ટરવ્યુ
+
         return {
           id: item._id,
           title: `${item.candidateName} - ${item.type} (${item.position})`,
-          start: isNaN(startDateTime.getTime()) ? new Date() : startDateTime,
-          end: isNaN(startDateTime.getTime()) ? new Date() : new Date(startDateTime.getTime() + 60*60*1000),
+          start: startDateTime,
+          end: endDateTime,
         };
       });
       setEvents(formatted);
