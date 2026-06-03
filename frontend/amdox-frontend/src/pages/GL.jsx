@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { BookOpen, RefreshCw, Loader2, ArrowUpRight, ArrowDownLeft, ShieldCheck, Plus, Trash2, Lock, Unlock } from "lucide-react";
+import { BookOpen, RefreshCw, Loader2, ArrowUpRight, ArrowDownLeft, ShieldCheck, Plus, Trash2, Lock, Unlock, PlusCircle, AlertCircle, CheckCircle2 } from "lucide-react";
 import API from "../services/api";
 
 export default function GL() {
@@ -62,11 +62,25 @@ export default function GL() {
     };
   }, [entryLines]);
 
-  const handleLineChange = (index, field, value) => {
+  // 🧠 ડાયનેમિક લાઇન એડ કરવી
+  const handleAddLine = () => {
+    setEntryLines([...entryLines, { accountCode: "1010", debit: "", credit: "" }]);
+  };
+
+  // 🧠 લાઇન નિકાળવી (ન્યૂનતમ ૨ લાઇન રહેશે જ)
+  const handleRemoveLine = (index) => {
+    if (entryLines.length <= 2) return;
+    setEntryLines(entryLines.filter((_, i) => i !== index));
+  };
+
+  const handleLineChange = (index, field, val) => {
     const updatedLines = [...entryLines];
-    updatedLines[index][field] = value;
-    if (field === "debit" && value > 0) updatedLines[index]["credit"] = "";
-    if (field === "credit" && value > 0) updatedLines[index]["debit"] = "";
+    const numVal = val === "" ? "" : Number(val);
+    updatedLines[index][field] = numVal;
+
+    // ડેબિટ લખાતા ક્રેડિટ ખાલી કરવું અને ક્રેડિટ લખાતા ડેબિટ ખાલી કરવું
+    if (field === "debit" && numVal > 0) updatedLines[index]["credit"] = "";
+    if (field === "credit" && numVal > 0) updatedLines[index]["debit"] = "";
     setEntryLines(updatedLines);
   };
 
@@ -135,7 +149,7 @@ export default function GL() {
         <p className="text-slate-400 text-xs mt-1.5">Manage Chart of accounts, balance ledgers, and override period lock values.</p>
       </div>
 
-      {/* 🔹 રાયપ્રેસિવ હોરિઝોન્ટલ સ્ક્રોલેબલ ટેબ્સ */}
+      {/* રિસ્પોન્સિવ ટેબ્સ */}
       <div className="flex border-b text-xs sm:text-sm overflow-x-auto whitespace-nowrap scrollbar-none w-full border-slate-200">
         <button onClick={() => setActiveTab("ledger")} className={`px-4 sm:px-6 py-2.5 sm:py-3 font-bold border-b-2 transition shrink-0 ${activeTab === "ledger" ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-400"}`}>Post Journal</button>
         <button onClick={() => setActiveTab("coa")} className={`px-4 sm:px-6 py-2.5 sm:py-3 font-bold border-b-2 transition shrink-0 ${activeTab === "coa" ? "border-indigo-600 text-indigo-600" : "border-transparent text-slate-400"}`}>Chart of Accounts</button>
@@ -145,27 +159,59 @@ export default function GL() {
       {activeTab === "ledger" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full max-w-full overflow-hidden">
           {/* Post Form */}
-          <div className="lg:col-span-7 bg-white rounded-2xl sm:rounded-3xl border p-4 sm:p-6 shadow-sm space-y-4 sm:space-y-6 w-full max-w-full">
+          <div className="lg:col-span-7 bg-white border rounded-3xl p-4 sm:p-6 shadow-sm space-y-5 w-full max-w-full">
             <form onSubmit={handlePostJournalEntry} className="space-y-4">
-              <input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Monthly Rent Expense Adjustment" className="w-full h-11 border border-slate-200 bg-slate-50/50 rounded-xl px-3.5 outline-none focus:border-indigo-500 focus:bg-white text-xs" />
+              <input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Monthly Rent Expense Adjustment" className="w-full h-11 border border-slate-200 bg-slate-50/50 rounded-xl px-3.5 outline-none focus:border-indigo-500 focus:bg-white text-xs font-bold" />
               
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {entryLines.map((line, idx) => (
-                  <div key={idx} className="grid grid-cols-12 gap-1.5 sm:gap-2 items-center w-full min-w-0">
-                    <select value={line.accountCode} onChange={(e) => handleLineChange(idx, "accountCode", e.target.value)} className="col-span-6 h-9 sm:h-10 border border-slate-200 bg-white rounded-xl px-2 text-[11px] sm:text-xs">
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-center w-full min-w-0">
+                    <select value={line.accountCode} onChange={(e) => handleLineChange(idx, "accountCode", e.target.value)} className="col-span-5 h-10 border border-slate-200 bg-white rounded-xl px-2 text-[11px] sm:text-xs font-semibold">
                       {accounts.map(acc => <option key={acc.code} value={acc.code}>{acc.name}</option>)}
                     </select>
-                    <input type="number" placeholder="Debit" value={line.debit} onChange={(e) => handleLineChange(idx, "debit", e.target.value)} className="col-span-3 h-9 sm:h-10 border border-slate-200 bg-slate-50/50 rounded-xl text-[11px] sm:text-xs text-right px-1.5" />
-                    <input type="number" placeholder="Credit" value={line.credit} onChange={(e) => handleLineChange(idx, "credit", e.target.value)} className="col-span-3 h-9 sm:h-10 border border-slate-200 bg-slate-50/50 rounded-xl text-[11px] sm:text-xs text-right px-1.5" />
+                    <input type="number" placeholder="Debit" value={line.debit} onChange={(e) => handleLineChange(idx, "debit", e.target.value)} className="col-span-3 h-10 border border-slate-200 bg-slate-50/50 rounded-xl text-[11px] sm:text-xs text-right px-1.5 font-bold" />
+                    <input type="number" placeholder="Credit" value={line.credit} onChange={(e) => handleLineChange(idx, "credit", e.target.value)} className="col-span-3 h-10 border border-slate-200 bg-slate-50/50 rounded-xl text-[11px] sm:text-xs text-right px-1.5 font-bold" />
+                    
+                    {/* Delete Line Button */}
+                    <div className="col-span-1 text-center">
+                      {entryLines.length > 2 && (
+                        <button type="button" onClick={() => handleRemoveLine(idx)} className="text-rose-500 hover:text-rose-700">
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <div className="p-3 sm:p-4 bg-slate-50 border rounded-xl text-xs flex justify-between font-bold text-slate-700">
+              {/* ➕ ADD NEW LINE BUTTON */}
+              <button 
+                type="button" 
+                onClick={handleAddLine}
+                className="h-9 px-4 rounded-xl border border-dashed text-indigo-600 border-indigo-200 hover:bg-indigo-50/30 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <PlusCircle size={14} /> Add Transaction Line
+              </button>
+
+              <div className="p-3 sm:p-4 bg-slate-50 border rounded-xl text-xs flex flex-col sm:flex-row justify-between gap-2 font-bold text-slate-700">
                 <span>Debit Total: ₹{totals.totalDebit}</span>
                 <span>Credit Total: ₹{totals.totalCredit}</span>
               </div>
-              <button type="submit" disabled={saving || !totals.isBalanced} className="w-full h-10 sm:h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs disabled:opacity-50 transition cursor-pointer">Post Transaction</button>
+
+              {/* Status Helper Alert */}
+              <div className="pt-1.5">
+                {totals.isBalanced ? (
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-[10px] text-emerald-700 font-bold flex items-center gap-1.5">
+                    <CheckCircle2 size={14} /> Transaction is perfectly balanced and ready to post.
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-[10px] text-rose-700 font-bold flex items-center gap-1.5 animate-pulse">
+                    <AlertCircle size={14} /> Unbalanced transaction. Debit total must equal Credit total and be greater than ₹0.
+                  </div>
+                )}
+              </div>
+
+              <button type="submit" disabled={saving || !totals.isBalanced} className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs disabled:opacity-50 transition cursor-pointer">Post Transaction</button>
             </form>
           </div>
 
@@ -192,8 +238,8 @@ export default function GL() {
         </div>
       )}
 
+      {/* COA & Period Close Sections (Remain same) */}
       {activeTab === "coa" && (
-        // 🔹 ટેબલ હોરિઝોન્ટલ સ્ક્રોલ ગાર્ડ
         <div className="bg-white border rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm overflow-hidden w-full max-w-full">
           <div className="w-full overflow-x-auto scrollbar-none">
             <table className="w-full text-xs text-slate-600 min-w-[520px]">
