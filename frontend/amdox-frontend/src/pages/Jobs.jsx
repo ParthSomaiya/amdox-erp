@@ -8,7 +8,6 @@ if (typeof window !== "undefined" && !window.hasAmdoxProtectorLoaded) {
   window.hasAmdoxProtectorLoaded = true;
   const originalClear = localStorage.clear;
   localStorage.clear = function() {
-    // સાચવી રાખવાની કી-મેમરી લિસ્ટ
     const keysToKeep = ["amdox_jobs", "amdox_applicants", "amdox_approved_candidates", "amdox_scheduled_interviews", "amdox_simulated_attendance"];
     const backups = {};
     keysToKeep.forEach(key => {
@@ -17,7 +16,6 @@ if (typeof window !== "undefined" && !window.hasAmdoxProtectorLoaded) {
     
     originalClear.apply(this, arguments);
     
-    // ક્લીયર થયા પછી તુરંત જ ડેટાબેઝ રીસ્ટોર કરો
     Object.keys(backups).forEach(key => {
       if (backups[key] !== null) {
         localStorage.setItem(key, backups[key]);
@@ -189,18 +187,18 @@ export default function Jobs() {
   }, [jobs, search]);
 
   return (
-    <div className="space-y-6">
-      <div className="bg-slate-900 border rounded-[32px] p-8 text-white relative overflow-hidden">
+    <div className="space-y-6 max-w-full overflow-hidden box-border">
+      <div className="bg-slate-900 border rounded-[32px] p-6 sm:p-8 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-56 h-56 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
         <span className="text-[10px] uppercase tracking-widest text-indigo-400 font-bold block mb-1.5">Talent Acquisition Suite</span>
-        <h1 className="text-3xl font-black tracking-tight flex items-center gap-2"><Briefcase className="text-indigo-400" /> Manage Workspace Vacancies</h1>
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2"><Briefcase className="text-indigo-400" /> Manage Workspace Vacancies</h1>
         <p className="mt-1.5 text-slate-400 text-xs sm:text-sm max-w-xl">Create, configure and manage public hiring positions, company wise vacancies, and department requirements.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start w-full box-border overflow-hidden">
         {/* ADD FORM */}
-        <div className="lg:col-span-5 bg-white border rounded-[28px] p-6 shadow-sm space-y-4 sm:space-y-6">
-          <h3 className="font-extrabold text-slate-800 text-base">Draft New Vacancy</h3>
+        <div className="lg:col-span-5 bg-white border rounded-[28px] p-5 sm:p-6 shadow-sm space-y-4 sm:space-y-6 w-full box-border">
+          <h3 className="font-extrabold text-slate-800 text-sm sm:text-base">Draft New Vacancy</h3>
           <form onSubmit={createJob} className="space-y-3.5 text-[11px] font-semibold text-slate-600">
             <div>
               <label className="block mb-1">Job Title</label>
@@ -240,7 +238,7 @@ export default function Jobs() {
         </div>
 
         {/* VACANCIES LIST */}
-        <div className="lg:col-span-7 space-y-4">
+        <div className="lg:col-span-7 space-y-4 w-full box-border overflow-hidden">
           <div className="bg-white border rounded-xl p-4 shadow-sm flex items-center gap-2.5">
             <Search size={16} className="text-slate-400" />
             <input type="text" placeholder="Search active listings..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-grow h-8 outline-none text-sm bg-transparent" />
@@ -251,10 +249,11 @@ export default function Jobs() {
           ) : filteredJobs.length === 0 ? (
             <div className="bg-white rounded-2xl p-12 border text-center text-slate-400 font-bold">No active vacancies.</div>
           ) : (
-            <div className="space-y-3.5">
+            <div className="space-y-3.5 w-full box-border">
               {filteredJobs.map((job) => (
-                <div key={job._id} className="bg-white rounded-2xl border p-5 flex justify-between items-center group">
-                  <div className="space-y-1.5 min-w-0 flex-1 pr-4">
+                // 🔹 રિસ્પોન્સિવ લેઆઉટ બોર્ડર સિક્યોર્ડ (flex-col sm:flex-row)
+                <div key={job._id} className="bg-white rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row justify-between sm:items-center gap-4 group w-full box-border overflow-hidden transition-all duration-200 hover:shadow-md">
+                  <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="font-extrabold text-slate-800 text-sm group-hover:text-indigo-600 transition truncate">{job.title}</h4>
                       <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[8px] font-black uppercase">
@@ -268,8 +267,10 @@ export default function Jobs() {
                     </p>
                     <p className="text-xs text-slate-500 line-clamp-2">{job.description}</p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => openEditModal(job)} className="h-9 px-3.5 rounded-lg bg-indigo-50 text-indigo-600 font-bold text-xs cursor-pointer">Edit</button>
+                  
+                  {/* બટન્સ માટે રિસ્પોન્સિવ ઓપ્શન (મોબાઇલમાં સુંદર રીતે નીચે ગોઠવાશે) */}
+                  <div className="flex items-center gap-2 shrink-0 justify-end w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                    <button onClick={() => openEditModal(job)} className="h-9 px-3.5 rounded-lg bg-indigo-50 text-indigo-600 font-bold text-xs cursor-pointer flex-1 sm:flex-initial text-center justify-center">Edit</button>
                     <button onClick={() => deleteJob(job._id)} className="h-9 w-9 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center border border-rose-100 shrink-0">
                       <Trash2 size={14} />
                     </button>

@@ -14,7 +14,6 @@ export default function MyProfile() {
     const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
     setUser(storedUser);
     
-    // 🧠 સ્માર્ટ ઓટો-ડિટેક્ટ ઇમેઇલ ફિલ્ટર
     const email = storedUser.email || storedUser.userId?.email || "";
 
     if (storedUser.role === "JOB_SEEKER") {
@@ -32,7 +31,6 @@ export default function MyProfile() {
     try {
       setLoading(true);
       
-      // ૧. અરજીઓ લોડ કરો
       const res = await API.get("/jobs/applicants").catch(() => null);
       const serverApps = res && Array.isArray(res.data) ? res.data : [];
       const localApps = JSON.parse(localStorage.getItem("amdox_applicants") || "[]");
@@ -44,7 +42,6 @@ export default function MyProfile() {
       });
       setApplications(mergedApps.filter(app => app.email?.toLowerCase() === email?.toLowerCase()));
 
-      // ૨. ઈન્ટરવ્યુ શિડ્યુલર લાઈવ લોડ લોજિક (ઇમેઇલ દ્વારા મેચ થશે)
       const intRes = await API.get("/jobs/interviews").catch(() => null);
       const serverInts = intRes && Array.isArray(intRes.data) ? intRes.data : [];
       const localInts = JSON.parse(localStorage.getItem("amdox_scheduled_interviews") || "[]");
@@ -55,7 +52,6 @@ export default function MyProfile() {
         }
       });
 
-      // માત્ર આ લોગિન થયેલા સાચા કેન્ડિડેટનો જ ઇન્ટરવ્યુ બતાવો
       const myScheduled = mergedInts.filter(i => i.candidateEmail?.toLowerCase() === email?.toLowerCase());
       setInterviews(myScheduled);
     } catch (err) {
@@ -65,7 +61,6 @@ export default function MyProfile() {
     }
   };
 
-  // ✅ ADD & UPDATE RESUME
   const handleResumeUpload = async (e) => {
     e.preventDefault();
     if (!resumeFile) return;
@@ -78,7 +73,6 @@ export default function MyProfile() {
       await API.put(`/hr/profile/resume`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       }).catch(() => {
-        // Fallback local update
         const updatedUser = { ...user, resume: `uploads/${resumeFile.name}` };
         localStorage.setItem("user", JSON.stringify(updatedUser));
         setUser(updatedUser);
@@ -93,13 +87,11 @@ export default function MyProfile() {
     }
   };
 
-  // ✅ DELETE RESUME
   const handleDeleteResume = async () => {
     if (!window.confirm("Are you sure you want to delete your resume?")) return;
     try {
       setUploading(true);
       await API.delete(`/hr/profile/resume`).catch(() => {
-        // Fallback local delete
         const updatedUser = { ...user, resume: null };
         localStorage.setItem("user", JSON.stringify(updatedUser));
         setUser(updatedUser);
@@ -198,19 +190,21 @@ export default function MyProfile() {
           <div className="lg:col-span-8 space-y-6 w-full box-border">
             
             {/* LATEST SHEDULED INTERVIEWS LISTING CARD WITH GUJARATI NOTIFICATION */}
-            {interviews.length > 0 && (
-              <div className="bg-white border rounded-[24px] p-5 sm:p-6 shadow-sm space-y-4 w-full">
-                <div>
-                  <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-[9px] font-bold">Live Calendar Match</span>
-                  <h3 className="font-extrabold text-slate-800 text-sm sm:text-base mt-2">My Scheduled Interviews</h3>
-                </div>
+            <div className="bg-white border rounded-[24px] p-5 sm:p-6 shadow-sm space-y-4 w-full">
+              <div>
+                <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-[9px] font-bold">Live Calendar Match</span>
+                <h3 className="font-extrabold text-slate-800 text-sm sm:text-base mt-2">My Scheduled Interviews</h3>
+              </div>
 
+              {interviews.length === 0 ? (
+                <p className="text-xs text-slate-400 italic py-4">No interviews scheduled yet.</p>
+              ) : (
                 <div className="space-y-3">
                   {interviews.map((item) => (
-                    <div key={item._id} className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div key={item._id} className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
                       <div className="space-y-1">
                         <h4 className="font-extrabold text-slate-800 text-sm">
-                          તમારું ઇન્ટરવ્યુ {item.date} તારીખે અને {item.time} વાગ્યે ગોઠવાયેલું છે.
+                          Your interview is scheduled for {item.date} at {item.time}.
                         </h4>
                         <p className="text-[11px] text-slate-500 font-medium">Position: {item.position} ({item.type})</p>
                         <p className="text-[11px] text-slate-500 font-medium">Interviewer Panel: {item.interviewer}</p>
@@ -221,8 +215,8 @@ export default function MyProfile() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Applications */}
             <div className="bg-white border rounded-[24px] p-5 sm:p-6 shadow-sm space-y-4 sm:space-y-6 w-full">

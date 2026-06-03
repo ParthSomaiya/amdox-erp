@@ -123,6 +123,27 @@ import PushSetup from "./components/PushSetup";
 import AIAssistant from "./pages/ai/AIAssistant";
 import MyProfile from "./pages/MyProfile";
 
+// 🧠 GLOBAL AMDOX MEMORY PROTECTOR (તમામ સાયલન્ટ લોગઆઉટ વાઇપ્સને અટકાવશે)
+if (typeof window !== "undefined" && !window.hasAmdoxProtectorLoaded) {
+  window.hasAmdoxProtectorLoaded = true;
+  const originalClear = localStorage.clear;
+  localStorage.clear = function() {
+    const keysToKeep = ["amdox_jobs", "amdox_applicants", "amdox_approved_candidates", "amdox_scheduled_interviews", "amdox_simulated_attendance"];
+    const backups = {};
+    keysToKeep.forEach(key => {
+      backups[key] = localStorage.getItem(key);
+    });
+    
+    originalClear.apply(this, arguments);
+    
+    Object.keys(backups).forEach(key => {
+      if (backups[key] !== null) {
+        localStorage.setItem(key, backups[key]);
+      }
+    });
+  };
+}
+
 function App() {
   return (
     <>
