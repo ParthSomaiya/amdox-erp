@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-import { MapPin, IndianRupee, Search, Building2, Clock, Sparkles, Loader2, ArrowRight, ShieldCheck, Bookmark, BookmarkCheck } from "lucide-react";
+import { createPortal } from "react-dom";
+import { MapPin, IndianRupee, Search, Building2, Clock, Sparkles, Loader2, ArrowRight, ShieldCheck, Bookmark, BookmarkCheck, X, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import API from "../../services/api";
 
@@ -18,10 +19,13 @@ export default function CareerPortal() {
     REMOTE: false
   });
   
-  // મિનિમમ અને મેક્સિમમ સેલરી કસ્ટમ સ્ટેટ્સ
   const [minSalary, setMinSalary] = useState("");
   const [maxSalary, setMaxSalary] = useState("");
   const [savedJobs, setSavedJobs] = useState([]);
+
+  // POPUP MODAL STATES
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedJobDetails, setSelectedJobDetails] = useState(null);
 
   useEffect(() => {
     fetchJobs();
@@ -61,7 +65,7 @@ export default function CareerPortal() {
     setMaxSalary("");
   };
 
-  // ✅ TOGGLE SAVE JOB FEATURE
+  // TOGGLE SAVE JOB FEATURE
   const handleToggleSaveJob = (job) => {
     let updated = [...savedJobs];
     const isAlreadySaved = updated.some(j => j._id === job._id);
@@ -92,7 +96,6 @@ export default function CareerPortal() {
       const activeTypes = Object.keys(jobTypes).filter(k => jobTypes[k]);
       const matchesType = activeTypes.length === 0 ? true : activeTypes.includes(job.type || "FULL_TIME");
 
-      // 🧠 ડાયનેમિક મિનિમમ અને મેક્સિમમ સેલરી ફિલ્ટર કૅલ્ક્યુલેશન
       const salary = Number(job.salary || 0);
       let matchesSalary = true;
       if (minSalary && salary < Number(minSalary)) {
@@ -102,7 +105,7 @@ export default function CareerPortal() {
         matchesSalary = false;
       }
 
-      // ડેટ પોસ્ટ (Date Post) ફિલ્ટર
+      // ડેટ પોસ્ટ ફિલ્ટર
       let matchesDate = true;
       if (dateFilter !== "Anytime" && job.createdAt) {
         const createdDate = new Date(job.createdAt);
@@ -124,6 +127,11 @@ export default function CareerPortal() {
 
   const handleCheckboxChange = (type) => {
     setJobTypes(prev => ({ ...prev, [type]: !prev[type] }));
+  };
+
+  const handleOpenDetails = (job) => {
+    setSelectedJobDetails(job);
+    setShowDetailsModal(true);
   };
 
   return (
@@ -164,7 +172,7 @@ export default function CareerPortal() {
         </div>
         <button
           onClick={fetchJobs}
-          className="h-10 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition cursor-pointer w-full md:w-auto text-center justify-center"
+          className="h-10 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition cursor-pointer w-full md:w-auto text-center justify-center animate-pulse"
         >
           Search Jobs
         </button>
@@ -218,7 +226,7 @@ export default function CareerPortal() {
             </div>
           </div>
 
-          {/* 🧠 DYNAMIC MIN & MAX SALARY INPUT SECTIONS */}
+          {/* DYNAMIC MIN & MAX SALARY INPUT SECTIONS */}
           <div className="space-y-2.5 border-t pt-4">
             <label className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider block">Salary Range (INR)</label>
             <div className="grid grid-cols-2 gap-2">
@@ -246,7 +254,7 @@ export default function CareerPortal() {
           </div>
         </aside>
 
-        {/* 💼 RIGHT SIDE JOBS LISTING (૬-૬ ગ્રીડ ફ્રેક્શન લેઆઉટ) */}
+        {/* 💼 RIGHT SIDE JOBS LISTING */}
         <main className="flex-1 w-full min-w-0 space-y-4 box-border">
           <div className="flex justify-between items-center">
             <span className="text-xs sm:text-sm font-extrabold text-slate-500">{filteredJobs.length} Jobs results</span>
@@ -262,12 +270,11 @@ export default function CareerPortal() {
               <h3 className="text-base font-bold text-slate-700">No Openings Found</h3>
             </div>
           ) : (
-            // 🔹 પર્ફેક્ટ ડેસ્કટોપ ડબલ કૉલમ ગ્રીડ લેઆઉટ (૬-૬ કૉલમ રેશિયો)
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full box-border">
               {filteredJobs.map((job) => {
                 const isSaved = savedJobs.some(j => j._id === job._id);
                 return (
-                  <div key={job._id} className="bg-white rounded-[24px] border border-slate-200 p-5 shadow-sm hover:shadow-xl hover:border-indigo-200 transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between h-[230px] w-full box-border overflow-hidden relative">
+                  <div key={job._id} className="bg-white rounded-[24px] border border-slate-200 p-5 flex flex-col justify-between h-[230px] w-full box-border overflow-hidden relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                     
                     {/* Floating Save Button */}
                     <button 
@@ -296,8 +303,12 @@ export default function CareerPortal() {
                         <span className="font-black text-slate-800 text-xs sm:text-sm">₹{job.salary?.toLocaleString()}</span>
                       </div>
                       
-                      <button onClick={() => navigate(`/apply-job/${job._id}`)} className="h-8.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs cursor-pointer shrink-0">
-                        Apply Now
+                      {/* 🚀 WORLD CLASS MINIMAL SaaS CUSTOM BUTTON DESIGN */}
+                      <button 
+                        onClick={() => handleOpenDetails(job)} 
+                        className="h-9 px-5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 hover:text-slate-900 font-black text-xs shadow-sm hover:shadow transition-all duration-200 flex items-center justify-center gap-1 active:scale-[0.97] shrink-0 cursor-pointer"
+                      >
+                        View Details
                       </button>
                     </div>
                   </div>
@@ -306,6 +317,79 @@ export default function CareerPortal() {
             </div>
           )}
         </main>
+      </div>
+
+      {/* WORLD-CLASS CUSTOM INTERNATIONAL RESPONSIVE DETAIL POP-UP MODAL */}
+      {showDetailsModal && selectedJobDetails && createPortal(
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-white rounded-[32px] shadow-2xl overflow-hidden animate-fade-in mx-auto border border-slate-100 flex flex-col justify-between">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-950 p-6 text-white flex justify-between items-start relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-36 h-36 bg-indigo-500/10 rounded-full blur-2xl" />
+              <div className="relative z-10 space-y-2 min-w-0 flex-1 pr-4">
+                <span className="px-2.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded-lg text-[9px] font-black uppercase tracking-wider">Hiring Details</span>
+                <h2 className="text-lg sm:text-xl font-black truncate">{selectedJobDetails.title}</h2>
+                <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase flex items-center gap-1"><Building2 size={12} /> {selectedJobDetails.companyName || "AMDOX Corporate Suite"}</p>
+              </div>
+              <button 
+                onClick={() => setShowDetailsModal(false)} 
+                className="text-slate-400 hover:text-white bg-white/10 p-1.5 rounded-xl transition-all z-10 shrink-0 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5 text-xs text-slate-600 font-semibold max-h-[350px] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="p-3 bg-slate-50 border rounded-xl">
+                  <span className="text-[9px] text-slate-400 font-bold uppercase block mb-1">Location Details</span>
+                  <span className="text-slate-800 font-bold flex items-center gap-1"><MapPin size={12} className="text-indigo-600" /> {selectedJobDetails.location || "Ahmedabad"}</span>
+                </div>
+                <div className="p-3 bg-slate-50 border rounded-xl">
+                  <span className="text-[9px] text-slate-400 font-bold uppercase block mb-1">Contract Type</span>
+                  <span className="text-slate-800 font-bold flex items-center gap-1"><Clock size={12} className="text-indigo-600" /> {selectedJobDetails.type || "Full Time"}</span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[9px] text-slate-400 font-bold uppercase block mb-1.5">Detailed Job Description</span>
+                <p className="text-slate-500 leading-relaxed font-medium bg-slate-50 p-4 rounded-xl border whitespace-pre-wrap">{selectedJobDetails.description}</p>
+              </div>
+
+              <div className="p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100 flex items-center justify-between gap-3">
+                <div>
+                  <span className="text-[9px] text-slate-400 font-bold uppercase block">Compensation Budget</span>
+                  <span className="text-sm font-black text-indigo-700 mt-1 block flex items-center gap-0.5"><IndianRupee size={13} /> {selectedJobDetails.salary?.toLocaleString()} /mo</span>
+                </div>
+                <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg text-[9px] font-black uppercase">Active Vacancy</span>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-5 bg-slate-50 border-t flex gap-3">
+              <button 
+                onClick={() => setShowDetailsModal(false)} 
+                className="flex-1 h-11 border rounded-xl font-bold text-xs text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+              >
+                Go Back
+              </button>
+              <button 
+                onClick={() => { setShowDetailsModal(false); navigate(`/apply-job/${selectedJobDetails._id}`); }} 
+                className="flex-1 h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition shadow-md shadow-indigo-600/10 cursor-pointer"
+              >
+                Apply for Position <ArrowRight size={12} />
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Footer */}
+      <div className="flex items-center justify-center gap-1 text-[9px] sm:text-xs text-slate-400 font-semibold pt-2 text-center px-4">
+        <ShieldCheck size={12} className="text-indigo-600 shrink-0" />
+        <span className="truncate">Secure AMDOX Careers Portal Verification Active</span>
       </div>
     </div>
   );
