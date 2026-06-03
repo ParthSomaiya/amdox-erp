@@ -23,10 +23,35 @@ export default function HRDashboard() {
         API.get("/jobs/applicants").catch(() => ({ data: [] }))
       ]);
 
-      setEmployees(empRes.data || []);
-      setLeaves(leaveRes.data || []);
+      // ૧. Employees મર્જ (API + LocalStorage Cache)
+      const serverEmps = empRes.data || [];
+      const localEmps = JSON.parse(localStorage.getItem("amdox_employees") || "[]");
+      const mergedEmps = [...serverEmps];
+      localEmps.forEach((item) => {
+        if (!mergedEmps.some((m) => m._id === item._id)) mergedEmps.push(item);
+      });
+      setEmployees(mergedEmps);
+
+      // ૨. Applied Leaves મર્જ
+      const serverLeaves = leaveRes.data || [];
+      const localLeaves = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
+      const mergedLeaves = [...serverLeaves];
+      localLeaves.forEach((item) => {
+        if (!mergedLeaves.some((m) => m._id === item._id)) mergedLeaves.push(item);
+      });
+      setLeaves(mergedLeaves);
+
       setJobs(jobRes.data || []);
-      setApplicants(appRes.data || []);
+
+      // ૩. Applicants મર્જ
+      const serverApplicants = appRes.data || [];
+      const localApplicants = JSON.parse(localStorage.getItem("amdox_applicants") || "[]");
+      const mergedApplicants = [...serverApplicants];
+      localApplicants.forEach((item) => {
+        if (!mergedApplicants.some((m) => m._id === item._id)) mergedApplicants.push(item);
+      });
+      setApplicants(mergedApplicants);
+
     } catch (err) {
       console.error("Dashboard Fetch Error:", err);
     } finally {
@@ -49,9 +74,9 @@ export default function HRDashboard() {
 
   const chartData = useMemo(() => {
     return [
-      { name: "Employees", count: stats.totalEmployees || 5 },
-      { name: "Vacancies", count: stats.activeJobs || 3 },
-      { name: "Applications", count: stats.totalApplicants || 8 }
+      { name: "Employees", count: stats.totalEmployees || 0 },
+      { name: "Vacancies", count: stats.activeJobs || 0 },
+      { name: "Applications", count: stats.totalApplicants || 0 }
     ];
   }, [stats]);
 
@@ -68,7 +93,7 @@ export default function HRDashboard() {
 
   return (
     <div className="space-y-6 max-w-full overflow-x-hidden px-1">
-      {/* 🔹 રિસ્પોન્સિવ હેડર */}
+      {/* 🔹 હેડર */}
       <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 p-5 sm:p-8 rounded-2xl sm:rounded-[32px] text-white shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative overflow-hidden">
         <div className="space-y-1">
           <span className="text-[10px] uppercase tracking-widest text-indigo-100 font-bold">HR Core Operations</span>
@@ -85,7 +110,7 @@ export default function HRDashboard() {
         </button>
       </div>
 
-      {/* 🔹 રિસ્પોન્સિવ KPI Cards Grid */}
+      {/* 🔹 KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Total Employees */}
         <div className="bg-white border rounded-2xl p-4 sm:p-5 shadow-sm flex items-center justify-between hover:shadow-md transition">
@@ -124,7 +149,7 @@ export default function HRDashboard() {
         </div>
       </div>
 
-      {/* 🔹 Split Layout: રિસ્પોન્સિવ ઓવરફ્લો સેટિંગ્સ */}
+      {/* 🔹 Split Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start w-full max-w-full overflow-hidden">
         
         {/* Left Side Chart Section */}
