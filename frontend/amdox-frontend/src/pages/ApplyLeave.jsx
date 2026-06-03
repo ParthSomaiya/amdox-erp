@@ -18,6 +18,13 @@ export default function ApplyLeave() {
   const [loading, setLoading] = useState(false);
   const [myLeaves, setMyLeaves] = useState([]);
   
+  // બેઝ બેલેન્સ ટ્રેકર
+  const [baseBalance, setBaseBalance] = useState({
+    casual: 8,
+    sick: 5,
+    paid: 12,
+  });
+
   const [leaveBalance, setLeaveBalance] = useState({
     casual: 8,
     sick: 5,
@@ -41,7 +48,7 @@ export default function ApplyLeave() {
   };
 
   // મંજૂર થયેલી રજાઓ આપમેળે બેલેન્સમાંથી બાદ કરવાનું હેલ્પર ફંક્શન
-  const calculateDynamicBalance = (allLeaves) => {
+  const calculateDynamicBalance = (allLeaves, currentBase) => {
     let casualUsed = 0;
     let sickUsed = 0;
     let paidUsed = 0;
@@ -56,13 +63,13 @@ export default function ApplyLeave() {
     });
 
     setLeaveBalance({
-      casual: Math.max(8 - casualUsed, 0),
-      sick: Math.max(5 - sickUsed, 0),
-      paid: Math.max(12 - paidUsed, 0),
+      casual: Math.max(currentBase.casual - casualUsed, 0),
+      sick: Math.max(currentBase.sick - sickUsed, 0),
+      paid: Math.max(currentBase.paid - paidUsed, 0),
     });
   };
 
-  const fetchMyLeaves = async () => {
+  const fetchMyLeaves = async (currentBase = baseBalance) => {
     try {
       const res = await API.get("/leave/my");
       const serverLeaves = Array.isArray(res.data) ? res.data : [];
@@ -83,7 +90,7 @@ export default function ApplyLeave() {
 
       merged.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       setMyLeaves(merged);
-      calculateDynamicBalance(merged);
+      calculateDynamicBalance(merged, currentBase);
     } catch (err) {
       console.error(err);
       const localApplies = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
@@ -92,12 +99,31 @@ export default function ApplyLeave() {
         return String(lSenderId) === String(userId);
       });
       setMyLeaves(myLocal);
-      calculateDynamicBalance(myLocal);
+      calculateDynamicBalance(myLocal, currentBase);
+    }
+  };
+
+  const fetchLeaveBalance = async () => {
+    try {
+      const res = await API.get("/leave/balance");
+      if (res.data?.success && res.data?.balance) {
+        const incomingBase = {
+          casual: res.data.balance.casual || 8,
+          sick: res.data.balance.sick || 5,
+          paid: res.data.balance.paid || 12,
+        };
+        setBaseBalance(incomingBase);
+        fetchMyLeaves(incomingBase);
+      } else {
+        fetchMyLeaves(baseBalance);
+      }
+    } catch (err) {
+      fetchMyLeaves(baseBalance);
     }
   };
 
   useEffect(() => {
-    fetchMyLeaves();
+    fetchLeaveBalance();
   }, []);
 
   const handleChange = (e) => {
@@ -125,7 +151,6 @@ export default function ApplyLeave() {
       return false;
     }
 
-    // રજાના દિવસો બાકી બેલેન્સ કરતા વધારે ન હોવા જોઈએ
     const requestedDays = calculateDays(form.fromDate, form.toDate);
     const currentCategory = form.leaveType.toLowerCase();
     const availableBalance = leaveBalance[currentCategory] || 0;
@@ -157,6 +182,7 @@ export default function ApplyLeave() {
           _id: userId,
           name: user.name,
           userId: {
+            _id: userId,
             name: user.name,
             email: user.email
           }
@@ -164,7 +190,12 @@ export default function ApplyLeave() {
         createdAt: new Date().toISOString()
       };
 
-      await API.post("/leave/apply", form);
+      // એડમિન મેચિંગ પ્રોટેક્ટર: બેકએન્ડ પર પણ સંપૂર્ણ વિગતો સબમિટ કરો
+      await API.post("/leave/apply", {
+        ...form,
+        employeeId: userId,
+        userId: userId
+      });
 
       const localLeaves = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
       localStorage.setItem("amdox_applied_leaves", JSON.stringify([payload, ...localLeaves]));
