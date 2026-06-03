@@ -1,11 +1,14 @@
 import { useEffect, useState, useMemo } from "react";
-import { User, Mail, Shield, CheckCircle, FileText, Upload, Briefcase, Globe, Loader2, Calendar, Video, Clock, Trash2 } from "lucide-react";
+import { User, Mail, Shield, CheckCircle, FileText, Upload, Briefcase, Globe, Loader2, Calendar, Video, Clock, Trash2, BookmarkCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 
 export default function MyProfile() {
+  const navigate = useNavigate();
   const [user, setUser] = useState({});
   const [applications, setApplications] = useState([]);
   const [interviews, setInterviews] = useState([]); 
+  const [savedJobs, setSavedJobs] = useState([]); // સેવ કરેલી જોબ્સ સ્ટેટ
   const [loading, setLoading] = useState(true);
   const [resumeFile, setResumeFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -21,6 +24,10 @@ export default function MyProfile() {
     } else {
       setLoading(false);
     }
+
+    // સેવ કરેલી જોબ્સ લોડ કરો
+    const saved = JSON.parse(localStorage.getItem("amdox_saved_jobs") || "[]");
+    setSavedJobs(saved);
   }, []);
 
   const fetchApplicationsAndInterviews = async (email) => {
@@ -103,6 +110,13 @@ export default function MyProfile() {
     } finally {
       setUploading(false);
     }
+  };
+
+  // સેવ કરેલી જોબ રીમુવ કરવાનું ફંક્શન
+  const handleRemoveSavedJob = (id) => {
+    const updated = savedJobs.filter(j => j._id !== id);
+    setSavedJobs(updated);
+    localStorage.setItem("amdox_saved_jobs", JSON.stringify(updated));
   };
 
   return (
@@ -190,21 +204,19 @@ export default function MyProfile() {
           <div className="lg:col-span-8 space-y-6 w-full box-border">
             
             {/* LATEST SHEDULED INTERVIEWS LISTING CARD WITH GUJARATI NOTIFICATION */}
-            <div className="bg-white border rounded-[24px] p-5 sm:p-6 shadow-sm space-y-4 w-full">
-              <div>
-                <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-[9px] font-bold">Live Calendar Match</span>
-                <h3 className="font-extrabold text-slate-800 text-sm sm:text-base mt-2">My Scheduled Interviews</h3>
-              </div>
+            {interviews.length > 0 && (
+              <div className="bg-white border rounded-[24px] p-5 sm:p-6 shadow-sm space-y-4 w-full">
+                <div>
+                  <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-[9px] font-bold">Live Calendar Match</span>
+                  <h3 className="font-extrabold text-slate-800 text-sm sm:text-base mt-2">My Scheduled Interviews</h3>
+                </div>
 
-              {interviews.length === 0 ? (
-                <p className="text-xs text-slate-400 italic py-4">No interviews scheduled yet.</p>
-              ) : (
                 <div className="space-y-3">
                   {interviews.map((item) => (
                     <div key={item._id} className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
                       <div className="space-y-1">
                         <h4 className="font-extrabold text-slate-800 text-sm">
-                          Your interview is scheduled for {item.date} at {item.time}.
+                          Your interview is scheduled for  {item.date} at {item.time}.
                         </h4>
                         <p className="text-[11px] text-slate-500 font-medium">Position: {item.position} ({item.type})</p>
                         <p className="text-[11px] text-slate-500 font-medium">Interviewer Panel: {item.interviewer}</p>
@@ -212,6 +224,35 @@ export default function MyProfile() {
                       <a href={item.meetingLink} target="_blank" rel="noreferrer" className="h-8.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shrink-0 shadow-sm">
                         <Video size={12} /> Join Meeting
                       </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 🚀 DYNAMIC SAVED JOBS SECTION */}
+            <div className="bg-white border rounded-[24px] p-5 sm:p-6 shadow-sm space-y-4 sm:space-y-6 w-full">
+              <div>
+                <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-[9px] font-bold">Workspace Bookmark</span>
+                <h3 className="font-extrabold text-slate-800 text-sm sm:text-base mt-2">My Saved Jobs</h3>
+              </div>
+
+              {savedJobs.length === 0 ? (
+                <p className="text-xs text-slate-400 italic py-4">No jobs saved yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {savedJobs.map((job) => (
+                    <div key={job._id} className="p-4 bg-slate-50 border rounded-2xl flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-slate-800 text-xs sm:text-sm truncate">{job.title}</h4>
+                        <p className="text-[10px] text-slate-400 font-semibold">{job.companyName}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button onClick={() => navigate(`/apply-job/${job._id}`)} className="h-8 px-3 bg-indigo-600 text-white font-bold text-[10px] rounded-lg cursor-pointer">Apply</button>
+                        <button onClick={() => handleRemoveSavedJob(job._id)} className="h-8 w-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 cursor-pointer">
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
