@@ -72,7 +72,7 @@ import Reconciliation from "./pages/finance/Reconciliation";
 import InventoryDashboard from "./pages/InventoryDashboard";
 import Products from "./pages/Products";
 import PurchaseOrders from "./pages/PurchaseOrders";
-import StockHistory from "./pages/StockHistory";
+import StockHistory from "./pages/inventory/StockHistory";
 import BarcodeScanner from "./pages/inventory/BarcodeScanner";
 import CreatePO from "./pages/inventory/CreatePO";
 import InventoryAnalytics from "./pages/inventory/InventoryAnalytics";
@@ -236,7 +236,7 @@ function App() {
             <Route path="/inventory" element={<InventoryDashboard />} />
             <Route path="/products" element={<Products />} />
             <Route path="/purchase-orders" element={<PurchaseOrders />} />
-            <Route path="/stock-history" element={<StockHistory />} />
+            <Route path="/inventory/stock-history" element={<StockHistory />} />
 
             <Route path="/inventory/create-po" element={<CreatePO />} />
             <Route path="/inventory/low-stock" element={<LowStock />} />
