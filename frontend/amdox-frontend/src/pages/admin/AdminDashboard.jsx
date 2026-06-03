@@ -65,13 +65,6 @@ export default function AdminDashboard() {
           revenue: monthlyRevenueMap[key]
         }));
 
-        // જો ડેટાબેઝમાં હજી કોઈ પેઇડ ઇન્વોઇસ ન હોય, તો સુંદર ડિફોલ્ટ આલેખ ટ્રેન્ડ બતાવો
-        const defaultChart = [
-          { month: "Jan", revenue: 25000 },
-          { month: "Feb", revenue: 48000 },
-          { month: "Mar", revenue: 72000 },
-          { month: "Apr", revenue: 105000 }
-        ];
 
         setFinanceData(formattedChart.some(d => d.revenue > 0) ? formattedChart : defaultChart);
 
