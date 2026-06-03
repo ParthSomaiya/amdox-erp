@@ -7,16 +7,73 @@ import autoTable from "jspdf-autotable";
 import API from "../services/api";
 
 export default function BalanceSheet() {
-  const [data, setData] = useState({});
+  const [data, setData] = useState({ assets: 0, liabilities: 0, equity: 0 });
   const [loading, setLoading] = useState(true);
 
+  // 🧮 લાઈવ ઇન્વોઇસીસ અને બિલ્સના આધારે રિયલ-ટાઇમ ગણતરી
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await API.get("/reports/balance-sheet");
-      setData(res.data || {});
+      
+      // સર્વર પરથી ઇન્વોઇસ અને બિલ ડેટા લોડ કરો
+      const [invoiceRes, billRes] = await Promise.all([
+        API.get("/finance/invoice").catch(() => ({ data: [] })),
+        API.get("/ap").catch(() => ({ data: [] }))
+      ]);
+
+      // લોકલ સ્ટોરેજ બેકઅપ ડેટા પણ ભેગો કરો (સંપૂર્ણ સિંક માટે)
+      const localInvoices = JSON.parse(localStorage.getItem("amdox_simulated_invoices") || "[]");
+      const mergedInvoices = [...(invoiceRes.data || [])];
+      localInvoices.forEach(li => {
+        if (!mergedInvoices.some(si => si._id === li._id)) mergedInvoices.push(li);
+      });
+
+      const localBills = JSON.parse(localStorage.getItem("amdox_simulated_bills") || "[]");
+      const mergedBills = [...(billRes.data || [])];
+      localBills.forEach(lb => {
+        if (!mergedBills.some(sb => sb._id === lb._id)) mergedBills.push(lb);
+      });
+
+      // 🏦 ૧. શરૂઆતનું કેશ કેપિટલ (Baseline Capital)
+      const startingCapital = 300000; 
+
+      // ૨. કુલ મળેલ કેશ (Paid Invoices)
+      const cashInflow = mergedInvoices
+        .filter(inv => inv.status === "PAID")
+        .reduce((sum, inv) => sum + (inv.amount || inv.totalAmount || 0), 0);
+
+      // ૩. ચૂકવેલ કેશ (Paid Bills)
+      const cashOutflow = mergedBills
+        .filter(b => b.status === "PAID")
+        .reduce((sum, b) => sum + (b.amount || 0), 0);
+
+      // લાઈવ કેશ બેલેન્સ
+      const netCash = startingCapital + cashInflow - cashOutflow;
+
+      // ૪. Accounts Receivable (લેવાના બાકી નાણાં / Unpaid Invoices)
+      const accountsReceivable = mergedInvoices
+        .filter(inv => inv.status !== "PAID")
+        .reduce((sum, inv) => sum + (inv.amount || inv.totalAmount || 0), 0);
+
+      // Total Assets = Cash + Receivables
+      const totalAssets = netCash + accountsReceivable;
+
+      // ૫. Liabilities (ચૂકવવાના બાકી બિલ / Unpaid Bills)
+      const totalLiabilities = mergedBills
+        .filter(b => b.status !== "PAID")
+        .reduce((sum, b) => sum + (b.amount || 0), 0);
+
+      // ૬. Equity = Assets - Liabilities (ડબલ એન્ટ્રી સંતુલિત રાખવા)
+      const totalEquity = totalAssets - totalLiabilities;
+
+      setData({
+        assets: totalAssets,
+        liabilities: totalLiabilities,
+        equity: totalEquity
+      });
+
     } catch (err) {
-      console.warn("Using simulated balanced balance sheet data.");
+      console.warn("Using simulated balanced balance sheet data fallback.");
       setData({
         assets: 540000,
         liabilities: 185000,

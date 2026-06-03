@@ -13,6 +13,8 @@ export default function ApplyLeave() {
     return JSON.parse(localStorage.getItem("user") || "{}");
   }, []);
 
+  const userId = user.id || user._id;
+
   const [loading, setLoading] = useState(false);
   const [myLeaves, setMyLeaves] = useState([]);
   
@@ -29,19 +31,43 @@ export default function ApplyLeave() {
     reason: "",
   });
 
-  useEffect(() => {
-    fetchMyLeaves();
-    fetchLeaveBalance();
-  }, []);
+  // રજાના દિવસોની સાચી ગણતરી કરવાનું ફંક્શન
+  const calculateDays = (start, end) => {
+    if (!start || !end) return 1;
+    const from = new Date(start);
+    const to = new Date(end);
+    const diffTime = Math.abs(to - from);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  };
 
-  // કર્મચારીની રજાઓ મેળવવા અને સિંક કરવાનું ફંક્શન
+  // મંજૂર થયેલી રજાઓ આપમેળે બેલેન્સમાંથી બાદ કરવાનું હેલ્પર ફંક્શન
+  const calculateDynamicBalance = (allLeaves) => {
+    let casualUsed = 0;
+    let sickUsed = 0;
+    let paidUsed = 0;
+
+    allLeaves.forEach(leave => {
+      if (leave.status === "APPROVED") {
+        const days = calculateDays(leave.fromDate, leave.toDate);
+        if (leave.leaveType === "CASUAL") casualUsed += days;
+        if (leave.leaveType === "SICK") sickUsed += days;
+        if (leave.leaveType === "PAID") paidUsed += days;
+      }
+    });
+
+    setLeaveBalance({
+      casual: Math.max(8 - casualUsed, 0),
+      sick: Math.max(5 - sickUsed, 0),
+      paid: Math.max(12 - paidUsed, 0),
+    });
+  };
+
   const fetchMyLeaves = async () => {
     try {
       const res = await API.get("/leave/my");
       const serverLeaves = Array.isArray(res.data) ? res.data : [];
       
       const localApplies = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
-      const userId = user.id || user._id;
       
       const myLocal = localApplies.filter(l => {
         const lSenderId = l.employeeId?._id || l.userId || l.employeeId;
@@ -54,33 +80,25 @@ export default function ApplyLeave() {
           merged.push(l);
         }
       });
+
+      merged.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       setMyLeaves(merged);
+      calculateDynamicBalance(merged);
     } catch (err) {
       console.error(err);
       const localApplies = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
-      const userId = user.id || user._id;
       const myLocal = localApplies.filter(l => {
         const lSenderId = l.employeeId?._id || l.userId || l.employeeId;
         return String(lSenderId) === String(userId);
       });
       setMyLeaves(myLocal);
+      calculateDynamicBalance(myLocal);
     }
   };
 
-  const fetchLeaveBalance = async () => {
-    try {
-      const res = await API.get("/leave/balance");
-      if (res.data?.success && res.data?.balance) {
-        setLeaveBalance({
-          casual: res.data.balance.casual || 8,
-          sick: res.data.balance.sick || 5,
-          paid: res.data.balance.paid || 12,
-        });
-      }
-    } catch (err) {
-      console.error("Error fetching leave balance:", err);
-    }
-  };
+  useEffect(() => {
+    fetchMyLeaves();
+  }, []);
 
   const handleChange = (e) => {
     setForm({
@@ -89,20 +107,41 @@ export default function ApplyLeave() {
     });
   };
 
-  const validateDates = () => {
+  const validateForm = () => {
     if (!form.fromDate || !form.toDate) return false;
+    
     const from = new Date(form.fromDate);
     const to = new Date(form.toDate);
-    return from <= to;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    if (from < today) {
+      alert("From Date cannot be in the past");
+      return false;
+    }
+
+    if (from > to) {
+      alert("From Date cannot be greater than To Date");
+      return false;
+    }
+
+    // રજાના દિવસો બાકી બેલેન્સ કરતા વધારે ન હોવા જોઈએ
+    const requestedDays = calculateDays(form.fromDate, form.toDate);
+    const currentCategory = form.leaveType.toLowerCase();
+    const availableBalance = leaveBalance[currentCategory] || 0;
+
+    if (requestedDays > availableBalance) {
+      alert(`You only have ${availableBalance} ${form.leaveType.replace("_", " ")} leaves remaining. You cannot apply for ${requestedDays} days.`);
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateDates()) {
-      alert("From Date cannot be greater than To Date");
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       setLoading(true);
@@ -115,7 +154,7 @@ export default function ApplyLeave() {
         reason: form.reason,
         status: "PENDING",
         employeeId: {
-          _id: user.id || user._id,
+          _id: userId,
           name: user.name,
           userId: {
             name: user.name,
@@ -133,12 +172,12 @@ export default function ApplyLeave() {
       socket.emit("sendMessage", {
         room: "general",
         text: `📢 Leave Application Alert: ${user.name} applied for ${form.leaveType} Leave.`,
-        sender: { id: user.id || user._id, name: user.name, role: "EMPLOYEE" }
+        sender: { id: userId, name: user.name, role: "EMPLOYEE" }
       });
 
       notifier.leaveApplied(form.leaveType, form.reason);
 
-      alert("Leave Applied Successfully");
+      alert("Leave Applied Successfully!");
       setForm({
         leaveType: "CASUAL",
         fromDate: "",
@@ -147,7 +186,6 @@ export default function ApplyLeave() {
       });
 
       fetchMyLeaves();
-      fetchLeaveBalance();
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Failed to apply leave");
@@ -224,7 +262,6 @@ export default function ApplyLeave() {
                 <option value="CASUAL">Casual Leave</option>
                 <option value="SICK">Sick Leave</option>
                 <option value="PAID">Paid Leave</option>
-                <option value="EMERGENCY">Emergency Leave</option>
               </select>
             </div>
 
