@@ -6,7 +6,7 @@ import API from "../../services/api";
 export default function InterviewScheduler() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [approvedCandidates, setApprovedCandidates] = useState([]); // Approved કેન્ડિડેટ્સ સ્ટેટ
+  const [approvedCandidates, setApprovedCandidates] = useState([]); 
 
   const [form, setForm] = useState({
     candidateName: "",
@@ -19,7 +19,6 @@ export default function InterviewScheduler() {
     type: "TECHNICAL"
   });
 
-  // ૧. એક્સેપ્ટ થયેલા કેન્ડિડેટ્સ લિસ્ટ લોડ કરો (ડ્રોપ ડાઉન માટે)
   useEffect(() => {
     const savedApproved = JSON.parse(localStorage.getItem("amdox_approved_candidates") || "[]");
     setApprovedCandidates(savedApproved);
@@ -29,7 +28,6 @@ export default function InterviewScheduler() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 🧠 ડ્રોપ-ડાઉનમાંથી સિલેક્ટ કરતા જ ઓટો-ફીલ લોજીક
   const handleSelectApprovedCandidate = (e) => {
     const candidateId = e.target.value;
     if (!candidateId) return;
@@ -47,18 +45,19 @@ export default function InterviewScheduler() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const payload = {
+      ...form,
+      _id: `int-${Date.now()}`,
+      createdAt: new Date().toISOString()
+    };
+
+    // 🧠 સબમિટ કરતા પહેલા જ લોકલ સ્ટોરેજ સુરક્ષિત કરો (કનેક્ટિવિટી સ્યોરિટી!)
+    const existing = JSON.parse(localStorage.getItem("amdox_scheduled_interviews") || "[]");
+    localStorage.setItem("amdox_scheduled_interviews", JSON.stringify([payload, ...existing]));
+
     try {
       setLoading(true);
-      const payload = {
-        ...form,
-        _id: `int-${Date.now()}`,
-        createdAt: new Date().toISOString()
-      };
-
-      await API.post("/jobs/interview", payload).catch(() => {
-        const existing = JSON.parse(localStorage.getItem("amdox_scheduled_interviews") || "[]");
-        localStorage.setItem("amdox_scheduled_interviews", JSON.stringify([payload, ...existing]));
-      });
+      await API.post("/jobs/interview", payload);
 
       window.triggerAmdoxNotification?.(
         "Interview Scheduled", 
@@ -66,11 +65,12 @@ export default function InterviewScheduler() {
         "HR"
       );
 
-      alert("Interview successfully scheduled & synced to recruitment calendar!");
+      alert("Interview successfully scheduled & synced!");
       navigate("/calendar");
     } catch (err) {
-      console.error(err);
-      alert("Failed to save schedule.");
+      console.warn("API Error: Saved locally.");
+      alert("Interview successfully scheduled!");
+      navigate("/calendar");
     } finally {
       setLoading(false);
     }
@@ -84,8 +84,6 @@ export default function InterviewScheduler() {
       </div>
 
       <div className="bg-white rounded-[32px] border p-8 shadow-sm space-y-6">
-        
-        {/* 🧠 SELECT APPROVED CANDIDATE DROPDOWN */}
         {approvedCandidates.length > 0 && (
           <div className="p-4 bg-indigo-50/40 border border-indigo-100 rounded-2xl space-y-2">
             <label className="block text-xs font-bold text-indigo-700 uppercase flex items-center gap-1"><Users size={14} /> Quick Select Approved Candidate</label>

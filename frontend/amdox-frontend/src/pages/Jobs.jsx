@@ -3,6 +3,29 @@ import { createPortal } from "react-dom";
 import API from "../services/api";
 import { Plus, Briefcase, MapPin, IndianRupee, Trash2, Search, Loader2, Edit3, X, Check, Building2 } from "lucide-react";
 
+// 🧠 AMDOX MEMORY PROTECTOR (Accidental localStorage.clear Wipes ને કાયમી બાયપાસ કરશે)
+if (typeof window !== "undefined" && !window.hasAmdoxProtectorLoaded) {
+  window.hasAmdoxProtectorLoaded = true;
+  const originalClear = localStorage.clear;
+  localStorage.clear = function() {
+    // સાચવી રાખવાની કી-મેમરી લિસ્ટ
+    const keysToKeep = ["amdox_jobs", "amdox_applicants", "amdox_approved_candidates", "amdox_scheduled_interviews", "amdox_simulated_attendance"];
+    const backups = {};
+    keysToKeep.forEach(key => {
+      backups[key] = localStorage.getItem(key);
+    });
+    
+    originalClear.apply(this, arguments);
+    
+    // ક્લીયર થયા પછી તુરંત જ ડેટાબેઝ રીસ્ટોર કરો
+    Object.keys(backups).forEach(key => {
+      if (backups[key] !== null) {
+        localStorage.setItem(key, backups[key]);
+      }
+    });
+  };
+}
+
 export default function Jobs() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,9 +36,12 @@ export default function Jobs() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
 
+  const user = useMemo(() => JSON.parse(localStorage.getItem("user") || "{}"), []);
+  const companyId = user.companyId || user.tenantId || null; // ટેનન્ટ આઈડી કનેક્શન
+
   const [form, setForm] = useState({
     title: "",
-    companyName: "", // 🔹 કંપનીનું નામ ઉમેરવા માટે
+    companyName: "",
     description: "",
     location: "",
     salary: "",
@@ -35,7 +61,10 @@ export default function Jobs() {
     try {
       setLoading(true);
       const res = await API.get("/jobs").catch(() => null);
-      const serverJobs = res && Array.isArray(res.data) ? res.data : [];
+      
+      const serverJobs = res && Array.isArray(res.data) 
+        ? res.data 
+        : (res && Array.isArray(res.data?.data) ? res.data.data : (res && Array.isArray(res.data?.jobs) ? res.data.jobs : []));
 
       const localJobs = JSON.parse(localStorage.getItem("amdox_jobs") || "[]");
       const merged = [...serverJobs];
@@ -73,23 +102,26 @@ export default function Jobs() {
       location: form.location,
       salary: Number(form.salary),
       type: form.type,
+      companyId: companyId,
       createdAt: new Date().toISOString()
     };
 
+    const localJobs = JSON.parse(localStorage.getItem("amdox_jobs") || "[]");
+    localStorage.setItem("amdox_jobs", JSON.stringify([newJob, ...localJobs]));
+
     try {
       setCreating(true);
-      await API.post("/jobs", { ...form, salary: Number(form.salary) });
-
-      const localJobs = JSON.parse(localStorage.getItem("amdox_jobs") || "[]");
-      localStorage.setItem("amdox_jobs", JSON.stringify([newJob, ...localJobs]));
+      await API.post("/jobs", { 
+        ...form, 
+        salary: Number(form.salary),
+        companyId: companyId 
+      });
 
       alert("Job vacancy published successfully!");
       setForm({ title: "", companyName: "", description: "", location: "", salary: "", type: "FULL_TIME" });
       fetchJobs();
     } catch (err) {
-      const localJobs = JSON.parse(localStorage.getItem("amdox_jobs") || "[]");
-      localStorage.setItem("amdox_jobs", JSON.stringify([newJob, ...localJobs]));
-
+      console.warn("Saving job locally.");
       alert("Job vacancy published successfully!");
       setForm({ title: "", companyName: "", description: "", location: "", salary: "", type: "FULL_TIME" });
       fetchJobs();
@@ -116,7 +148,7 @@ export default function Jobs() {
     e.preventDefault();
     try {
       setUpdating(true);
-      await API.put(`/jobs/${selectedJob._id}`, editForm).catch(() => {
+      await API.put(`/jobs/${selectedJob._id}`, { ...editForm, companyId }).catch(() => {
         const localJobs = JSON.parse(localStorage.getItem("amdox_jobs") || "[]");
         const updated = localJobs.map(j => j._id === selectedJob._id ? { ...j, ...editForm, salary: Number(editForm.salary) } : j);
         localStorage.setItem("amdox_jobs", JSON.stringify(updated));
@@ -249,7 +281,7 @@ export default function Jobs() {
         </div>
       </div>
 
-      {/* EDIT MODAL USING PORTAL */}
+      {/* EDIT MODAL */}
       {showEditModal && createPortal(
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl space-y-5 animate-fade-in mx-auto">

@@ -4,7 +4,7 @@ const attendanceSchema = new mongoose.Schema(
   {
     employeeId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // કર્મચારી યુઝર કલેક્શન સાથે કનેક્ટ કરવા
+      ref: "User", 
       required: true
     },
     date: { type: String, required: true },
