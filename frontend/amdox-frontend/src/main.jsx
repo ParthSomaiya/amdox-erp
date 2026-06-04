@@ -6,8 +6,16 @@ import "./index.css";
 import ToastContainer from "./components/notifications/ToastContainer";
 import ErrorBoundary from "./components/ErrorBoundary";
 
+// 🚀 F-12: PWA / OFFLINE SUPPORT SERVICE WORKER REGISTRATION
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js")
+      .then(reg => console.log("AMDOX PWA Service Worker Registered! Scope:", reg.scope))
+      .catch(err => console.warn("PWA Service Worker registration failed:", err));
+  });
+}
+
 ReactDOM.createRoot(document.getElementById("root")).render(
-  // 🔹 સુધારેલ: React.StrictMode નો ટેગ હટાવ્યો જેથી react-beautiful-dnd બરાબર કામ કરી શકે
   <ErrorBoundary>
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <App />

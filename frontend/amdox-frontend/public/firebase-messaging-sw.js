@@ -13,19 +13,19 @@ importScripts(
 firebase.initializeApp({
 
   apiKey:
-    "YOUR_API_KEY",
+    "AIzaSyCsa0yhXgavOs9gm92e8NCiJe5np4SKMGw",
 
   authDomain:
-    "YOUR_AUTH_DOMAIN",
+    "amdox-erp-cf808.firebaseapp.com",
 
   projectId:
-    "YOUR_PROJECT_ID",
+    "amdox-erp-cf808",
 
   messagingSenderId:
-    "YOUR_SENDER_ID",
+    "905266107904",
 
   appId:
-    "YOUR_APP_ID",
+    "1:905266107904:web:314ef5598957d2a73d2ae5",
 
 });
 
