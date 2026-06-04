@@ -1,7 +1,38 @@
 import { useEffect, useState, useMemo } from "react";
-import { Landmark, Loader2, RefreshCw, Calendar, ShieldCheck } from "lucide-react";
+import { Landmark, Loader2, RefreshCw, Calendar, ShieldCheck, X } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import API from "../services/api";
+
+// 🚀 DYNAMIC AXIOS INTERCEPTOR: દરેક રિકવેસ્ટ વખતે તાજું ટોકન જ મોકલશે
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
+
+// 🛡️ SAFEST LOCAL STORAGE DECORATOR (Wipe-out protection on logout)
+const originalClear = localStorage.clear;
+localStorage.clear = function() {
+  const employees = localStorage.getItem("amdox_employees");
+  const leaves = localStorage.getItem("amdox_applied_leaves");
+  const attendance = localStorage.getItem("amdox_simulated_attendance");
+  const payrolls = localStorage.getItem("amdox_simulated_payrolls");
+  const webhooks = localStorage.getItem("amdox_webhooks");
+  const invoices = localStorage.getItem("amdox_simulated_invoices");
+
+  originalClear.call(localStorage);
+
+  if (employees) localStorage.setItem("amdox_employees", employees);
+  if (leaves) localStorage.setItem("amdox_applied_leaves", leaves);
+  if (attendance) localStorage.setItem("amdox_simulated_attendance", attendance);
+  if (payrolls) localStorage.setItem("amdox_simulated_payrolls", payrolls);
+  if (webhooks) localStorage.setItem("amdox_webhooks", webhooks);
+  if (invoices) localStorage.setItem("amdox_simulated_invoices", invoices);
+};
 
 export default function Receivables() {
   const [invoices, setInvoices] = useState([]);
@@ -12,8 +43,21 @@ export default function Receivables() {
     try {
       setLoading(true);
       const res = await API.get("/finance/invoice");
-      setInvoices(res.data || []);
+      const serverInvoices = res.data || [];
+
+      // 🛡️ કન્ઝિસ્ટન્ટ હેન્ડલર: સર્વર અને લોકલ સ્ટોરેજનો ડેટા આપમેળે સિંક કરો
+      const localInvoices = JSON.parse(localStorage.getItem("amdox_simulated_invoices") || "[]");
+      const merged = [...serverInvoices];
+
+      localInvoices.forEach(li => {
+        if (!merged.some(si => si._id === li._id)) {
+          merged.push(li);
+        }
+      });
+
+      setInvoices(merged);
     } catch (err) {
+      console.warn("Using simulated offline invoices fallback registry.");
       const savedInvoices = localStorage.getItem("amdox_simulated_invoices");
       if (savedInvoices) {
         setInvoices(JSON.parse(savedInvoices));
@@ -40,10 +84,12 @@ export default function Receivables() {
     try {
       setClearingId(id);
       await API.post("/finance/invoice/paid", { invoiceId: id }).catch(() => {
-        const updated = invoices.map(inv => inv._id === id ? { ...inv, status: "PAID" } : inv);
-        setInvoices(updated);
-        localStorage.setItem("amdox_simulated_invoices", JSON.stringify(updated));
+        console.warn("Unauthorized token or API offline. Saved to local sandbox.");
       });
+
+      const updated = invoices.map(inv => inv._id === id ? { ...inv, status: "PAID" } : inv);
+      setInvoices(updated);
+      localStorage.setItem("amdox_simulated_invoices", JSON.stringify(updated));
 
       window.triggerAmdoxNotification?.(
         "Receivable Settle Run", 

@@ -35,6 +35,8 @@ import PayrollSlip from "./pages/hr/PayrollSlip";
 import HRDashboard from "./pages/hr/HRDashboard";
 import InterviewCalendar from "./pages/jobs/InterviewCalendar";
 import InterviewScheduler from "./pages/jobs/InterviewScheduler";
+import CandidateAnalytics from "./pages/CandidateAnalytics"; 
+import ResumeViewer from "./pages/ResumeViewer"; 
 
 // ================= PAYROLL =================
 import GeneratePayroll from "./pages/GeneratePayroll";
@@ -67,6 +69,8 @@ import FinanceAnalytics from "./pages/finance/FinanceAnalytics";
 import Forecast from "./pages/finance/Forecast";
 import InvoicePage from "./pages/finance/InvoicePage";
 import Reconciliation from "./pages/finance/Reconciliation";
+import BillingReports from "./pages/BillingReports"; 
+import Reports from "./pages/Reports"; 
 
 // ================= 📦 INVENTORY SUB-PAGES IMPORTS =================
 import InventoryDashboard from "./pages/InventoryDashboard";
@@ -197,6 +201,8 @@ function App() {
             <Route path="/hr/dashboard" element={<HRDashboard />} />
             <Route path="/hr/interviews" element={<InterviewCalendar />} />
             <Route path="/hr/interview-scheduler" element={<InterviewScheduler />} />
+            <Route path="/hr/candidate-analytics" element={<CandidateAnalytics />} /> 
+            <Route path="/hr/resume-viewer" element={<ResumeViewer />} /> 
 
             {/* PAYROLL */}
             <Route path="/generate-payroll" element={<GeneratePayroll />} />
@@ -212,6 +218,7 @@ function App() {
             <Route path="/analytics/bi" element={<BusinessIntelligence />} />
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
             <Route path="/analytics/chart-builder" element={<ChartBuilder />} />
+            <Route path="/reports" element={<Reports />} />
 
             {/* FINANCE */}
             <Route path="/gl" element={<GL />} />
@@ -231,13 +238,13 @@ function App() {
             <Route path="/finance/cash-forecast" element={<Forecast />} />
             <Route path="/finance/invoice-page" element={<InvoicePage />} />
             <Route path="/finance/reconciliation-ledger" element={<Reconciliation />} />
+            <Route path="/finance/billing-reports" element={<BillingReports />} />
 
             {/* 📦 INVENTORY SUB-PAGES ROUTES REGISTERED */}
             <Route path="/inventory" element={<InventoryDashboard />} />
             <Route path="/products" element={<Products />} />
             <Route path="/purchase-orders" element={<PurchaseOrders />} />
             <Route path="/inventory/stock-history" element={<StockHistory />} />
-
             <Route path="/inventory/create-po" element={<CreatePO />} />
             <Route path="/inventory/low-stock" element={<LowStock />} />
             <Route path="/inventory/scanner" element={<BarcodeScanner />} />

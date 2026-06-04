@@ -1,310 +1,100 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
+import { Landmark, Loader2, Save, FileSpreadsheet, Coins, RefreshCw } from "lucide-react";
 import API from "../services/api";
 
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-} from "recharts";
-
 export default function Reports() {
-  const [finance, setFinance] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [projects, setProjects] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
+      const res = await API.get("/finance/invoice").catch(() => ({ data: [] }));
+      const serverInvoices = res.data || [];
+
+      const localInvoices = JSON.parse(localStorage.getItem("amdox_simulated_invoices") || "[]");
+      const merged = [...serverInvoices];
+      localInvoices.forEach(li => {
+        if (!merged.some(si => si._id === li._id)) merged.push(li);
+      });
+
+      setInvoices(merged);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchReports();
   }, []);
 
-  const fetchReports = async () => {
-    try {
-      const financeRes =
-        await API.get("/analytics/finance");
+  const totalRevenue = useMemo(() => {
+    return invoices
+      .filter(inv => inv.status === "PAID")
+      .reduce((sum, inv) => sum + (inv.amount || inv.totalAmount || 0), 0);
+  }, [invoices]);
 
-      const employeeRes =
-        await API.get("/analytics/employees");
+  const totalUnpaid = useMemo(() => {
+    return invoices
+      .filter(inv => inv.status !== "PAID")
+      .reduce((sum, inv) => sum + (inv.amount || inv.totalAmount || 0), 0);
+  }, [invoices]);
 
-      const projectRes =
-        await API.get("/analytics/projects");
-
-      setFinance(financeRes.data || []);
-      setEmployees(employeeRes.data || []);
-      setProjects(projectRes.data || []);
-
-      setLoading(false);
-
-    } catch (err) {
-      console.log(err);
-      setLoading(false);
-    }
-  };
-
-  const exportCSV = () => {
-    let csv =
-      "Month,Revenue,Expense,Profit\n";
-
-    finance.forEach((f) => {
-      csv += `${f.month},${f.revenue},${f.expense},${f.profit}\n`;
+  const chartData = useMemo(() => {
+    const monthly = { Jan: 0, Feb: 0, Mar: 0, Apr: 0, May: 0, Jun: 0, Jul: 0, Aug: 0, Sep: 0, Oct: 0, Nov: 0, Dec: 0 };
+    invoices.forEach(inv => {
+      if (inv.createdAt) {
+        const m = new Date(inv.createdAt).toLocaleString("default", { month: "short" });
+        if (monthly[m] !== undefined) monthly[m] += Number(inv.amount || inv.totalAmount || 0);
+      }
     });
 
-    const blob =
-      new Blob([csv], {
-        type: "text/csv",
-      });
-
-    const url =
-      window.URL.createObjectURL(blob);
-
-    const a =
-      document.createElement("a");
-
-    a.href = url;
-    a.download = "reports.csv";
-
-    a.click();
-  };
-
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="p-6">
-          Loading Reports...
-        </div>
-      </MainLayout>
-    );
-  }
+    return Object.keys(monthly).map(k => ({ name: k, Revenue: monthly[k] }));
+  }, [invoices]);
 
   return (
-    <MainLayout>
-
-      <div className="p-6">
-
-        {/* HEADER */}
-        <div className="flex justify-between items-center mb-6">
-
-          <h1 className="text-3xl font-bold">
-            Reports & Analytics
+    <div className="space-y-6 max-w-5xl mx-auto p-1">
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-950 p-8 rounded-3xl text-white shadow-md flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
+            <FileSpreadsheet /> Corporate Financial Reports
           </h1>
-
-          <button
-            onClick={exportCSV}
-            className="bg-green-600 text-white px-4 py-2 rounded"
-          >
-            Export CSV
-          </button>
-
+          <p className="text-slate-400 text-xs">Verify total net earnings, invoices collections, and tax assets.</p>
         </div>
-
-        {/* KPI */}
-        <div className="grid md:grid-cols-4 gap-5 mb-8">
-
-          <div className="bg-white shadow rounded p-5">
-            <p className="text-gray-500">
-              Revenue
-            </p>
-
-            <h2 className="text-3xl font-bold text-green-600">
-              ₹
-              {finance.reduce(
-                (a, b) =>
-                  a + b.revenue,
-                0
-              )}
-            </h2>
-          </div>
-
-          <div className="bg-white shadow rounded p-5">
-            <p className="text-gray-500">
-              Expenses
-            </p>
-
-            <h2 className="text-3xl font-bold text-red-500">
-              ₹
-              {finance.reduce(
-                (a, b) =>
-                  a + b.expense,
-                0
-              )}
-            </h2>
-          </div>
-
-          <div className="bg-white shadow rounded p-5">
-            <p className="text-gray-500">
-              Profit
-            </p>
-
-            <h2 className="text-3xl font-bold text-blue-600">
-              ₹
-              {finance.reduce(
-                (a, b) =>
-                  a + b.profit,
-                0
-              )}
-            </h2>
-          </div>
-
-          <div className="bg-white shadow rounded p-5">
-            <p className="text-gray-500">
-              Employees
-            </p>
-
-            <h2 className="text-3xl font-bold">
-              {employees.length}
-            </h2>
-          </div>
-
-        </div>
-
-        {/* CHARTS */}
-        <div className="grid md:grid-cols-2 gap-6">
-
-          {/* REVENUE */}
-          <div className="bg-white rounded shadow p-5">
-
-            <h2 className="text-xl font-bold mb-4">
-              Revenue Trend
-            </h2>
-
-            <ResponsiveContainer
-              width="100%"
-              height={300}
-            >
-
-              <LineChart data={finance}>
-
-                <XAxis dataKey="month" />
-
-                <YAxis />
-
-                <Tooltip />
-
-                <Legend />
-
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                />
-
-              </LineChart>
-
-            </ResponsiveContainer>
-
-          </div>
-
-          {/* EXPENSE */}
-          <div className="bg-white rounded shadow p-5">
-
-            <h2 className="text-xl font-bold mb-4">
-              Expense Trend
-            </h2>
-
-            <ResponsiveContainer
-              width="100%"
-              height={300}
-            >
-
-              <BarChart data={finance}>
-
-                <XAxis dataKey="month" />
-
-                <YAxis />
-
-                <Tooltip />
-
-                <Legend />
-
-                <Bar dataKey="expense" />
-
-              </BarChart>
-
-            </ResponsiveContainer>
-
-          </div>
-
-          {/* PROJECT STATUS */}
-          <div className="bg-white rounded shadow p-5">
-
-            <h2 className="text-xl font-bold mb-4">
-              Project Status
-            </h2>
-
-            <ResponsiveContainer
-              width="100%"
-              height={300}
-            >
-
-              <PieChart>
-
-                <Pie
-                  data={projects}
-                  dataKey="count"
-                  nameKey="status"
-                  outerRadius={100}
-                  label
-                >
-
-                  {projects.map(
-                    (entry, index) => (
-                      <Cell
-                        key={index}
-                      />
-                    )
-                  )}
-
-                </Pie>
-
-                <Tooltip />
-
-              </PieChart>
-
-            </ResponsiveContainer>
-
-          </div>
-
-          {/* EMPLOYEE CHART */}
-          <div className="bg-white rounded shadow p-5">
-
-            <h2 className="text-xl font-bold mb-4">
-              Employee Analytics
-            </h2>
-
-            <ResponsiveContainer
-              width="100%"
-              height={300}
-            >
-
-              <BarChart data={employees}>
-
-                <XAxis
-                  dataKey="department"
-                />
-
-                <YAxis />
-
-                <Tooltip />
-
-                <Bar dataKey="count" />
-
-              </BarChart>
-
-            </ResponsiveContainer>
-
-          </div>
-
-        </div>
-
+        <button onClick={fetchReports} className="h-10 w-10 bg-white/10 hover:bg-white/20 text-white border rounded-xl flex items-center justify-center transition">
+          <RefreshCw size={15} />
+        </button>
       </div>
 
-    </MainLayout>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white border rounded-3xl p-6 shadow-sm">
+          <span className="text-[10px] text-slate-400 font-bold block uppercase">Net Collected Cash</span>
+          <h2 className="text-2xl font-black text-emerald-600 mt-2">₹{totalRevenue.toLocaleString()}</h2>
+        </div>
+        <div className="bg-white border rounded-3xl p-6 shadow-sm">
+          <span className="text-[10px] text-slate-400 font-bold block uppercase">Receivables (AR Outstanding)</span>
+          <h2 className="text-2xl font-black text-rose-500 mt-2">₹{totalUnpaid.toLocaleString()}</h2>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl border p-6 shadow-sm space-y-4">
+        {loading ? (
+          <div className="py-20 text-center"><Loader2 className="animate-spin text-indigo-600 mx-auto" /></div>
+        ) : (
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={chartData}>
+              <XAxis dataKey="name" stroke="#94a3b8" />
+              <YAxis stroke="#94a3b8" />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="Revenue" stroke="#4f46e5" strokeWidth={3} />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
   );
 }

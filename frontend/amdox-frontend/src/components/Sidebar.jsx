@@ -127,12 +127,18 @@ export default function Sidebar() {
                   <Link to="/admin/applicants" className={menuClass("/admin/applicants")}>
                     👥 Job Applicants
                   </Link>
+                  <Link to="/hr/candidate-analytics" className={menuClass("/hr/candidate-analytics")}>
+                    📊 Candidate Analytics
+                  </Link>
                   <Link to="/jobs" className={menuClass("/jobs")}>
                     📌 Manage Vacancies
                   </Link>
                   <Link to="/hr/documents" className={menuClass("/hr/documents")}>
                     📂 Employee Documents
                   </Link>
+                  <Link to="/hr/resume-viewer" className={menuClass("/hr/resume-viewer")}>
+                    📄 Resume Viewer
+                  </Link> 
                   <Link to="/attendance" className={menuClass("/attendance")}>
                     📅 Attendance Log
                   </Link>
@@ -219,8 +225,14 @@ export default function Sidebar() {
                   <Link to="/finance/invoice-page" className={menuClass("/finance/invoice-page")}>
                     🧾 Invoice History
                   </Link>
+                  <Link to="/finance/billing-reports" className={menuClass("/finance/billing-reports")}>
+                    🧾 Billing Reports
+                  </Link> 
                   <Link to="/profit-loss" className={menuClass("/profit-loss")}>
                     📈 Profit & Loss
+                  </Link>
+                  <Link to="/reports" className={menuClass("/reports")}>
+                    📊 Financial Reports
                   </Link>
                   <Link to="/finance/cash-forecast" className={menuClass("/finance/cash-forecast")}>
                     🔮 Cash Forecast
