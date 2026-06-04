@@ -32,7 +32,6 @@ export default function StockHistory() {
           setHistory([]);
         }
       } else {
-        // જો પ્રથમ વાર રન કરતા હોવ તો સુંદર ડેમો લાઈવ રેકોર્ડ્સ
         const defaultLogs = [
           { 
             _id: "hist-101", 
