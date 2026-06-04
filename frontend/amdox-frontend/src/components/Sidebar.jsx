@@ -379,6 +379,9 @@ export default function Sidebar() {
               <Link to="/timeline" className={menuClass("/timeline")}>
                 🕒 Employee Timeline
               </Link>
+              <Link to="/chat" className={menuClass("/chat")}>
+                💬 Workspace Chat
+              </Link>
               <Link to="/notifications" className={menuClass("/notifications")}>
                 🔔 Activity Stream
               </Link>

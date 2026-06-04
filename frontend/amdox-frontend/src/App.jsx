@@ -128,8 +128,7 @@ import AIAssistant from "./pages/ai/AIAssistant";
 import MyProfile from "./pages/MyProfile";
 import Users from "./pages/Users";
 import Tasks from "./pages/Tasks";
-
-
+import Chat from "./pages/Chat";
 
 
 // 🧠 GLOBAL AMDOX MEMORY PROTECTOR (તમામ સાયલન્ટ લોગઆઉટ વાઇપ્સને અટકાવશે)
@@ -300,6 +299,7 @@ function App() {
             <Route path="/profile" element={<MyProfile />} />
             <Route path="/admin/users" element={<Users />} />
             <Route path="/tasks" element={<Tasks />} />
+            <Route path="/chat" element={<Chat />} />
           </Route>
         </Routes>
       </Suspense>

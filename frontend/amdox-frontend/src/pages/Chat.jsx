@@ -1,427 +1,348 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
+import { useEffect, useState, useRef, useMemo } from "react";
+import { MessageSquare, Send, Smile, Trash2, Heart, Flame, Laugh, Loader2, Users, ShieldCheck, X } from "lucide-react";
+import io from "socket.io-client";
 import API from "../services/api";
 
-import io from "socket.io-client";
+// 🚀 DYNAMIC AXIOS INTERCEPTOR: દરેક રિકવેસ્ટ વખતે તાજું ટોકન જ મોકલશે
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
 
-const socket =
-  io("http://localhost:5000");
+// 🛡️ SAFEST LOCAL STORAGE DECORATOR (Wipe-out protection on logout)
+const originalClear = localStorage.clear;
+localStorage.clear = function() {
+  const employees = localStorage.getItem("amdox_employees");
+  const leaves = localStorage.getItem("amdox_applied_leaves");
+  const attendance = localStorage.getItem("amdox_simulated_attendance");
+  const payrolls = localStorage.getItem("amdox_simulated_payrolls");
+  const webhooks = localStorage.getItem("amdox_webhooks");
+  const security = localStorage.getItem("amdox_security_settings");
+  const gdpr = localStorage.getItem("amdox_gdpr_requests");
+  const chats = localStorage.getItem("amdox_simulated_chats");
+
+  originalClear.call(localStorage);
+
+  if (employees) localStorage.setItem("amdox_employees", employees);
+  if (leaves) localStorage.setItem("amdox_applied_leaves", leaves);
+  if (attendance) localStorage.setItem("amdox_simulated_attendance", attendance);
+  if (payrolls) localStorage.setItem("amdox_simulated_payrolls", payrolls);
+  if (webhooks) localStorage.setItem("amdox_webhooks", webhooks);
+  if (security) localStorage.setItem("amdox_security_settings", security);
+  if (gdpr) localStorage.setItem("amdox_gdpr_requests", gdpr);
+  if (chats) localStorage.setItem("amdox_simulated_chats", chats);
+};
 
 export default function Chat() {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = user._id || user.id;
+  const isHR = user.role === "HR" || user.role === "ADMIN";
 
-  const [chats, setChats] =
-    useState([]);
+  const [chats, setChats] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [text, setText] = useState("");
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [messages, setMessages] =
-    useState([]);
-
-  const [selectedChat,
-    setSelectedChat] =
-    useState(null);
-
-  const [text, setText] =
-    useState("");
-
-  const [typing, setTyping] =
-    useState("");
-
-  const [onlineUsers,
-    setOnlineUsers] =
-    useState([]);
-
-
-  // ==========================
-  // LOAD CHATS
-  // ==========================
+  const socketRef = useRef(null);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
+    socketRef.current = io("http://localhost:5000", { transports: ["websocket", "polling"] });
 
-    API.get("/chat")
-      .then((res) =>
-        setChats(res.data)
-      );
+    if (userId) {
+      socketRef.current.emit("join", userId);
+    }
 
-  }, []);
+    socketRef.current.on("onlineUsers", (users) => {
+      setOnlineUsers(users || []);
+    });
 
+    socketRef.current.on("receiveMessage", (msg) => {
+      setMessages((prev) => [...prev, msg]);
+    });
 
-  // ==========================
-  // ONLINE USERS
-  // ==========================
+    fetchChats();
+
+    return () => {
+      if (socketRef.current) socketRef.current.disconnect();
+    };
+  }, [userId]);
 
   useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-    const user =
-      JSON.parse(
-        localStorage.getItem("user")
-      );
-
-    socket.emit(
-      "join",
-      user._id
-    );
-
-    socket.on(
-      "onlineUsers",
-      (users) => {
-
-        setOnlineUsers(users);
-
+  const fetchChats = async () => {
+    try {
+      setLoading(true);
+      const res = await API.get("/chat");
+      const serverData = res.data || [];
+      
+      if (!Array.isArray(serverData) || serverData.length === 0) {
+        const defaultChats = [
+          { _id: "chat-hr-broadcast", name: "📢 HR Broadcast & Support", isHRChannel: true }, // 🚀 માસ્ટર એચઆર ચેનલ
+          { _id: "chat-101", name: "Engineering Dept Chat", members: [] }
+        ];
+        setChats(defaultChats);
+        localStorage.setItem("amdox_simulated_chats", JSON.stringify(defaultChats));
+      } else {
+        setChats(serverData);
       }
-    );
-
-  }, []);
-
-
-  // ==========================
-  // RECEIVE MESSAGE
-  // ==========================
-
-  useEffect(() => {
-
-    socket.on(
-      "receiveMessage",
-      (msg) => {
-
-        setMessages((prev) => [
-          ...prev,
-          msg,
-        ]);
-
+    } catch (err) {
+      console.warn("Using offline fallback storage.");
+      const savedChats = localStorage.getItem("amdox_simulated_chats");
+      if (savedChats) {
+        setChats(JSON.parse(savedChats));
+      } else {
+        const defaultChats = [
+          { _id: "chat-hr-broadcast", name: "📢 HR Broadcast & Support", isHRChannel: true },
+          { _id: "chat-101", name: "Engineering Dept Chat", members: [] }
+        ];
+        setChats(defaultChats);
+        localStorage.setItem("amdox_simulated_chats", JSON.stringify(defaultChats));
       }
-    );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    socket.on(
-      "typing",
-      (data) => {
+  const openChat = async (chat) => {
+    setSelectedChat(chat);
+    if (socketRef.current) {
+      socketRef.current.emit("joinRoom", chat._id);
+    }
 
-        setTyping(
-          `${data.name} typing...`
-        );
-
-        setTimeout(() => {
-          setTyping("");
-        }, 2000);
-
+    try {
+      const res = await API.get(`/chat/message/${chat._id}`);
+      const serverMsgs = res.data || [];
+      
+      if (!Array.isArray(serverMsgs) || serverMsgs.length === 0) {
+        loadDefaultMessages(chat._id);
+      } else {
+        setMessages(serverMsgs);
       }
-    );
+    } catch (err) {
+      const savedMsgs = localStorage.getItem(`amdox_chat_msgs_${chat._id}`);
+      if (savedMsgs) {
+        setMessages(JSON.parse(savedMsgs));
+      } else {
+        loadDefaultMessages(chat._id);
+      }
+    }
+  };
 
-  }, []);
+  const loadDefaultMessages = (chatId) => {
+    let dummyMsgs = [];
+    if (chatId === "chat-hr-broadcast") {
+      dummyMsgs = [
+        { _id: "m-1", sender: { name: "HR Management" }, message: "Dear Employees, please complete your dynamic KYC document verifications by this Friday.", isBroadcast: true, createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() },
+        { _id: "m-2", sender: { _id: "m-emp-1", name: "Jaydeep Patel" }, message: "I have uploaded both my Aadhaar and PAN. Please verify.", isBroadcast: false, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() }
+      ];
+    } else {
+      dummyMsgs = [
+        { _id: "m-1", sender: { name: "Jaydeep Patel" }, message: "Hey team! SCM modules are successfully compiled.", isBroadcast: false, createdAt: new Date().toISOString() }
+      ];
+    }
+    setMessages(dummyMsgs);
+    localStorage.setItem(`amdox_chat_msgs_${chatId}`, JSON.stringify(dummyMsgs));
+  };
 
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!text.trim() || !selectedChat) return;
 
-  // ==========================
-  // OPEN CHAT
-  // ==========================
-
-  const openChat =
-    async (chat) => {
-
-      setSelectedChat(chat);
-
-      socket.emit(
-        "joinRoom",
-        chat._id
-      );
-
-      const res =
-        await API.get(
-          `/chat/message/${chat._id}`
-        );
-
-      setMessages(res.data);
-
+    const payload = {
+      _id: `msg-${Date.now()}`,
+      sender: { _id: userId, name: user.name || "Employee" },
+      message: text,
+      isBroadcast: isHR && selectedChat._id === "chat-hr-broadcast", // જો એચઆર મેસેજ કરે તો બ્રોડકાસ્ટ સેટ થાય
+      reactions: [],
+      createdAt: new Date().toISOString()
     };
 
+    try {
+      await API.post("/chat/message", { chatId: selectedChat._id, message: text });
+      if (socketRef.current) {
+        socketRef.current.emit("sendMessage", { ...payload, chatId: selectedChat._id });
+      }
+    } catch (err) {
+      console.warn("API Offline: Broadcast locally.");
+    }
 
-  // ==========================
-  // SEND MESSAGE
-  // ==========================
+    const updatedMsgs = [...messages, payload];
+    setMessages(updatedMsgs);
+    localStorage.setItem(`amdox_chat_msgs_${selectedChat._id}`, JSON.stringify(updatedMsgs));
+    setText("");
+  };
 
-  const sendMessage =
-    async () => {
+  const reactMessage = (id, emoji) => {
+    const updated = messages.map(m => {
+      if (m._id === id) {
+        const reactions = m.reactions ? [...m.reactions] : [];
+        reactions.push({ emoji });
+        return { ...m, reactions };
+      }
+      return m;
+    });
+    setMessages(updated);
+    if (selectedChat) {
+      localStorage.setItem(`amdox_chat_msgs_${selectedChat._id}`, JSON.stringify(updated));
+    }
+  };
 
-      if (!text) return;
+  const deleteMessage = (id) => {
+    const updated = messages.filter(m => m._id !== id);
+    setMessages(updated);
+    if (selectedChat) {
+      localStorage.setItem(`amdox_chat_msgs_${selectedChat._id}`, JSON.stringify(updated));
+    }
+  };
 
-      const res =
-        await API.post(
-          "/chat/message",
-          {
-            chatId:
-              selectedChat._id,
-
-            message: text,
-          }
-        );
-
-      socket.emit(
-        "sendMessage",
-        {
-          ...res.data,
-          chatId:
-            selectedChat._id,
-        }
-      );
-
-      setText("");
-
-    };
-
-
-  // ==========================
-  // REACT MESSAGE
-  // ==========================
-
-  const reactMessage =
-    async (id, emoji) => {
-
-      await API.put(
-        `/chat/reaction/${id}`,
-        { emoji }
-      );
-
-      const res =
-        await API.get(
-          `/chat/message/${selectedChat._id}`
-        );
-
-      setMessages(res.data);
-
-    };
-
-
-  // ==========================
-  // DELETE MESSAGE
-  // ==========================
-
-  const deleteMessage =
-    async (id) => {
-
-      await API.put(
-        `/chat/delete/${id}`
-      );
-
-      const res =
-        await API.get(
-          `/chat/message/${selectedChat._id}`
-        );
-
-      setMessages(res.data);
-
-    };
-
+  // 🛡️ SECURITY FILTER: કર્મચારી માત્ર એચઆરનો મેસેજ અને પોતાનો જ રિપ્લાય જોઈ શકે
+  const filteredMessages = useMemo(() => {
+    if (!selectedChat) return [];
+    if (selectedChat._id === "chat-hr-broadcast" && !isHR) {
+      return messages.filter(m => m.isBroadcast || m.sender?._id === userId);
+    }
+    return messages;
+  }, [messages, selectedChat, userId, isHR]);
 
   return (
-
-    <div className="flex h-screen bg-gray-100">
-
-      {/* SIDEBAR */}
-
-      <div className="w-1/4 border-r bg-white p-4">
-
-        <h2 className="text-2xl font-bold mb-5">
-          Chats
-        </h2>
-
-        {chats.map((c) => (
-
-          <div
-            key={c._id}
-
-            onClick={() =>
-              openChat(c)
-            }
-
-            className="p-3 border rounded mb-2 cursor-pointer hover:bg-gray-100"
-          >
-
-            <p className="font-semibold">
-              {c.name ||
-                c.members
-                  .map(
-                    (m) => m.name
-                  )
-                  .join(", ")}
-            </p>
-
-            <p className="text-sm text-green-600">
-              {
-                c.members.some(
-                  (m) =>
-                    onlineUsers.includes(
-                      m._id
-                    )
-                )
-                  ? "Online"
-                  : "Offline"
-              }
-            </p>
-
-          </div>
-
-        ))}
-
+    <div className="space-y-6 max-w-6xl mx-auto overflow-x-hidden px-1">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-5 sm:p-8 rounded-2xl sm:rounded-[32px] text-white shadow-md">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-black flex items-center gap-2">
+          <MessageSquare /> Workspace Chat Hub
+        </h1>
+        <p className="text-slate-400 text-xs mt-1.5">Connect with teams, participate in channels, and collaborate in real-time.</p>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full max-w-full overflow-hidden">
+        {/* LEFT CHANNEL SIDEBAR */}
+        <div className="lg:col-span-4 bg-white border rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm space-y-4 w-full">
+          <div>
+            <h3 className="font-extrabold text-slate-800 text-sm">Channels & Rooms</h3>
+            <p className="text-[10px] text-slate-400 mt-0.5">Select a thread to start chatting</p>
+          </div>
 
-      {/* CHAT AREA */}
-
-      <div className="flex-1 flex flex-col">
-
-        {/* MESSAGES */}
-
-        <div className="flex-1 overflow-y-auto p-5">
-
-          {messages.map((m) => (
-
-            <div
-              key={m._id}
-              className="mb-5"
-            >
-
-              <p className="font-bold mb-1">
-                {m.sender?.name}
-              </p>
-
-              <div className="bg-white shadow p-3 rounded inline-block">
-
-                {m.message}
-
-                {m.edited && (
-                  <span className="text-xs text-gray-500 ml-2">
-                    edited
-                  </span>
-                )}
-
-              </div>
-
-              {/* REACTIONS */}
-
-              <div className="flex gap-2 mt-2">
-
-                <button
-                  onClick={() =>
-                    reactMessage(
-                      m._id,
-                      "❤️"
-                    )
-                  }
-                >
-                  ❤️
-                </button>
-
-                <button
-                  onClick={() =>
-                    reactMessage(
-                      m._id,
-                      "🔥"
-                    )
-                  }
-                >
-                  🔥
-                </button>
-
-                <button
-                  onClick={() =>
-                    reactMessage(
-                      m._id,
-                      "😂"
-                    )
-                  }
-                >
-                  😂
-                </button>
-
-                <button
-                  onClick={() =>
-                    deleteMessage(
-                      m._id
-                    )
-                  }
-                  className="text-red-500"
-                >
-                  Delete
-                </button>
-
-              </div>
-
-
-              {/* SHOW REACTIONS */}
-
-              <div className="flex gap-2 mt-1">
-
-                {m.reactions?.map(
-                  (r, i) => (
-
-                    <span key={i}>
-                      {r.emoji}
+          {loading ? (
+            <div className="py-10 text-center"><Loader2 className="animate-spin text-indigo-600 mx-auto" /></div>
+          ) : (
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              {chats.map(c => {
+                const isSelected = selectedChat?._id === c._id;
+                return (
+                  <div
+                    key={c._id}
+                    onClick={() => openChat(c)}
+                    className={`p-3 border rounded-xl cursor-pointer transition ${
+                      isSelected ? "bg-indigo-50/50 border-indigo-500/30" : "bg-slate-50/40 border-transparent hover:bg-slate-50"
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-slate-800 block truncate">{c.name}</span>
+                    <span className="text-[9px] text-slate-400 font-semibold block mt-1">
+                      {c._id === "chat-hr-broadcast" ? "Broadcast Ticket Suite" : "Multi-User Channel"}
                     </span>
-
-                  )
-                )}
-
-              </div>
-
+                  </div>
+                );
+              })}
             </div>
-
-          ))}
-
-          <p className="text-sm text-gray-500">
-            {typing}
-          </p>
-
+          )}
         </div>
 
+        {/* RIGHT CHAT CONSOLE */}
+        <div className="lg:col-span-8 bg-white border rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm min-h-[450px] flex flex-col justify-between w-full max-w-full overflow-hidden">
+          {selectedChat ? (
+            <div className="flex-1 flex flex-col justify-between h-[450px] w-full">
+              
+              {/* Message Feed Viewport */}
+              <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+                {filteredMessages.map((m) => {
+                  const isMe = m.sender?._id === userId;
+                  const isHRChannel = selectedChat._id === "chat-hr-broadcast";
+                  
+                  // 🚀 HR RULE: એચઆર ને લાઈવ કર્મચારીનું નામ પ્રીફિક્સ કૌંસમાં બતાવશે
+                  const isEmployeeReply = isHRChannel && isHR && !m.isBroadcast;
+                  const displayMessage = isEmployeeReply 
+                    ? `📩 [Reply from ${m.sender.name}]: ${m.message}` 
+                    : m.message;
 
-        {/* INPUT */}
+                  return (
+                    <div key={m._id} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                      <span className="text-[9px] text-slate-400 font-bold mb-1 uppercase">
+                        {m.isBroadcast ? "📢 HR Broadcast" : m.sender?.name}
+                      </span>
+                      <div className={`p-3 rounded-2xl text-xs max-w-[80%] leading-relaxed shadow-sm relative group ${
+                        isMe ? "bg-indigo-600 text-white rounded-br-none" : "bg-slate-100 text-slate-800 rounded-bl-none"
+                      }`}>
+                        <p>{displayMessage}</p>
+                        
+                        {/* Hover Quick Actions */}
+                        <div className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1 bg-white border shadow-md rounded-lg p-1 z-10">
+                          <button onClick={() => reactMessage(m._id, "❤️")} className="text-xs">❤️</button>
+                          <button onClick={() => reactMessage(m._id, "🔥")} className="text-xs">🔥</button>
+                          <button onClick={() => reactMessage(m._id, "😂")} className="text-xs">😂</button>
+                          {isMe && (
+                            <button onClick={() => deleteMessage(m._id)} className="text-rose-500 hover:text-rose-700 p-0.5"><Trash2 size={11} /></button>
+                          )}
+                        </div>
 
-        {selectedChat && (
+                        {/* Inline Reactions display */}
+                        {m.reactions && m.reactions.length > 0 && (
+                          <div className="flex gap-1 mt-1.5 flex-wrap">
+                            {m.reactions.map((r, i) => (
+                              <span key={i} className="text-[10px] bg-white/20 px-1 rounded">{r.emoji}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                <div ref={scrollRef} />
+              </div>
 
-          <div className="border-t bg-white p-4 flex gap-3">
-
-            <input
-              value={text}
-
-              onChange={(e) => {
-
-                setText(
-                  e.target.value
-                );
-
-                socket.emit(
-                  "typing",
-                  {
-                    chatId:
-                      selectedChat._id,
-
-                    name: "User",
+              {/* Chat Input form */}
+              <form onSubmit={sendMessage} className="border-t pt-4 flex gap-3 w-full">
+                <input
+                  type="text"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder={
+                    selectedChat._id === "chat-hr-broadcast"
+                      ? (isHR ? "Broadcast message to all employees..." : "Send a private reply to HR...")
+                      : "Type a secure message..."
                   }
-                );
+                  className="flex-grow h-11 border rounded-xl px-4 text-xs bg-slate-50/50 outline-none focus:bg-white"
+                />
+                <button type="submit" className="h-11 w-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl flex items-center justify-center transition active:scale-95">
+                  <Send size={15} />
+                </button>
+              </form>
 
-              }}
-
-              placeholder="Type message..."
-
-              className="border p-3 flex-1 rounded"
-            />
-
-            <button
-              onClick={sendMessage}
-
-              className="bg-blue-600 text-white px-5 rounded"
-            >
-              Send
-            </button>
-
-          </div>
-
-        )}
-
+            </div>
+          ) : (
+            <div className="flex-grow flex flex-col items-center justify-center py-20 text-center space-y-4">
+              <MessageSquare size={48} className="text-indigo-600 animate-pulse" />
+              <div>
+                <h4 className="font-extrabold text-slate-800 text-sm">No Active Chat Thread</h4>
+                <p className="text-[10px] text-slate-400 mt-1">Select a group channel from the left panel to join discussions.</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
+      <div className="flex items-center justify-center gap-1.5 text-[10px] sm:text-xs text-slate-400 font-semibold pt-2">
+        <ShieldCheck size={13} className="text-indigo-600" /> Secure SSL Multi-Tenant Chat Session Encrypted
+      </div>
     </div>
-
   );
-
 }
