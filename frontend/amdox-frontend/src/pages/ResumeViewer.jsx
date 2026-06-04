@@ -108,13 +108,13 @@ export default function ResumeViewer() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto p-1 font-sans">
+    <div className="space-y-6 max-w-6xl mx-auto px-3 sm:px-4 font-sans box-border w-full">
       {/* Header */}
-      <div className="bg-slate-900 border border-slate-800 p-8 rounded-[32px] text-white relative overflow-hidden shadow-xl">
+      <div className="bg-slate-900 border border-slate-800 p-5 sm:p-8 rounded-2xl sm:rounded-[32px] text-white relative overflow-hidden shadow-xl">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 space-y-2">
           <span className="text-[10px] uppercase tracking-widest text-indigo-400 font-bold block mb-1">Compliance Vault</span>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight flex items-center gap-2">
             <FileText className="text-indigo-400" /> Professional Resume Vault
           </h1>
           <p className="text-slate-400 text-xs sm:text-sm">Access, review, and print employee resume portfolios and credentials in real-time.</p>
@@ -127,11 +127,11 @@ export default function ResumeViewer() {
           <p className="text-xs text-slate-400 font-bold mt-4">Syncing verified databases...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start w-full">
           
           {/* LEFT COLUMN */}
           <div className="lg:col-span-4 space-y-6 w-full">
-            <div className="bg-white border rounded-[28px] p-6 shadow-sm space-y-5">
+            <div className="bg-white border rounded-2xl sm:rounded-[28px] p-4 sm:p-6 shadow-sm space-y-5">
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2.5">Select Employee Profile</label>
                 <select 
@@ -174,7 +174,7 @@ export default function ResumeViewer() {
           </div>
 
           {/* RIGHT COLUMN */}
-          <div className="lg:col-span-8 bg-white border rounded-[28px] p-6 shadow-sm min-h-[400px] flex flex-col justify-between w-full">
+          <div className="lg:col-span-8 bg-white border rounded-2xl sm:rounded-[28px] p-4 sm:p-6 shadow-sm min-h-[350px] flex flex-col justify-between w-full box-border">
             <div className="flex justify-between items-center pb-4 border-b border-slate-100">
               <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
                 <FileText className="text-indigo-600" size={16} /> Document Storage
@@ -184,45 +184,48 @@ export default function ResumeViewer() {
               </span>
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center py-10 min-h-[300px]">
+            <div className="flex-1 flex flex-col items-center justify-center py-10 min-h-[250px] w-full">
               {currentEmp?.resume ? (
                 <div className="w-full max-w-md space-y-6 text-center">
                   
-                  <div className="p-8 bg-slate-50/60 border border-slate-100 rounded-3xl flex flex-col items-center justify-center space-y-4 shadow-sm relative overflow-hidden">
+                  {/* High Fidelity Glassmorphic File Card */}
+                  <div className="p-5 sm:p-8 bg-slate-50/60 border border-slate-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center space-y-4 shadow-sm relative overflow-hidden w-full box-border">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
                     
                     <div className="h-16 w-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner">
                       <FileText size={32} />
                     </div>
-                    <div>
-                      <h4 className="font-black text-slate-800 text-sm truncate max-w-[250px]">
+                    <div className="w-full min-w-0">
+                      <h4 className="font-black text-slate-800 text-sm truncate max-w-full">
                         {currentEmp.resume.split("/").pop()}
                       </h4>
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">PDF Portfolio Document</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-3">
+                  {/* 🚀 રિસ્પોન્સિવ ઓટો-સ્ટેક બટન કન્ટેનર */}
+                  <div className="flex flex-col sm:flex-row gap-3 w-full">
                     <a
                       href={getFileUrl(currentEmp.resume)}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex-1 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-md"
+                      className="flex-1 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-md w-full"
                     >
                       <ExternalLink size={14} /> Open Resume in New Tab
                     </a>
                     <a
                       href={getFileUrl(currentEmp.resume)}
                       download
-                      className="h-11 w-12 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl flex items-center justify-center transition border"
+                      className="h-11 w-full sm:w-12 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl flex items-center justify-center transition border shrink-0 font-bold text-xs gap-2"
                       title="Download PDF"
                     >
                       <Download size={16} />
+                      <span className="inline sm:hidden">Download PDF</span>
                     </a>
                   </div>
                 </div>
               ) : (
-                <div className="text-center space-y-3 p-10 border-2 border-dashed border-slate-200 rounded-2xl max-w-md w-full">
+                <div className="text-center space-y-3 p-10 border-2 border-dashed border-slate-200 rounded-2xl max-w-md w-full box-border">
                   <Award size={36} className="mx-auto text-slate-300" />
                   <div>
                     <h5 className="font-extrabold text-slate-800 text-xs">No resume uploaded</h5>

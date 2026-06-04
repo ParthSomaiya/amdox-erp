@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { MessageSquare, Send, Smile, Trash2, Heart, Flame, Laugh, Loader2, Users, ShieldCheck, X, Edit3 } from "lucide-react";
+import { MessageSquare, Send, Smile, Trash2, Heart, Flame, Laugh, Loader2, Users, ShieldCheck, X, Edit3, CornerUpLeft } from "lucide-react";
 import io from "socket.io-client";
 import API from "../services/api";
 
@@ -43,10 +43,11 @@ export default function Chat() {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🚀 મેસેજ ઓપ્શન્સ અને એડિટ સ્ટેટ્સ
+  // 🚀 એડિટ, ઓપ્શન્સ અને રિપ્લાય સ્ટેટ્સ
   const [activeActionMenuId, setActiveActionMenuId] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editText, setEditText] = useState("");
+  const [replyToMessage, setReplyToMessage] = useState(null); // રિપ્લાય ટ્રેકર
 
   const socketRef = useRef(null);
   const scrollRef = useRef(null);
@@ -113,6 +114,7 @@ export default function Chat() {
 
   const openChat = async (chat) => {
     setSelectedChat(chat);
+    setReplyToMessage(null); // નવું ચેટ ઓપન થતા રિપ્લાય ટાર્ગેટ રીસેટ કરો
     if (socketRef.current) {
       socketRef.current.emit("joinRoom", chat._id);
     }
@@ -165,13 +167,15 @@ export default function Chat() {
       _id: `msg-${Date.now()}`,
       sender: { _id: userId, name: user.name || "Employee" },
       message: text,
+      // 🚀 રિપ્લાય ટૅગ સિંક્રોનાઇઝર
+      replyTo: replyToMessage ? { _id: replyToMessage._id, senderName: replyToMessage.sender?.name || "User", message: replyToMessage.message } : null,
       isBroadcast: isHR && selectedChat._id === "chat-hr-broadcast",
       reactions: [],
       createdAt: new Date().toISOString()
     };
 
     try {
-      await API.post("/chat/message", { chatId: selectedChat._id, message: text });
+      await API.post("/chat/message", { chatId: selectedChat._id, message: text, replyTo: payload.replyTo });
       if (socketRef.current) {
         socketRef.current.emit("sendMessage", { ...payload, chatId: selectedChat._id });
       }
@@ -183,13 +187,23 @@ export default function Chat() {
     setMessages(updatedMsgs);
     localStorage.setItem(`amdox_chat_msgs_${selectedChat._id}`, JSON.stringify(updatedMsgs));
     setText("");
+    setReplyToMessage(null); // સેન્ડ થયા પછી રિપ્લાય ટાર્ગેટ રીસેટ કરો
   };
 
+  // 🚀 TOGGLE REACTIONS HANDLER (બટન પર બીજી વાર ક્લિક કરવાથી ઈમોજી રિમૂવ થશે)
   const reactMessage = (id, emoji) => {
     const updated = messages.map(m => {
       if (m._id === id) {
-        const reactions = m.reactions ? [...m.reactions] : [];
-        reactions.push({ emoji });
+        let reactions = m.reactions ? [...m.reactions] : [];
+        const exists = reactions.some(r => r.emoji === emoji);
+
+        if (exists) {
+          // જો ઈમોજી ઓલરેડી હોય, તો તેને ફિલ્ટર કરીને કાઢી નાખો
+          reactions = reactions.filter(r => r.emoji !== emoji);
+        } else {
+          // નહીંતર નવી એડ કરો
+          reactions.push({ emoji });
+        }
         return { ...m, reactions };
       }
       return m;
@@ -242,7 +256,6 @@ export default function Chat() {
     return messages;
   }, [messages, selectedChat, userId, isHR]);
 
-  // લાઈવ સિલેક્ટેડ મેસેજ ઓપ્શન્સ કમ્પાઇલર
   const activeMsgObj = useMemo(() => {
     return messages.find(m => m._id === activeActionMenuId) || null;
   }, [activeActionMenuId, messages]);
@@ -313,10 +326,17 @@ export default function Chat() {
                       
                       {/* ચેટ બબલ કન્ટેનર */}
                       <div 
-                        onClick={() => setActiveActionMenuId(m._id)} // બબલ પર ક્લિક કરતાં જ પોર્ટલ મેનૂ ખુલશે
+                        onClick={() => setActiveActionMenuId(m._id)}
                         className={`p-3 rounded-2xl text-xs max-w-[80%] leading-relaxed shadow-sm relative cursor-pointer hover:opacity-95 transition-all ${isMe ? "bg-indigo-600 text-white rounded-br-none" : "bg-slate-100 text-slate-800 rounded-bl-none"
                         }`}
                       >
+                        {/* 🚀 રીપ્લાય કનેક્ટર પ્રીવ્યૂ કાર્ડ */}
+                        {m.replyTo && (
+                          <div className="bg-black/10 p-2 rounded-xl text-[10px] text-slate-400 mb-2 italic border-l-2 border-indigo-500">
+                            Replying to <span className="font-bold">{m.replyTo.senderName}</span>: "{m.replyTo.message}"
+                          </div>
+                        )}
+
                         {/* ઇનલાઇન એડિટ ઇનપુટ બોક્સ */}
                         {editingMessageId === m._id ? (
                           <form onSubmit={(e) => handleSaveEdit(e, m._id)} className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -337,7 +357,16 @@ export default function Chat() {
                         {m.reactions && m.reactions.length > 0 && (
                           <div className="flex gap-1 mt-1.5 flex-wrap">
                             {m.reactions.map((r, i) => (
-                              <span key={i} className="text-[10px] bg-white/20 px-1 rounded">{r.emoji}</span>
+                              <button 
+                                key={i} 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  reactMessage(m._id, r.emoji); // ક્લિક કરવાથી રીએક્શન રિમૂવ થશે
+                                }}
+                                className="text-[10px] bg-white/25 px-1 rounded hover:bg-white/40 cursor-pointer active:scale-90"
+                              >
+                                {r.emoji}
+                              </button>
                             ))}
                           </div>
                         )}
@@ -347,6 +376,22 @@ export default function Chat() {
                 })}
                 <div ref={scrollRef} />
               </div>
+
+              {/* 🚀 રીપ્લાય કમ્પાર્ટમેન્ટ પ્રીવ્યૂ બાર (ઇનપુટ બોક્સ ની ઉપર) */}
+              {replyToMessage && (
+                <div className="px-4 py-2 bg-indigo-50/70 border-t border-indigo-100 flex items-center justify-between text-xs text-indigo-900 rounded-t-xl animate-in slide-in-from-bottom-2 duration-200">
+                  <span className="truncate">
+                    Replying to <span className="font-bold">{replyToMessage.sender?.name || "Staff"}</span>: "{replyToMessage.message}"
+                  </span>
+                  <button 
+                    type="button" 
+                    onClick={() => setReplyToMessage(null)}
+                    className="text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
 
               {/* Chat Input form */}
               <form onSubmit={sendMessage} className="border-t pt-4 flex gap-3 w-full">
@@ -379,7 +424,7 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* 🚀 વૈશ્વિક કક્ષાનું સિક્યોર ચેટ કંટ્રોલ પોર્ટલ ઓવરલે (Bypasses Scroll bounds & Cuts) */}
+      {/* 🚀 વૈશ્વિક કક્ષાનું સિક્યોર ચેટ કંટ્રોલ પોર્ટલ ઓવરલે */}
       {activeActionMenuId && activeMsgObj && createPortal(
         <div 
           className="fixed inset-0 z-[110] bg-slate-900/20 backdrop-blur-xs flex items-center justify-center p-4"
@@ -387,7 +432,7 @@ export default function Chat() {
         >
           <div 
             className="bg-white rounded-3xl p-5 shadow-2xl border border-slate-100 w-full max-w-xs space-y-4 animate-in fade-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()} // મેનૂની અંદરની ક્લિક બાયપાસ રોકે
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center pb-2 border-b">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Message Actions</span>
@@ -420,8 +465,19 @@ export default function Chat() {
 
             {/* Edit / Delete / Reply workflows */}
             <div className="space-y-1.5 pt-2 border-t border-slate-100">
-              {activeMsgObj.sender?._id === userId ? (
-                <div className="space-y-1">
+              {/* 🚀 માસ્ટર રીપ્લાય બટન (બધા યુઝર્સ વાપરી શકશે) */}
+              <button 
+                onClick={() => {
+                  setReplyToMessage(activeMsgObj);
+                  setActiveActionMenuId(null);
+                }}
+                className="w-full h-10 px-3 hover:bg-slate-50 text-indigo-600 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer transition-all"
+              >
+                <CornerUpLeft size={13} /> Reply to Message
+              </button>
+
+              {activeMsgObj.sender?._id === userId && (
+                <div className="space-y-1 pt-1.5 border-t border-dashed">
                   <button 
                     onClick={() => {
                       setEditingMessageId(activeMsgObj._id);
@@ -442,8 +498,6 @@ export default function Chat() {
                     <Trash2 size={13} /> Delete Message
                   </button>
                 </div>
-              ) : (
-                <p className="text-[10px] text-slate-400 italic text-center py-2">Read-only system message.</p>
               )}
             </div>
           </div>
