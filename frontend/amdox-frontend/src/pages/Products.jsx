@@ -41,7 +41,7 @@ function ProductImage({ p }) {
     <img
       src={imgSrc}
       alt={p.name}
-      crossOrigin="anonymous" // 🔹 આ એટ્રિબ્યુટ ERR_BLOCKED_BY_RESPONSE ને રોકવા માટે ઉમેરેલ છે
+      crossOrigin="anonymous" 
       className="h-12 w-12 rounded-xl object-cover border border-slate-200"
       onError={() => {
         setHasError(true);

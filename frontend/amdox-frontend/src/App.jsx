@@ -35,8 +35,8 @@ import PayrollSlip from "./pages/hr/PayrollSlip";
 import HRDashboard from "./pages/hr/HRDashboard";
 import InterviewCalendar from "./pages/jobs/InterviewCalendar";
 import InterviewScheduler from "./pages/jobs/InterviewScheduler";
-import CandidateAnalytics from "./pages/CandidateAnalytics"; 
-import ResumeViewer from "./pages/ResumeViewer"; 
+import CandidateAnalytics from "./pages/CandidateAnalytics";
+import ResumeViewer from "./pages/ResumeViewer";
 
 // ================= PAYROLL =================
 import GeneratePayroll from "./pages/GeneratePayroll";
@@ -69,8 +69,8 @@ import FinanceAnalytics from "./pages/finance/FinanceAnalytics";
 import Forecast from "./pages/finance/Forecast";
 import InvoicePage from "./pages/finance/InvoicePage";
 import Reconciliation from "./pages/finance/Reconciliation";
-import BillingReports from "./pages/BillingReports"; 
-import Reports from "./pages/Reports"; 
+import BillingReports from "./pages/BillingReports";
+import Reports from "./pages/Reports";
 
 // ================= 📦 INVENTORY SUB-PAGES IMPORTS =================
 import InventoryDashboard from "./pages/InventoryDashboard";
@@ -126,20 +126,25 @@ import Notifications from "./pages/notifications/Notifications";
 import PushSetup from "./components/PushSetup";
 import AIAssistant from "./pages/ai/AIAssistant";
 import MyProfile from "./pages/MyProfile";
+import Users from "./pages/Users";
+import Tasks from "./pages/Tasks";
+
+
+
 
 // 🧠 GLOBAL AMDOX MEMORY PROTECTOR (તમામ સાયલન્ટ લોગઆઉટ વાઇપ્સને અટકાવશે)
 if (typeof window !== "undefined" && !window.hasAmdoxProtectorLoaded) {
   window.hasAmdoxProtectorLoaded = true;
   const originalClear = localStorage.clear;
-  localStorage.clear = function() {
+  localStorage.clear = function () {
     const keysToKeep = ["amdox_jobs", "amdox_applicants", "amdox_approved_candidates", "amdox_scheduled_interviews", "amdox_simulated_attendance"];
     const backups = {};
     keysToKeep.forEach(key => {
       backups[key] = localStorage.getItem(key);
     });
-    
+
     originalClear.apply(this, arguments);
-    
+
     Object.keys(backups).forEach(key => {
       if (backups[key] !== null) {
         localStorage.setItem(key, backups[key]);
@@ -201,8 +206,8 @@ function App() {
             <Route path="/hr/dashboard" element={<HRDashboard />} />
             <Route path="/hr/interviews" element={<InterviewCalendar />} />
             <Route path="/hr/interview-scheduler" element={<InterviewScheduler />} />
-            <Route path="/hr/candidate-analytics" element={<CandidateAnalytics />} /> 
-            <Route path="/hr/resume-viewer" element={<ResumeViewer />} /> 
+            <Route path="/hr/candidate-analytics" element={<CandidateAnalytics />} />
+            <Route path="/hr/resume-viewer" element={<ResumeViewer />} />
 
             {/* PAYROLL */}
             <Route path="/generate-payroll" element={<GeneratePayroll />} />
@@ -293,6 +298,8 @@ function App() {
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/ai" element={<AIAssistant />} />
             <Route path="/profile" element={<MyProfile />} />
+            <Route path="/admin/users" element={<Users />} />
+            <Route path="/tasks" element={<Tasks />} />
           </Route>
         </Routes>
       </Suspense>

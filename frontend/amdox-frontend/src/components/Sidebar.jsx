@@ -138,7 +138,7 @@ export default function Sidebar() {
                   </Link>
                   <Link to="/hr/resume-viewer" className={menuClass("/hr/resume-viewer")}>
                     📄 Resume Viewer
-                  </Link> 
+                  </Link>
                   <Link to="/attendance" className={menuClass("/attendance")}>
                     📅 Attendance Log
                   </Link>
@@ -227,7 +227,7 @@ export default function Sidebar() {
                   </Link>
                   <Link to="/finance/billing-reports" className={menuClass("/finance/billing-reports")}>
                     🧾 Billing Reports
-                  </Link> 
+                  </Link>
                   <Link to="/profit-loss" className={menuClass("/profit-loss")}>
                     📈 Profit & Loss
                   </Link>
@@ -314,6 +314,9 @@ export default function Sidebar() {
                   <Link to="/tasks-board" className={menuClass("/tasks-board")}>
                     🧩 Kanban Board
                   </Link>
+                  <Link to="/tasks" className={menuClass("/tasks")}>
+                    📋 Tasks List
+                  </Link>
                   <Link to="/projects/gantt" className={menuClass("/projects/gantt")}>
                     📅 Gantt Timeline
                   </Link>
@@ -341,6 +344,9 @@ export default function Sidebar() {
                   </Link>
                   <Link to="/admin/security" className={menuClass("/admin/security")}>
                     🔐 Security Access
+                  </Link>
+                  <Link to="/admin/users" className={menuClass("/admin/users")}>
+                    👥 Users Management
                   </Link>
                   <Link to="/admin/permissions" className={menuClass("/admin/permissions")}>
                     🧩 Permission Matrix
