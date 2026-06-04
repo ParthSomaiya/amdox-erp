@@ -250,7 +250,7 @@ export default function Sidebar() {
                   <Link to="/inventory/create-po" className={menuClass("/inventory/create-po")}>
                     ➕ Create Purchase Order
                   </Link>
-                  <Link to="/stock-history" className={menuClass("/stock-history")}>
+                  <Link to="/inventory/stock-history" className={menuClass("/stock-history")}>
                     🕒 Stock History
                   </Link>
                   <Link to="/inventory/low-stock" className={menuClass("/inventory/low-stock")}>
