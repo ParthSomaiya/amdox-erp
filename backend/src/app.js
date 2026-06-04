@@ -182,7 +182,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/sms", smsRoutes);
 app.use("/api/ai", aiRoutes);
-app.use("/api/calendar", calendarRoutes); // REGISTER NEW CALENDAR ROUTES
+app.use("/api/calendar", calendarRoutes); 
 app.get("/api/po", getPurchaseOrders);
 app.use("/api", inventoryRoutes);
 app.use("/api/hr", hrRouter);

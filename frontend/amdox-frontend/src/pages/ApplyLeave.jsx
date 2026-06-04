@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-import { CalendarDays, Clock3, FileText, Send, ShieldCheck, Loader2 } from "lucide-react";
+import { createPortal } from "react-dom";
+import { CalendarDays, Clock3, FileText, Send, ShieldCheck, Loader2, X, Eye } from "lucide-react";
 import io from "socket.io-client";
 import API from "../services/api";
 import notifier from "../utils/notifier";
@@ -8,17 +9,43 @@ const socket = io("http://localhost:5000", {
   transports: ["websocket", "polling"],
 });
 
+// 🛡️ SAFEST LOCAL STORAGE DECORATOR (Wipe-out protection on logout)
+const originalClear = localStorage.clear;
+localStorage.clear = function() {
+  const employees = localStorage.getItem("amdox_employees");
+  const leaves = localStorage.getItem("amdox_applied_leaves");
+  const attendance = localStorage.getItem("amdox_simulated_attendance");
+  const payrolls = localStorage.getItem("amdox_simulated_payrolls");
+  const webhooks = localStorage.getItem("amdox_webhooks");
+
+  originalClear.call(localStorage);
+
+  if (employees) localStorage.setItem("amdox_employees", employees);
+  if (leaves) localStorage.setItem("amdox_applied_leaves", leaves);
+  if (attendance) localStorage.setItem("amdox_simulated_attendance", attendance);
+  if (payrolls) localStorage.setItem("amdox_simulated_payrolls", payrolls);
+  if (webhooks) localStorage.setItem("amdox_webhooks", webhooks);
+};
+
 export default function ApplyLeave() {
   const user = useMemo(() => {
     return JSON.parse(localStorage.getItem("user") || "{}");
   }, []);
 
-  const userId = user.id || user._id;
+  const userId = useMemo(() => {
+    return user.id || user._id || (user.email ? `mock-usr-${user.email.replace(/[@.]/g, "-")}` : "guest-user");
+  }, [user]);
 
   const [loading, setLoading] = useState(false);
   const [myLeaves, setMyLeaves] = useState([]);
   
-  // બેઝ બેલેન્સ ટ્રેકર
+  const [proofFile, setProofFile] = useState(null);
+  const [proofBase64, setProofBase64] = useState("");
+
+  // 🚀 લાઈવ પ્રૂફ પ્રીવ્યૂ સ્ટેટ્સ
+  const [previewProof, setPreviewProof] = useState(null);
+  const [showProofModal, setShowProofModal] = useState(false);
+
   const [baseBalance, setBaseBalance] = useState({
     casual: 8,
     sick: 5,
@@ -38,7 +65,6 @@ export default function ApplyLeave() {
     reason: "",
   });
 
-  // રજાના દિવસોની સાચી ગણતરી કરવાનું ફંક્શન
   const calculateDays = (start, end) => {
     if (!start || !end) return 1;
     const from = new Date(start);
@@ -47,7 +73,6 @@ export default function ApplyLeave() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
   };
 
-  // મંજૂર થયેલી રજાઓ આપમેળે બેલેન્સમાંથી બાદ કરવાનું હેલ્પર ફંક્શન
   const calculateDynamicBalance = (allLeaves, currentBase) => {
     let casualUsed = 0;
     let sickUsed = 0;
@@ -75,15 +100,23 @@ export default function ApplyLeave() {
       const serverLeaves = Array.isArray(res.data) ? res.data : [];
       
       const localApplies = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
-      
       const myLocal = localApplies.filter(l => {
-        const lSenderId = l.employeeId?._id || l.userId || l.employeeId;
+        const lSenderId = l.employeeId?._id || l.userId?._id || l.userId || l.employeeId;
         return String(lSenderId) === String(userId);
       });
 
       const merged = [...serverLeaves];
+      
       myLocal.forEach(l => {
-        if (!merged.some(sl => sl._id === l._id)) {
+        const isDuplicate = merged.some(sl => {
+          const slStart = sl.fromDate ? sl.fromDate.slice(0, 10) : "";
+          const lStart = l.fromDate ? l.fromDate.slice(0, 10) : "";
+          const slEnd = sl.toDate ? sl.toDate.slice(0, 10) : "";
+          const lEnd = l.toDate ? l.toDate.slice(0, 10) : "";
+
+          return sl._id === l._id || (slStart === lStart && slEnd === lEnd && sl.leaveType === l.leaveType);
+        });
+        if (!isDuplicate) {
           merged.push(l);
         }
       });
@@ -92,10 +125,10 @@ export default function ApplyLeave() {
       setMyLeaves(merged);
       calculateDynamicBalance(merged, currentBase);
     } catch (err) {
-      console.error(err);
+      console.warn("Using offline fallback storage.");
       const localApplies = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
       const myLocal = localApplies.filter(l => {
-        const lSenderId = l.employeeId?._id || l.userId || l.employeeId;
+        const lSenderId = l.employeeId?._id || l.userId?._id || l.userId || l.employeeId;
         return String(lSenderId) === String(userId);
       });
       setMyLeaves(myLocal);
@@ -123,8 +156,24 @@ export default function ApplyLeave() {
   };
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    }
     fetchLeaveBalance();
   }, []);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProofFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProofBase64(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleChange = (e) => {
     setForm({
@@ -134,7 +183,10 @@ export default function ApplyLeave() {
   };
 
   const validateForm = () => {
-    if (!form.fromDate || !form.toDate) return false;
+    if (!form.fromDate || !form.toDate || !form.reason.trim()) {
+      alert("From date, to date, and reason are required");
+      return false;
+    }
     
     const from = new Date(form.fromDate);
     const to = new Date(form.toDate);
@@ -178,6 +230,8 @@ export default function ApplyLeave() {
         toDate: form.toDate,
         reason: form.reason,
         status: "PENDING",
+        proof: proofBase64 || null,
+        employeeName: user.name || "Employee",
         employeeId: {
           _id: userId,
           name: user.name,
@@ -190,15 +244,27 @@ export default function ApplyLeave() {
         createdAt: new Date().toISOString()
       };
 
-      // એડમિન મેચિંગ પ્રોટેક્ટર: બેકએન્ડ પર પણ સંપૂર્ણ વિગતો સબમિટ કરો
-      await API.post("/leave/apply", {
-        ...form,
-        employeeId: userId,
-        userId: userId
-      });
+      let apiSuccess = false;
+      try {
+        await API.post("/leave/apply", {
+          leaveType: form.leaveType,
+          fromDate: form.fromDate,
+          toDate: form.toDate,
+          reason: form.reason,
+          employeeId: userId,
+          userId: userId,
+          employeeName: user.name,
+          proof: proofBase64 || null
+        });
+        apiSuccess = true;
+      } catch (apiErr) {
+        console.warn("Backend token unauthorized. Saved locally.");
+      }
 
-      const localLeaves = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
-      localStorage.setItem("amdox_applied_leaves", JSON.stringify([payload, ...localLeaves]));
+      if (!apiSuccess) {
+        const localLeaves = JSON.parse(localStorage.getItem("amdox_applied_leaves") || "[]");
+        localStorage.setItem("amdox_applied_leaves", JSON.stringify([payload, ...localLeaves]));
+      }
 
       socket.emit("sendMessage", {
         room: "general",
@@ -208,18 +274,21 @@ export default function ApplyLeave() {
 
       notifier.leaveApplied(form.leaveType, form.reason);
 
-      alert("Leave Applied Successfully!");
+      alert(apiSuccess ? "Leave Applied Successfully!" : "Leave Applied & Saved Offline!");
+      
       setForm({
         leaveType: "CASUAL",
         fromDate: "",
         toDate: "",
         reason: "",
       });
+      setProofFile(null);
+      setProofBase64("");
 
       fetchMyLeaves();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Failed to apply leave");
+      alert("An unexpected error occurred while applying leave.");
     } finally {
       setLoading(false);
     }
@@ -227,12 +296,9 @@ export default function ApplyLeave() {
 
   const badgeColor = (status) => {
     switch (status) {
-      case "APPROVED":
-        return "bg-green-100 text-green-700";
-      case "REJECTED":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-yellow-100 text-yellow-700";
+      case "APPROVED": return "bg-green-100 text-green-700";
+      case "REJECTED": return "bg-red-100 text-red-700";
+      default: return "bg-yellow-100 text-yellow-700";
     }
   };
 
@@ -305,7 +371,7 @@ export default function ApplyLeave() {
                   value={form.fromDate}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-4 outline-none focus:border-blue-500"
+                  className="w-full h-11 border rounded-xl px-4 text-sm bg-slate-50/50 outline-none"
                 />
               </div>
               <div>
@@ -316,7 +382,7 @@ export default function ApplyLeave() {
                   value={form.toDate}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-4 outline-none focus:border-blue-500"
+                  className="w-full h-11 border rounded-xl px-4 text-sm bg-slate-50/50 outline-none"
                 />
               </div>
             </div>
@@ -324,13 +390,24 @@ export default function ApplyLeave() {
             <div>
               <label className="text-sm font-semibold text-slate-700 block mb-2">Reason</label>
               <textarea
-                rows="6"
+                rows="4"
                 name="reason"
                 value={form.reason}
                 onChange={handleChange}
                 placeholder="Enter detailed reason..."
                 required
                 className="w-full rounded-2xl border border-slate-200 px-4 py-4 outline-none resize-none focus:border-blue-500"
+              />
+            </div>
+
+            {/* Proof Selection */}
+            <div>
+              <label className="text-sm font-semibold text-slate-700 block mb-2">Upload Medical / Event Proof (Optional)</label>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                onChange={handleFileChange}
+                className="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 cursor-pointer"
               />
             </div>
 
@@ -377,11 +454,61 @@ export default function ApplyLeave() {
                   {leave.fromDate?.slice(0, 10)} to {leave.toDate?.slice(0, 10)}
                 </p>
                 <p className="text-sm text-slate-600 mt-3">{leave.reason}</p>
+                {leave.proof && (
+                  <button
+                    onClick={() => {
+                      setPreviewProof(leave.proof);
+                      setShowProofModal(true);
+                    }}
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs text-indigo-600 font-bold hover:underline cursor-pointer"
+                  >
+                    📎 View Attached Proof
+                  </button>
+                )}
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* 🚀 DYNAMIC INLINE PROOF PREVIEW MODAL */}
+      {showProofModal && previewProof && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-[28px] p-6 w-full max-w-2xl max-h-[85vh] flex flex-col justify-between shadow-2xl relative">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center pb-3 border-b mb-4">
+              <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+                <FileText size={18} className="text-indigo-600" /> Attached Proof Preview
+              </h3>
+              <button 
+                onClick={() => { setShowProofModal(false); setPreviewProof(null); }}
+                className="text-slate-400 hover:text-slate-600 bg-slate-50 p-1.5 rounded-xl border cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            {/* Body Viewport */}
+            <div className="flex-1 overflow-auto bg-slate-50 border rounded-2xl p-2 min-h-[320px] flex items-center justify-center">
+              {previewProof.startsWith("data:image/") || previewProof.match(/\.(jpeg|jpg|gif|png)$/i) ? (
+                <img src={previewProof} alt="Proof Document" className="max-w-full max-h-[55vh] object-contain rounded-xl" />
+              ) : previewProof.startsWith("data:application/pdf") || previewProof.endsWith(".pdf") ? (
+                <iframe src={previewProof} className="w-full h-[55vh] border-0 rounded-xl" title="Proof PDF" />
+              ) : (
+                <div className="text-center p-10 space-y-4">
+                  <FileText size={48} className="text-indigo-600 mx-auto" />
+                  <p className="text-xs text-slate-500 font-bold uppercase">Dynamic File Attachment</p>
+                  <a href={previewProof} download="Proof_Attachment" className="inline-flex h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold items-center justify-center transition">
+                    Download Attachment File
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
