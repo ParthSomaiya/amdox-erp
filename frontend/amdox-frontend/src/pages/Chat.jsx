@@ -14,28 +14,25 @@ API.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-// 🛡️ SAFEST LOCAL STORAGE DECORATOR (Wipe-out protection on logout)
+// 🛡️ MASTER LOCAL STORAGE DECORATOR (Wipe-out protection on logout for all dynamic chats)
 const originalClear = localStorage.clear;
 localStorage.clear = function() {
-  const employees = localStorage.getItem("amdox_employees");
-  const leaves = localStorage.getItem("amdox_applied_leaves");
-  const attendance = localStorage.getItem("amdox_simulated_attendance");
-  const payrolls = localStorage.getItem("amdox_simulated_payrolls");
-  const webhooks = localStorage.getItem("amdox_webhooks");
-  const security = localStorage.getItem("amdox_security_settings");
-  const gdpr = localStorage.getItem("amdox_gdpr_requests");
-  const chats = localStorage.getItem("amdox_simulated_chats");
+  // 🚀 DYNAMIC ERPs SCANNER: "amdox_" થી શરૂ થતા તમામ લાઈવ ચેટ થ્રેડ્સને આપમેળે હોલ્ડ કરી લેશે
+  const backup = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && (key.startsWith("amdox_") || key.startsWith("amdox_chat_msgs_"))) {
+      backup[key] = localStorage.getItem(key);
+    }
+  }
 
+  // સાઇન-આઉટ સેશન ક્લીયર કરો
   originalClear.call(localStorage);
 
-  if (employees) localStorage.setItem("amdox_employees", employees);
-  if (leaves) localStorage.setItem("amdox_applied_leaves", leaves);
-  if (attendance) localStorage.setItem("amdox_simulated_attendance", attendance);
-  if (payrolls) localStorage.setItem("amdox_simulated_payrolls", payrolls);
-  if (webhooks) localStorage.setItem("amdox_webhooks", webhooks);
-  if (security) localStorage.setItem("amdox_security_settings", security);
-  if (gdpr) localStorage.setItem("amdox_gdpr_requests", gdpr);
-  if (chats) localStorage.setItem("amdox_simulated_chats", chats);
+  // તમામ એક્ટિવ હિસ્ટ્રી અને વૉલ્ટ ડેટાબેઝ રીસ્ટોર કરો
+  Object.keys(backup).forEach(key => {
+    localStorage.setItem(key, backup[key]);
+  });
 };
 
 export default function Chat() {
@@ -87,7 +84,7 @@ export default function Chat() {
       
       if (!Array.isArray(serverData) || serverData.length === 0) {
         const defaultChats = [
-          { _id: "chat-hr-broadcast", name: "📢 HR Broadcast & Support", isHRChannel: true }, // 🚀 માસ્ટર એચઆર ચેનલ
+          { _id: "chat-hr-broadcast", name: "📢 HR Broadcast & Support", isHRChannel: true },
           { _id: "chat-101", name: "Engineering Dept Chat", members: [] }
         ];
         setChats(defaultChats);
@@ -124,7 +121,13 @@ export default function Chat() {
       const serverMsgs = res.data || [];
       
       if (!Array.isArray(serverMsgs) || serverMsgs.length === 0) {
-        loadDefaultMessages(chat._id);
+        // 🚀 ઇનબોક્સ લોક પ્રોટેક્ટર: જો સર્વર મેસેજ ખાલી હોય, તો ડિફોલ્ટ ટેમ્પલેટ લોડ કરવાના બદલે લોકલ ચેટ લિસ્ટ ચેક કરો
+        const savedMsgs = localStorage.getItem(`amdox_chat_msgs_${chat._id}`);
+        if (savedMsgs) {
+          setMessages(JSON.parse(savedMsgs));
+        } else {
+          loadDefaultMessages(chat._id);
+        }
       } else {
         setMessages(serverMsgs);
       }
@@ -162,7 +165,7 @@ export default function Chat() {
       _id: `msg-${Date.now()}`,
       sender: { _id: userId, name: user.name || "Employee" },
       message: text,
-      isBroadcast: isHR && selectedChat._id === "chat-hr-broadcast", // જો એચઆર મેસેજ કરે તો બ્રોડકાસ્ટ સેટ થાય
+      isBroadcast: isHR && selectedChat._id === "chat-hr-broadcast",
       reactions: [],
       createdAt: new Date().toISOString()
     };
@@ -205,7 +208,6 @@ export default function Chat() {
     }
   };
 
-  // 🛡️ SECURITY FILTER: કર્મચારી માત્ર એચઆરનો મેસેજ અને પોતાનો જ રિપ્લાય જોઈ શકે
   const filteredMessages = useMemo(() => {
     if (!selectedChat) return [];
     if (selectedChat._id === "chat-hr-broadcast" && !isHR) {
@@ -268,7 +270,6 @@ export default function Chat() {
                   const isMe = m.sender?._id === userId;
                   const isHRChannel = selectedChat._id === "chat-hr-broadcast";
                   
-                  // 🚀 HR RULE: એચઆર ને લાઈવ કર્મચારીનું નામ પ્રીફિક્સ કૌંસમાં બતાવશે
                   const isEmployeeReply = isHRChannel && isHR && !m.isBroadcast;
                   const displayMessage = isEmployeeReply 
                     ? `📩 [Reply from ${m.sender.name}]: ${m.message}` 
