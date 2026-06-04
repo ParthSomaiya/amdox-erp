@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, Loader2, ClipboardList } from "lucide-react";
+import { Plus, Search, Loader2, ClipboardList, GripVertical, CheckCircle2, Calendar, User, AlignLeft, X } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import API from "../services/api";
 import notifier from "../utils/notifier";
@@ -9,6 +9,7 @@ export default function TaskBoard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
+  const [showForm, setShowForm] = useState(false); // Collapsible Form state
   
   // 🔹 React 18 Compatibility માટે સ્ટેટ
   const [enabled, setEnabled] = useState(false);
@@ -21,7 +22,7 @@ export default function TaskBoard() {
 
   const columns = ["TODO", "IN_PROGRESS", "DONE"];
 
-  // 🔹 React 18 Lifecycle ફિક્સ (આનાથી ડ્રેગ-એન્ડ-ડ્રોપ ૧૦૦% એક્ટિવ થશે!)
+  // 🔹 React 18 Lifecycle ફિક્સ
   useEffect(() => {
     const animation = requestAnimationFrame(() => setEnabled(true));
     return () => {
@@ -54,6 +55,7 @@ export default function TaskBoard() {
         status: "TODO",
       });
       setNewTask({ title: "", description: "", priority: "MEDIUM" });
+      setShowForm(false);
       fetchTasks();
       notifier.taskCreated(newTask.title);
     } catch (err) {
@@ -96,116 +98,160 @@ export default function TaskBoard() {
   const priorityStyle = (priority) => {
     switch (priority) {
       case "HIGH":
-        return "bg-rose-50 text-rose-700 border border-rose-100";
+        return "bg-rose-500/10 text-rose-600 border border-rose-500/20";
       case "MEDIUM":
-        return "bg-amber-50 text-amber-700 border border-amber-100";
+        return "bg-amber-500/10 text-amber-600 border border-amber-500/20";
       default:
-        return "bg-emerald-50 text-emerald-700 border border-emerald-100";
+        return "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20";
     }
   };
 
   if (loading || !enabled) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-center">
-          <div className="h-12 w-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <h2 className="mt-4 text-slate-600 font-semibold">Loading task boards...</h2>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="animate-spin h-10 w-10 text-indigo-600 mx-auto" />
+          <p className="text-sm font-semibold text-slate-500">Aligning workspace objectives...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-violet-600 via-indigo-600 to-indigo-700 rounded-3xl p-8 text-white shadow-sm flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Task Board</h1>
-          <p className="mt-2 text-indigo-100 text-sm">Organize and drag-drop your workspace objectives.</p>
-        </div>
-        <div className="hidden sm:flex h-16 w-16 rounded-2xl bg-white/10 backdrop-blur-md items-center justify-center">
-          <ClipboardList size={28} />
-        </div>
-      </div>
-
-      {/* Task Creation Form */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm">
-        <h2 className="text-xl font-bold text-slate-800 mb-6">Create New Task</h2>
-        <form onSubmit={createTask} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Task Title"
-              required
-              value={newTask.title}
-              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-              className="h-11 rounded-xl border border-slate-300 px-4 outline-none focus:border-indigo-500 text-sm"
-            />
-            <select
-              value={newTask.priority}
-              onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
-              className="h-11 rounded-xl border border-slate-300 px-4 bg-white outline-none focus:border-indigo-500 text-sm"
-            >
-              <option value="LOW">LOW</option>
-              <option value="MEDIUM">MEDIUM</option>
-              <option value="HIGH">HIGH</option>
-            </select>
+    <div className="space-y-6 max-w-full overflow-x-hidden px-1">
+      {/* 🚀 Header Banner */}
+      <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 p-6 sm:p-8 rounded-3xl text-white shadow-md relative overflow-hidden border border-slate-800">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span className="text-[10px] uppercase tracking-widest text-indigo-400 font-bold block mb-1">Agile Sprint Board</span>
+            <h1 className="text-2xl sm:text-3xl font-black">🧩 Workspace Task Board</h1>
+            <p className="text-slate-400 text-xs mt-1">Organize, track, and drag-drop your product release objectives.</p>
           </div>
-          <textarea
-            rows="3"
-            placeholder="Detailed description of the task..."
-            value={newTask.description}
-            onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-            className="w-full rounded-2xl border border-slate-300 p-4 outline-none focus:border-indigo-500 text-sm resize-none"
-          />
-          <button
-            type="submit"
-            disabled={creating}
-            className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm transition disabled:opacity-50 flex items-center gap-1"
-          >
-            {creating ? <Loader2 className="animate-spin h-4 w-4" /> : <Plus size={16} />}
-            {creating ? "Creating..." : "Create Task"}
-          </button>
-        </form>
-      </div>
 
-      {/* Search Bar */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-sm">
-        <div className="relative max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input
-            type="text"
-            placeholder="Search task boards..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-11 rounded-xl border border-slate-300 pl-11 pr-4 outline-none focus:border-indigo-500 text-sm bg-slate-50/50 focus:bg-white transition"
-          />
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="h-10 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-lg shrink-0 cursor-pointer self-start sm:self-center"
+          >
+            {showForm ? <X size={15} /> : <Plus size={15} />}
+            {showForm ? "Cancel" : "Create New Task"}
+          </button>
         </div>
       </div>
 
-      {/* DRAG DROP CONTEXT */}
+      {/* 🚀 COLLAPSIBLE CREATION FORM (Elegant & Glassmorphic) */}
+      {showForm && (
+        <div className="bg-white rounded-3xl border p-6 shadow-md animate-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center gap-2 mb-6 pb-3 border-b">
+            <ClipboardList className="text-indigo-600" size={18} />
+            <h2 className="text-sm sm:text-base font-bold text-slate-800">New Task Specifications</h2>
+          </div>
+
+          <form onSubmit={createTask} className="space-y-4 text-xs font-semibold text-slate-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-slate-400 font-bold mb-1.5 uppercase tracking-wider">Task Title</label>
+                <input
+                  type="text"
+                  required
+                  value={newTask.title}
+                  onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                  placeholder="e.g. Integrate Plaid KYC API"
+                  className="w-full h-11 border rounded-xl px-4 text-sm bg-slate-50/50 outline-none focus:border-indigo-500 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 font-bold mb-1.5 uppercase tracking-wider">Priority Limit</label>
+                <select
+                  value={newTask.priority}
+                  onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
+                  className="w-full h-11 border rounded-xl px-3 bg-slate-50/50 outline-none text-xs font-bold text-slate-700 cursor-pointer"
+                >
+                  <option value="LOW">LOW PRIORITY</option>
+                  <option value="MEDIUM">MEDIUM PRIORITY</option>
+                  <option value="HIGH">HIGH PRIORITY</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-400 font-bold mb-1.5 uppercase tracking-wider">Task Description</label>
+              <textarea
+                rows="3"
+                value={newTask.description}
+                onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                placeholder="Specify core engineering goals..."
+                className="w-full rounded-2xl border p-4 outline-none resize-none focus:border-indigo-500 bg-slate-50/50 focus:bg-white font-medium"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="h-10 px-5 border rounded-xl font-bold text-xs text-slate-600 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={creating}
+                className="h-10 px-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition disabled:opacity-50 cursor-pointer"
+              >
+                {creating ? <Loader2 className="animate-spin h-3.5 w-3.5" /> : <Plus size={14} />}
+                Add Task
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* 🚀 Search & Filter Area */}
+      <div className="bg-white rounded-2xl border p-3 shadow-sm flex items-center gap-3">
+        <Search size={16} className="text-slate-400 shrink-0 ml-1" />
+        <input
+          type="text"
+          placeholder="Filter objectives by title or description..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-grow h-8 outline-none text-xs sm:text-sm bg-transparent text-slate-700 placeholder:text-slate-400"
+        />
+      </div>
+
+      {/* 🚀 KANBAN BOARD SYSTEM */}
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {columns.map((column) => {
             const columnTasks = filteredTasks.filter((task) => task.status === column);
+            
+            // ડાયનેમિક કલર ગ્રેડિયન્ટ બેનર્સ
+            const columnColors = {
+              TODO: "border-t-indigo-500/80 bg-indigo-500/5",
+              IN_PROGRESS: "border-t-amber-500/80 bg-amber-500/5",
+              DONE: "border-t-emerald-500/80 bg-emerald-500/5"
+            };
+
             return (
               <Droppable droppableId={column} key={column}>
                 {(provided) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="bg-slate-50 border border-slate-200/80 rounded-3xl p-5 space-y-4 min-h-[400px]"
+                    className={`border-t-4 rounded-3xl p-5 space-y-4 min-h-[450px] border border-slate-200/80 ${columnColors[column] || "bg-slate-50/50"}`}
                   >
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-                      <h3 className="font-bold text-slate-700 text-sm tracking-wide uppercase">
+                    {/* Column Header */}
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
+                      <h3 className="font-extrabold text-slate-700 text-xs tracking-wider uppercase">
                         {column.replace("_", " ")}
                       </h3>
-                      <span className="h-6 px-2.5 rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center shadow-sm">
+                      <span className="h-6 px-2.5 rounded-full bg-white border border-slate-200 text-slate-600 text-[10px] font-black flex items-center justify-center shadow-sm">
                         {columnTasks.length}
                       </span>
                     </div>
 
-                    <div className="space-y-3 min-h-[300px]">
+                    {/* Draggable Cards Stack */}
+                    <div className="space-y-3 min-h-[350px]">
                       {columnTasks.map((task, index) => (
                         <Draggable draggableId={String(task._id)} index={index} key={task._id}>
                           {(provided) => (
@@ -213,17 +259,29 @@ export default function TaskBoard() {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4 cursor-grab active:cursor-grabbing"
+                              className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all duration-200 space-y-3.5 cursor-grab active:cursor-grabbing relative group"
                             >
                               <div className="flex items-start justify-between gap-3">
-                                <h4 className="font-bold text-slate-800 text-sm">{task.title}</h4>
-                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase ${priorityStyle(task.priority)}`}>
+                                <div className="space-y-1">
+                                  <h4 className="font-extrabold text-slate-800 text-xs sm:text-sm leading-snug group-hover:text-indigo-600 transition">
+                                    {task.title}
+                                  </h4>
+                                  <span className="text-[9px] text-slate-400 font-bold uppercase block">ID: #{task._id?.slice(-5) || "TASK"}</span>
+                                </div>
+                                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase shrink-0 ${priorityStyle(task.priority)}`}>
                                   {task.priority || "MEDIUM"}
                                 </span>
                               </div>
+
                               {task.description && (
-                                <p className="text-xs text-slate-500 leading-normal line-clamp-3">{task.description}</p>
+                                <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">{task.description}</p>
                               )}
+
+                              {/* Task Card Footer */}
+                              <div className="pt-2 border-t border-slate-50 flex items-center justify-between text-[9px] text-slate-400 font-bold uppercase">
+                                <span className="flex items-center gap-1"><User size={11} className="text-slate-300" /> {task.assignedTo || "Unassigned"}</span>
+                                <span className="flex items-center gap-0.5"><GripVertical size={11} className="text-slate-300" /></span>
+                              </div>
                             </div>
                           )}
                         </Draggable>
