@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { FileText, Loader2, Eye, ShieldCheck, Award, Users, Download, ExternalLink, Info, CheckCircle2 } from "lucide-react";
+import { FileText, Loader2, Eye, ShieldCheck, Award, Download, ExternalLink, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import API from "../services/api";
 
 // 🚀 DYNAMIC AXIOS INTERCEPTOR: દરેક રિકવેસ્ટ વખતે તાજું ટોકન જ મોકલશે
@@ -86,6 +86,21 @@ export default function ResumeViewer() {
     return safeEmployees.find(e => e._id === selectedEmpId) || null;
   }, [selectedEmpId, safeEmployees]);
 
+  // 🧮 ડાયનેમિક કેવાયસી (KYC) વેરીફિકેશન અલ્ગોરિધમ
+  const kycStatus = useMemo(() => {
+    if (!currentEmp) return { text: "N/A", color: "text-slate-400", icon: <Clock size={12} /> };
+    const hasAadhaar = !!currentEmp.aadhaar;
+    const hasPan = !!currentEmp.pan;
+
+    if (hasAadhaar && hasPan) {
+      return { text: "Verified", color: "text-emerald-600", icon: <CheckCircle2 size={12} /> };
+    }
+    if (hasAadhaar || hasPan) {
+      return { text: "Pending", color: "text-amber-500", icon: <Clock size={12} /> };
+    }
+    return { text: "Not Started", color: "text-rose-500", icon: <AlertTriangle size={12} /> };
+  }, [currentEmp]);
+
   const getFileUrl = (path) => {
     if (!path) return "";
     if (path.startsWith("data:")) return path;
@@ -94,7 +109,7 @@ export default function ResumeViewer() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-1 font-sans">
-      {/* 🚀 Header */}
+      {/* Header */}
       <div className="bg-slate-900 border border-slate-800 p-8 rounded-[32px] text-white relative overflow-hidden shadow-xl">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 space-y-2">
@@ -114,7 +129,7 @@ export default function ResumeViewer() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
           
-          {/* 👥 LEFT COLUMN: Selector & Employee Profile Card */}
+          {/* LEFT COLUMN */}
           <div className="lg:col-span-4 space-y-6 w-full">
             <div className="bg-white border rounded-[28px] p-6 shadow-sm space-y-5">
               <div>
@@ -146,16 +161,19 @@ export default function ResumeViewer() {
                     </div>
                   </div>
 
+                  {/* 🚀 ૧૦૦% ડાયનેમિક કનેક્ટેડ કેવાયસી સ્ટેટસ */}
                   <div className="p-3 bg-slate-50 border rounded-xl flex items-center justify-between text-[11px] font-bold text-slate-500">
                     <span>KYC Document Status:</span>
-                    <span className="text-emerald-600 flex items-center gap-1"><CheckCircle2 size={12} /> Verified</span>
+                    <span className={`${kycStatus.color} flex items-center gap-1`}>
+                      {kycStatus.icon} {kycStatus.text}
+                    </span>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* 📂 RIGHT COLUMN: Breathtaking Document Vault (CORS Bypassed) */}
+          {/* RIGHT COLUMN */}
           <div className="lg:col-span-8 bg-white border rounded-[28px] p-6 shadow-sm min-h-[400px] flex flex-col justify-between w-full">
             <div className="flex justify-between items-center pb-4 border-b border-slate-100">
               <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
@@ -170,7 +188,6 @@ export default function ResumeViewer() {
               {currentEmp?.resume ? (
                 <div className="w-full max-w-md space-y-6 text-center">
                   
-                  {/* High Fidelity Glassmorphic File Card */}
                   <div className="p-8 bg-slate-50/60 border border-slate-100 rounded-3xl flex flex-col items-center justify-center space-y-4 shadow-sm relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
                     
@@ -190,14 +207,14 @@ export default function ResumeViewer() {
                       href={getFileUrl(currentEmp.resume)}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex-1 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-md shadow-indigo-600/10 hover:scale-[1.02] active:scale-95 duration-200 cursor-pointer"
+                      className="flex-1 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-md"
                     >
                       <ExternalLink size={14} /> Open Resume in New Tab
                     </a>
                     <a
                       href={getFileUrl(currentEmp.resume)}
                       download
-                      className="h-11 w-12 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl flex items-center justify-center transition border active:scale-95"
+                      className="h-11 w-12 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl flex items-center justify-center transition border"
                       title="Download PDF"
                     >
                       <Download size={16} />
