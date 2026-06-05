@@ -37,6 +37,7 @@ import InterviewCalendar from "./pages/jobs/InterviewCalendar";
 import InterviewScheduler from "./pages/jobs/InterviewScheduler";
 import CandidateAnalytics from "./pages/CandidateAnalytics";
 import ResumeViewer from "./pages/ResumeViewer";
+import OrganisationChart from "./pages/hr/OrganisationChart";
 
 // ================= PAYROLL =================
 import GeneratePayroll from "./pages/GeneratePayroll";
@@ -71,6 +72,8 @@ import InvoicePage from "./pages/finance/InvoicePage";
 import Reconciliation from "./pages/finance/Reconciliation";
 import BillingReports from "./pages/BillingReports";
 import Reports from "./pages/Reports";
+import APInvoiceList from "./pages/finance/APInvoiceList";
+import ARInvoiceList from "./pages/finance/APInvoiceList";
 
 // ================= 📦 INVENTORY SUB-PAGES IMPORTS =================
 import InventoryDashboard from "./pages/InventoryDashboard";
@@ -118,6 +121,10 @@ import PermissionMatrix from "./pages/admin/PermissionMatrix";
 import RoleManagement from "./pages/admin/RoleManagement";
 import GdprCompliance from "./pages/admin/GdprCompliance";
 import NotificationSettings from "./pages/admin/NotificationSettings";
+import ExecutiveDashboard from "./pages/ExecutiveDashboard";
+
+// ================= REPORTS =================
+import ReportBuilder from "./pages/Reports/ReportBuilder";
 
 // ================= OTHER =================
 import CalendarPage from "./pages/CalendarPage";
@@ -186,6 +193,7 @@ function App() {
             {/* DASHBOARD */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
+            <Route path="/dashboard/executive" element={<ExecutiveDashboard />} />
 
             {/* EMPLOYEE */}
             <Route path="/employees" element={<Employees />} />
@@ -207,6 +215,7 @@ function App() {
             <Route path="/hr/interview-scheduler" element={<InterviewScheduler />} />
             <Route path="/hr/candidate-analytics" element={<CandidateAnalytics />} />
             <Route path="/hr/resume-viewer" element={<ResumeViewer />} />
+            <Route path="/hr/org-chart" element={<OrganisationChart />} />
 
             {/* PAYROLL */}
             <Route path="/generate-payroll" element={<GeneratePayroll />} />
@@ -243,6 +252,8 @@ function App() {
             <Route path="/finance/invoice-page" element={<InvoicePage />} />
             <Route path="/finance/reconciliation-ledger" element={<Reconciliation />} />
             <Route path="/finance/billing-reports" element={<BillingReports />} />
+            <Route path="/finance/ap-invoices" element={<APInvoiceList />} />
+            <Route path="/finance/ar-invoices" element={<ARInvoiceList />} />
 
             {/* 📦 INVENTORY SUB-PAGES ROUTES REGISTERED */}
             <Route path="/inventory" element={<InventoryDashboard />} />
@@ -290,6 +301,7 @@ function App() {
             <Route path="/admin/roles" element={<RoleManagement />} />
             <Route path="/admin/gdpr" element={<GdprCompliance />} />
             <Route path="/admin/notifications-config" element={<NotificationSettings />} />
+            <Route path="/reports/builder" element={<ReportBuilder />} />
 
             {/* OTHER */}
             <Route path="/calendar" element={<CalendarPage />} />

@@ -105,6 +105,7 @@ export default function Sidebar() {
                   <Link to="/dashboard" className={menuClass("/dashboard")}>
                     📊 Admin Dashboard
                   </Link>
+                 
                   <Link to="/analytics/bi" className={menuClass("/analytics/bi")}>
                     📊 Business Intelligence (BI)
                   </Link>
@@ -120,6 +121,9 @@ export default function Sidebar() {
                   <SectionHeader title="HR Administration" />
                   <Link to="/employees" className={menuClass("/employees")}>
                     👥 Employees List
+                  </Link>
+                  <Link to="/hr/org-chart" className={menuClass("/hr/org-chart")}>
+                    🌿 Organisation Chart
                   </Link>
                   <Link to="/hr/employee-profile" className={menuClass("/hr/employee-profile")}>
                     👥 Employee Profiles
@@ -210,8 +214,14 @@ export default function Sidebar() {
                   <Link to="/bills" className={menuClass("/bills")}>
                     🧾 Vendor Bills
                   </Link>
+                  <Link to="/finance/ap-invoices" className={menuClass("/finance/ap-invoices")}>
+                    🧾 AP Invoices (Payable)
+                  </Link>
                   <Link to="/receivables" className={menuClass("/receivables")}>
                     💳 Receivables
+                  </Link>
+                  <Link to="/finance/ar-invoices" className={menuClass("/finance/ar-invoices")}>
+                    💳 AR Invoices (Receivable)
                   </Link>
                   <Link to="/finance/reconciliation-ledger" className={menuClass("/finance/reconciliation-ledger")}>
                     🔄 Bank Reconciliation
@@ -338,6 +348,9 @@ export default function Sidebar() {
                   </Link>
                   <Link to="/analytics/chart-builder" className={menuClass("/analytics/chart-builder")}>
                     📊 Custom Chart Builder
+                  </Link>
+                  <Link to="/reports/builder" className={menuClass("/reports/builder")}>
+                    📋 Report Drag-Builder
                   </Link>
                   <Link to="/admin/settings" className={menuClass("/admin/settings")}>
                     ⚙️ Settings Configuration
