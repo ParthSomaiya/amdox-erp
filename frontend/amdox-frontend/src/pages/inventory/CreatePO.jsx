@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { Send, Loader2, ShoppingCart, ShieldCheck } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Send, Loader2, ShoppingCart, ShieldCheck, AlertTriangle, X, ArrowLeft } from "lucide-react";
 import API from "../../services/api";
 import notifier from "../../utils/notifier";
 
@@ -13,6 +14,10 @@ export default function CreatePO() {
   
   const [loadingData, setLoadingData] = useState(true);
   const [creating, setCreating] = useState(false);
+
+  // આઉટ ઓફ સ્ટોક બ્લોકર પોપ-અપ સ્ટેટ્સ
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [outOfStockProduct, setOutOfStockProduct] = useState(null);
 
   useEffect(() => {
     loadFormData();
@@ -33,7 +38,16 @@ export default function CreatePO() {
       setProductsList(products);
       
       if (vendors.length > 0) setSelectedVendor(vendors[0]._id || "");
-      if (products.length > 0) setSelectedProduct(products[0]._id || "");
+      if (products.length > 0) {
+        const initialProd = products[0];
+        setSelectedProduct(initialProd._id || "");
+        
+        const stockQty = initialProd.quantity !== undefined ? initialProd.quantity : (initialProd.stock ?? 0);
+        if (stockQty <= 0) {
+          setOutOfStockProduct(initialProd);
+          setShowWarningModal(true);
+        }
+      }
     } catch (err) {
       console.error("Failed to fetch dropdown data:", err);
     } finally {
@@ -41,7 +55,17 @@ export default function CreatePO() {
     }
   };
 
-  // Live price calculations
+  const handleProductChange = (productId) => {
+    setSelectedProduct(productId);
+    const matched = productsList.find(p => p._id === productId);
+    const stockQty = matched ? (matched.quantity !== undefined ? matched.quantity : matched.stock || 0) : 0;
+    
+    if (stockQty <= 0 && matched) {
+      setOutOfStockProduct(matched);
+      setShowWarningModal(true); // બ્લોકર વોર્નિંગ પોપ-અપ ઓપન થશે
+    }
+  };
+
   const selectedProductPrice = useMemo(() => {
     const prod = productsList.find(p => p._id === selectedProduct);
     return prod ? prod.price : 0;
@@ -62,9 +86,18 @@ export default function CreatePO() {
     e.preventDefault();
     if (!selectedVendor || !selectedProduct || !quantity) return;
 
+    const chosenProduct = productsList.find(p => p._id === selectedProduct);
+    const stockQty = chosenProduct ? (chosenProduct.quantity !== undefined ? chosenProduct.quantity : chosenProduct.stock || 0) : 0;
+
+    // 🚨 સ્ટ્રિક્ટ સબમિશન ગાર્ડ: જો સ્ટોક 0 હોય તો ઓર્ડર કન્ફર્મ થવા ન દેવો
+    if (stockQty <= 0) {
+      setOutOfStockProduct(chosenProduct);
+      setShowWarningModal(true);
+      return;
+    }
+
     try {
       setCreating(true);
-      const chosenProduct = productsList.find(p => p._id === selectedProduct);
       const chosenVendor = vendorsList.find(v => v._id === selectedVendor);
 
       await API.post("/inventory/purchase-order", {
@@ -80,7 +113,7 @@ export default function CreatePO() {
       );
 
       alert("Purchase Order created and submitted successfully!");
-      notifier.poReceived(chosenVendor?.name || "Vendor", chosenProduct?.name || "Product");
+      notifier?.poReceived?.(chosenVendor?.name || "Vendor", chosenProduct?.name || "Product");
       setQuantity("");
     } catch (err) {
       console.error(err);
@@ -104,7 +137,7 @@ export default function CreatePO() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full max-w-full overflow-hidden">
         
-        {/* LEFT SIDE: Clean Inputs form */}
+        {/* LEFT SIDE: Inputs Form */}
         <div className="lg:col-span-7 bg-white rounded-2xl sm:rounded-[32px] border p-4 sm:p-6 shadow-sm space-y-4 sm:space-y-6 w-full max-w-full">
           <h2 className="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-1.5 pb-3 border-b">
             <ShoppingCart className="text-indigo-600 shrink-0" size={18} /> Order Specifications
@@ -134,13 +167,18 @@ export default function CreatePO() {
                 <select
                   required
                   value={selectedProduct}
-                  onChange={(e) => setSelectedProduct(e.target.value)}
+                  onChange={(e) => handleProductChange(e.target.value)}
                   className="w-full h-10 sm:h-12 border border-slate-200 rounded-xl px-3 text-xs outline-none focus:border-indigo-500 bg-slate-50/50 cursor-pointer font-bold text-slate-700"
                 >
                   <option value="">-- Choose Product --</option>
-                  {productsList.map((p) => (
-                    <option key={p._id} value={p._id}>{p.name} (₹{p.price})</option>
-                  ))}
+                  {productsList.map((p) => {
+                    const stock = (p.quantity !== undefined ? p.quantity : p.stock) || 0;
+                    return (
+                      <option key={p._id} value={p._id}>
+                        {p.name} (Stock: {stock} units)
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
@@ -169,7 +207,7 @@ export default function CreatePO() {
           )}
         </div>
 
-        {/* RIGHT SIDE: Real-Time calculated billing card */}
+        {/* RIGHT SIDE: Real-Time Billing Info */}
         <div className="lg:col-span-5 bg-slate-950 text-slate-100 rounded-2xl sm:rounded-[32px] p-4 sm:p-6 shadow-xl border border-slate-800 relative font-mono w-full max-w-full overflow-hidden">
           <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
           
@@ -215,6 +253,56 @@ export default function CreatePO() {
           </div>
         </div>
 
+      </div>
+
+      {/* 🚀 STRICKT STOCK BLOCKER MODAL POPUP */}
+      {showWarningModal && outOfStockProduct && createPortal(
+        <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-5 mx-auto animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-center pb-2.5 border-b">
+              <h2 className="text-sm sm:text-base font-bold text-rose-600 flex items-center gap-1.5">
+                <AlertTriangle size={18} className="animate-bounce" /> Stock Depleted Alert
+              </h2>
+              <button 
+                onClick={() => {
+                  setShowWarningModal(false);
+                  const available = productsList.find(p => (p.quantity ?? p.stock) > 0);
+                  if (available) setSelectedProduct(available._id);
+                }} 
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-3.5 bg-rose-50 border border-rose-100 rounded-2xl text-xs text-rose-700 leading-relaxed">
+              <p className="font-bold">🚨 PROCUREMENT ERROR:</p>
+              <p className="mt-1">
+                The selected item <strong className="text-rose-950 font-black">"{outOfStockProduct.name}"</strong> is currently out of stock (0 units remaining).
+              </p>
+              <p className="mt-2 font-black">SaaS business compliance rules do not permit raising Purchase Orders for zero-stock warehouse materials. Please select a valid product in stock.</p>
+            </div>
+
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWarningModal(false);
+                  const available = productsList.find(p => (p.quantity ?? p.stock) > 0);
+                  if (available) setSelectedProduct(available._id);
+                }}
+                className="w-full h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-md shadow-indigo-600/10"
+              >
+                <ArrowLeft size={13} /> Change to Available Product
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      <div className="flex items-center justify-center gap-1.5 text-[10px] sm:text-xs text-slate-400 font-semibold pt-2">
+        <ShieldCheck size={13} className="text-indigo-600 shrink-0" /> Enterprise SCM Procurement Engine Active
       </div>
     </div>
   );
