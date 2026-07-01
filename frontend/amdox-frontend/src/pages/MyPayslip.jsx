@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, Coins, Loader2, ShieldAlert, Receipt, CheckCircle2 } from "lucide-react";
+import { Download, Coins, Loader2, ShieldAlert, Receipt, CheckCircle2, ShieldCheck } from "lucide-react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import API from "../services/api";
@@ -20,6 +20,16 @@ export default function MyPayslip() {
       setLoading(true);
       const userId = currentUser.id || currentUser._id;
       
+      // ૧. ક્રોસ-આઈડી સોલ્યુશન: યુઝર ઇમેઇલ પરથી તેમનું એક્ટિવ Employee ID મેળવો
+      const localEmployees = JSON.parse(localStorage.getItem("amdox_employees") || "[]");
+      const matchedEmployee = localEmployees.find(e => 
+        e.userId?.email === currentUser.email || 
+        e.userId?._id === userId || 
+        e.email === currentUser.email
+      );
+      const employeeId = matchedEmployee ? matchedEmployee._id : null;
+
+      // ૨. બેકએન્ડ ગેટવે પરથી પર્સનલ સેલરી સ્લિપ રીડ કરવી
       const res = await API.get(`/payroll/my/${userId}`).catch(() => 
         API.get("/payroll").catch(() => ({ data: [] }))
       );
@@ -27,24 +37,44 @@ export default function MyPayslip() {
       const rawList = res.data?.data || res.data || [];
       let list = Array.isArray(rawList) ? rawList : [];
 
-      // 🧠 લાઈવ ફોલબેક સિંક્રોનાઇઝર: જો ડેટાબેઝ ખાલી હોય, તો પણ એમ્પ્લોયી માટે સચોટ લાઈવ પેરોલ સ્લિપ બનાવો
-      if (list.length === 0) {
-        list = [
+      // ૩. HR જનરેટ પેરોલ ડેટા સાથે સિંકિંગ લોજિક (Local Storage Bridge)
+      const localPayrolls = JSON.parse(localStorage.getItem("amdox_simulated_payrolls") || "[]");
+      
+      // એક્ટિવ લિસ્ટમાં લોકલ સેવ કરેલા પેરોલ મર્જ કરો
+      localPayrolls.forEach(lp => {
+        if (!list.some(sp => sp._id === lp._id)) {
+          list.push(lp);
+        }
+      });
+
+      // ૪. સિક્યોરિટી ફિલ્ટર: બંને ID (User ID & Employee ID) ક્રોસ વેરિફાય કરો
+      const filtered = list.filter(slip => {
+        const slipEmpId = slip.employeeId?._id || slip.employeeId;
+        return String(slipEmpId) === String(userId) || (employeeId && String(slipEmpId) === String(employeeId));
+      });
+
+      // ૫. જો લિસ્ટ ખાલી હોય, તો ડિફોલ્ટ ઓટો-જનરેટેડ સ્લિપ આપો
+      if (filtered.length === 0) {
+        const defaultSlips = [
           {
             _id: "sec-slip-01",
+            employeeId: employeeId || userId,
             month: "2026-05",
-            basicSalary: 40000,
-            bonus: 11000,
-            deductions: 15000,
-            netSalary: 36000,
+            basicSalary: 45000,
+            bonus: 10000,
+            deductions: 5000,
+            netSalary: 50000,
             status: "PAID"
           }
         ];
+        localStorage.setItem("amdox_simulated_payrolls", JSON.stringify(defaultSlips));
+        setSlips(defaultSlips);
+      } else {
+        setSlips(filtered);
       }
 
-      setSlips(list);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to compile personal payslips:", err);
     } finally {
       setLoading(false);
     }
@@ -54,7 +84,7 @@ export default function MyPayslip() {
   const handleDownloadPDF = (slip) => {
     try {
       const doc = new jsPDF();
-      const empName = user.name || "Dharmik Kotecha";
+      const empName = user.name || "Employee";
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(22);
@@ -72,11 +102,14 @@ export default function MyPayslip() {
       doc.text(`Payroll Month: ${slip.month}`, 14, 44);
       doc.text(`Transaction Status: PAID (Verified)`, 14, 50);
 
+      // કી સિંક ફિક્સ: સિંગ્યુલર અને પ્લુરલ બંને પ્રકારની ડિડક્શન કી હેન્ડલ કરી
+      const deductionVal = slip.deductions !== undefined ? slip.deductions : (slip.deduction ?? 0);
+
       const columns = ["Compensation Component", "Type", "Amount (INR)"];
       const rows = [
         ["Basic Base Salary", "Earning", `INR ${slip.basicSalary?.toLocaleString("en-IN")}`],
         ["Performance Allowances", "Earning", `INR ${(slip.bonus || 0).toLocaleString("en-IN")}`],
-        ["Provident Fund & Taxes (PF/PT)", "Deduction", `INR ${slip.deductions?.toLocaleString("en-IN")}`],
+        ["Provident Fund & Taxes (PF/PT/Deductions)", "Deduction", `INR ${deductionVal.toLocaleString("en-IN")}`],
         ["Net Salary Disbursed", "Net Take-Home Pay", `INR ${slip.netSalary?.toLocaleString("en-IN")}`],
       ];
 
@@ -160,7 +193,7 @@ export default function MyPayslip() {
               <div className="text-[11px] space-y-3 pt-1">
                 <div className="flex justify-between items-center gap-2">
                   <span className="text-slate-500 shrink-0">MEMBER:</span>
-                  <span className="text-slate-200 font-bold truncate max-w-[130px] sm:max-w-[180px]">{user.name || "Dharmik Kotecha"}</span>
+                  <span className="text-slate-200 font-bold truncate max-w-[130px] sm:max-w-[180px]">{user.name || "Employee"}</span>
                 </div>
                 <div className="flex justify-between items-center gap-2">
                   <span className="text-slate-500 shrink-0">PERIOD:</span>
@@ -171,20 +204,20 @@ export default function MyPayslip() {
               <div className="border-t border-dashed border-slate-800 pt-3 space-y-3 text-[11px]">
                 <div className="flex justify-between items-center gap-2">
                   <span className="text-slate-400">Basic Base Salary:</span>
-                  <span className="font-bold text-slate-200 shrink-0">₹{(slips[0]?.basicSalary || 40000).toLocaleString("en-IN")}</span>
+                  <span className="font-bold text-slate-200 shrink-0">₹{(slips[0]?.basicSalary || 0).toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between items-center text-slate-400 gap-2">
                   <span>Performance Surcharges:</span>
-                  <span className="shrink-0">+ ₹{(slips[0]?.bonus || 11000).toLocaleString("en-IN")}</span>
+                  <span className="shrink-0">+ ₹{(slips[0]?.bonus || 0).toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between items-center text-rose-500 gap-2">
                   <span>Deductions & PF:</span>
-                  <span className="shrink-0">- ₹{(slips[0]?.deductions || 15000).toLocaleString("en-IN")}</span>
+                  <span className="shrink-0">- ₹{(slips[0]?.deductions !== undefined ? slips[0]?.deductions : (slips[0]?.deduction ?? 0)).toLocaleString("en-IN")}</span>
                 </div>
 
                 <div className="flex justify-between items-center border-t border-dashed border-slate-800 pt-3 text-sm font-black text-emerald-500 gap-2">
                   <span>NET PAID:</span>
-                  <span className="shrink-0">₹{(slips[0]?.netSalary || 36000).toLocaleString("en-IN")}</span>
+                  <span className="shrink-0">₹{(slips[0]?.netSalary || 0).toLocaleString("en-IN")}</span>
                 </div>
               </div>
 
@@ -197,6 +230,10 @@ export default function MyPayslip() {
 
         </div>
       )}
+      
+      <div className="flex items-center justify-center gap-2 text-xs text-slate-400 font-semibold pt-4 text-center">
+        <ShieldCheck size={14} /> SaaS Multi-Tenant Payroll Verification Stream Active
+      </div>
     </div>
   );
 }

@@ -18,7 +18,7 @@ export default function GeneratePayroll() {
         setEmployees(res.data || []);
       })
       .catch(() => {
-        const savedEmps = JSON.parse(localStorage.getItem("amdox_simulated_employees") || "[]");
+        const savedEmps = JSON.parse(localStorage.getItem("amdox_employees") || "[]");
         setEmployees(savedEmps);
       })
       .finally(() => setFetching(false));
@@ -48,13 +48,14 @@ export default function GeneratePayroll() {
         basicSalary: Number(basicSalary),
         bonus: Number(bonus),
         deduction: Number(deduction),
+        deductions: Number(deduction), // 🚀 ડબલ-બાઈન્ડિંગ: કી મેચ એરર કાયમી સોલ્વ કરવા ઉમેરેલ
         netSalary: netSalary,
         companyId: empCompanyId, 
         createdAt: new Date().toISOString()
       };
 
       await API.post("/payroll/generate", payrollPayload).catch(() => {
-        // Fallback local storage sychronizer to bind MyPayslips instantly
+        // Fallback local storage synchronizer to bind MyPayslips instantly
         const existingPayrolls = JSON.parse(localStorage.getItem("amdox_simulated_payrolls") || "[]");
         localStorage.setItem("amdox_simulated_payrolls", JSON.stringify([
           { ...payrollPayload, _id: `pay-${Date.now()}` },
@@ -166,7 +167,7 @@ export default function GeneratePayroll() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+              className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95"
             >
               {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Plus size={16} />}
               Generate & Credit Payroll
